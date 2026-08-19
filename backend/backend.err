@@ -1,0 +1,16 @@
+2026/08/16 01:08:03 [DB] PostgreSQL connected successfully
+2026/08/16 01:08:03 [DB] Running auto-migration...
+2026/08/16 01:08:03 [DB] Migration completed successfully
+2026/08/16 01:08:03 [DB] Templates already seeded, skipping
+2026/08/16 01:08:03 [QUEUE] Redis connected successfully
+2026/08/16 01:08:03 [QUEUE] Task processor started
+2026/08/16 01:08:03 [SERVER] Starting on :8080
+asynq: pid=57072 2026/08/15 17:08:03.667389 INFO: Starting processing
+asynq: pid=57072 2026/08/15 17:08:03.668958 INFO: Send signal TERM or INT to terminate the process
+asynq: pid=57072 2026/08/16 04:39:48.840604 ERROR: Failed to forward scheduled tasks: INTERNAL_ERROR: INTERNAL_ERROR: redis eval error: i/o timeout
+2026/08/16 16:24:45 [SERVER] Shutting down gracefully...
+2026/08/16 16:24:45 [SERVER] Stopped
+asynq: pid=57072 2026/08/16 08:24:45.078131 INFO: Starting graceful shutdown
+asynq: pid=57072 2026/08/16 08:24:45.500674 INFO: Waiting for all workers to finish...
+asynq: pid=57072 2026/08/16 08:24:45.501179 INFO: All workers have finished
+asynq: pid=57072 2026/08/16 08:24:45.502797 INFO: Exiting

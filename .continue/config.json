@@ -1,0 +1,84 @@
+{
+  "models": [
+    { "title": "deepseek-r1", "provider": "ollama", "model": "deepseek-r1:7b", "contextLength": 32768 },
+    { "title": "qwen2.5-coder", "provider": "ollama", "model": "qwen2.5:7b", "contextLength": 32768 },
+    { "title": "qwen2.5", "provider": "ollama", "model": "qwen2.5:7b", "contextLength": 32768 },
+    { "title": "nemotron-mini", "provider": "ollama", "model": "nemotron-mini:4b", "contextLength": 8192 },
+    { "title": "llama3.2", "provider": "ollama", "model": "llama3.2:3b", "contextLength": 8192 }
+  ],
+  "customCommands": [
+    {
+      "name": "gen-infra001",
+      "prompt": "参考 @Sprint1-W1-Deliverables.md 的 2.1 节，补全 INFRA-001 index.ts 的生成逻辑，要求：1) 使用 fast-glob 替换模拟 2) 增加 actions/cache 3) 输出到 .github/workflows/sync-upstream.yml",
+      "model": "qwen2.5-coder"
+    },
+    {
+      "name": "gen-infra002",
+      "prompt": "参考 @Sprint1-W1-Deliverables.md 的 2.2 节，补全 INFRA-002 index.ts：1) 真实 git clone 2) fast-glob 提取测试文件 3) ts-morph 解析 describe/it 4) 生成 test-manifest.json + run-baseline.sh",
+      "model": "qwen2.5-coder"
+    },
+    {
+      "name": "gen-canvas001",
+      "prompt": "参考 @Sprint1-W1-Deliverables.md 的 2.3 节，补全 CANVAS-001：用 ts-morph 做 AST 级导出/依赖分析，输出 compatibility-report.json + COMPATIBILITY_ANALYSIS.md",
+      "model": "deepseek-r1"
+    },
+    {
+      "name": "review-pr",
+      "prompt": "对比 @Sprint1-W1-Deliverables.md 的验收清单，审查当前变更：1) 功能完整性 2) 单测覆盖率 3) 是否引入新依赖 4) MIT 合规性。输出 PR Review 报告。",
+      "model": "deepseek-r1"
+    },
+    {
+      "name": "sync-board",
+      "prompt": "读取 board-import/tasks.csv，将已完成任务标记为 DONE，生成同步到 GitHub Projects 的 GraphQL mutation 脚本。",
+      "model": "nemotron-mini"
+    },
+    {
+      "name": "gen-go-api",
+      "prompt": "参考当前项目的后端Go代码规范，生成符合Gin+GORM规范的API接口：包含路由定义、参数校验、错误处理、Swagger注释，自动生成对应的单元测试，确保符合项目安全约束。",
+      "model": "qwen2.5-coder"
+    },
+    {
+      "name": "debug-go-log",
+      "prompt": "读取当前后端日志，定位错误根因，输出分步修复方案，生成对应修复代码片段。",
+      "model": "deepseek-r1"
+    },
+    {
+      "name": "fix-powershell-json",
+      "prompt": "生成适配Windows PowerShell的curl/Invoke-WebRequest调用命令，规避JSON引号转义问题，直接输出可运行的指令。",
+      "model": "nemotron-mini"
+    },
+    {
+      "name": "explain-code",
+      "prompt": "解释当前文件/函数的业务逻辑、数据流、边界条件，输出结构化文档供云端Review。",
+      "model": "qwen2.5"
+    },
+    {
+      "name": "gen-test",
+      "prompt": "为当前文件生成单元测试，覆盖正常分支/边界/异常，目标覆盖率≥80%，使用项目现有测试框架。",
+      "model": "qwen2.5-coder"
+    },
+    {
+      "name": "run-local-verify",
+      "description": "一键在GPU Runner上执行本地模型环境全量校验，支持自动重试+看板同步",
+      "command": "ssh local-gpu-runner 'cd ~/workspace && chmod +x scripts/run-local-verify.sh && ./scripts/run-local-verify.sh --auto-retry 3 --sync-board true'",
+      "context": {
+        "include": ["scripts/verify-local-env.sh", ".github/workflows/verify-local-models.yml"]
+      }
+    }
+  ],
+  "contextProviders": [
+    { "name": "file", "params": {} },
+    { "name": "folder", "params": {} },
+    { "name": "code", "params": {} },
+    { "name": "docs", "params": { "path": "D:/nova启画/novainfinite/docs" } }
+  ],
+  "tabAutocompleteModel": { "title": "nemotron-mini", "provider": "ollama" },
+  "embeddingsProvider": { "provider": "ollama", "model": "nomic-embed-text" },
+  "mcpServers": {
+    "nova-canvas-ai001": {
+      "command": "python",
+      "args": ["-m", "backend.mcp.server"],
+      "env": { "PYTHONPATH": "D:\\nova启画\\novainfinite" }
+    }
+  }
+}

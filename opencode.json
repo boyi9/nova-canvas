@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "nova-canvas-ai001": {
+      "type": "local",
+      "command": ["python", "-m", "backend.mcp.server"],
+      "enabled": true,
+      "environment": {
+        "PYTHONPATH": "D:\\nova启画\\novainfinite"
+      }
+    }
+  }
+}

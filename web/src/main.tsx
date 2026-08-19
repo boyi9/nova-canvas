@@ -14,6 +14,9 @@ initAnalytics();
 
 document.body.style.fontFamily = '"SF Pro Display","SF Pro Text","PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif';
 
+// Nova启画 - 初始化主题
+document.documentElement.classList.add("dark");
+
 createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
         <AppProviders>
