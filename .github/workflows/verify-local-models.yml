@@ -1,0 +1,60 @@
+name: 本地模型验证OpenCode流水线
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  CI_REPORTS: "1"
+  PYTHONPATH: ${{ github.workspace }}
+
+jobs:
+  verify:
+    runs-on: local-gpu-runner
+    steps:
+      - name: 拉取最新代码
+        run: git pull origin main
+
+      - name: 记录流水线开始时间
+        run: echo "PIPELINE_START=$(date +%s)" > .pipeline-timer
+
+      - name: 启动 Ollama 服务
+        run: |
+          STEP_START=$(date +%s)
+          echo "STEP_START=$STEP_START" >> .pipeline-timer
+          systemctl is-active --quiet ollama || (ollama serve &)
+          # 最多等待30秒直到11434端口可访问
+          for i in {1..10}; do
+            sleep 3
+            curl -s http://localhost:11434/api/tags > /dev/null && break
+          done
+          echo "STEP_END=$(date +%s)" >> .pipeline-timer
+          ELAPSED=$(($(grep STEP_END .pipeline-timer | cut -d= -f2) - $(grep STEP_START .pipeline-timer | cut -d= -f2)))
+          echo "⏱️ 校验Ollama耗时 ${ELAPSED} 秒" >> step_summary.md
+
+      - name: 校验本地 4 欺模型
+        run: |
+          mkdir -p logs
+          curl -s http://localhost:11434/api/tags > logs/tags.json
+          REQUIRED=("deepseek-r1:7b" "nemotron-mini:4b" "llama3.2:3b" "qwen2.5:7b")
+          for m in "${REQUIRED[@]}"; do
+            grep -q "\"name\":\"$m\"" logs/tags.json || { echo "❌ 缺少模型 $m"; exit 1; }
+          done
+
+      - name: 设置 Go 环境
+        run: |
+          export PATH=$PATH:/usr/local/go/bin
+          export GOPATH=$HOME/go
+          export GOPROXY=https://goproxy.cn,direct
+
+      - name: 生成并运行 Hello World
+        run: |
+          ollama run deepseek-r1:7b "输出符合Go编码规范的Hello World代码，无注释解释" > logs/hello-world.go
+          go run logs/hello-world.go
+
+      - name: 安装并运行安全扫描
+        run: |
+          pip install safety -i https://pypi.tsinghua.edu.cn/simple
+          safety check --full-report > security-scan-report.txt
