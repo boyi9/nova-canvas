@@ -29,3 +29,18 @@ alwaysApply: true
 - **轻量脚本/格式化 → `nemotron-mini`**。
 - 所有写文件任务**必须遵守 verify-edits 规则**：写后回读 + grep 校验，确认生效后才汇报完成。
 - 与 OpenCode 接力时，改动须 `git status`/`git diff` 自查并 commit，确保同步到 GitHub 形成统一交付。
+
+## OpenCode → Continue 分派标注规范
+
+OpenCode 在把任务分派给 Continue 时，**必须在任务描述中显式标注使用的命令与模型**，Continue 侧无需自行判断，直接按标注执行。标注格式：
+
+> 【Continue 执行】命令：`/dev-canvas`　模型：qwen2.5-coder
+> 任务：<具体描述>
+
+速查（分派时照抄对应行）：
+- 写文件类 → `/dev-infra` · `/dev-canvas` · `/dev-go` · `/dev-test` · `/dev-agent` · `/fix`　（模型 qwen2.5-coder）
+- 纯评审 → `/review-pr`　（模型 deepseek-r1，不写文件）
+- 代码解释 → `/explain-code`　（模型 qwen2.5）
+- 轻量脚本 → `/sync-board` · `/fix-powershell-json`　（模型 nemotron-mini）
+
+目的：双端（OpenCode / Continue）遵循同一张路由表与标注，避免“声称已改实际未改”，并保证落盘后统一 commit 到 GitHub。
