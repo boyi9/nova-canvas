@@ -1,3 +1,5 @@
+name: 验证
+
 on:
   push:
     branches: [ main ]
@@ -14,7 +16,7 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}/.local
     steps:
       - name: 检出代码仓库
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5  # 升级到 v5，解决 Node.js 20 警告
       - name: 设置 Python 环境
         uses: actions/setup-python@v5
         with:
@@ -32,7 +34,7 @@ jobs:
         env:
           CI_REPORTS: "1"
       - name: 上传验证报告工件
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4  # 保持 v4，v5 目前无重大优势
         if: always()
         with:
           name: 验证报告
