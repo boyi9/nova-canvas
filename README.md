@@ -1,6 +1,14 @@
 # Nova Canvas (启画)
 
-> 本项目基于 [infinite-canvas](https://github.com/basketikun/infinite-canvas) 二次开发，原项目采用 MIT License，感谢原作者的贡献。
+> ⚠️ **重要声明**：本项目是基于 [infinite-canvas](https://github.com/basketikun/infinite-canvas) (MIT License) 的**独立二次开发项目**（Hard Fork），**不采用**同步上游、共享代码迭代的开发模式。
+> 
+> - 所有二次开发成果（新增功能、架构重构、AI 能力集成等）归 **Nova Canvas (启画) 项目及贡献者所有**
+> - 不会自动将上游 infinite-canvas 的更新同步合并到本项目
+> - 不会将本项目的开发成果回流贡献给 infinite-canvas 上游
+> - 两者是独立演进的两个项目，仅共享 MIT 许可证下的基础代码遗产
+> - 如需了解原始项目最新进展，请直接访问 infinite-canvas 官方仓库
+
+---
 
 ## 项目简介
 
@@ -54,13 +62,17 @@ cd ../backend && go run cmd/main.go
 
 本项目采用 MIT License。详见 [LICENSE](LICENSE)。
 
-本项目包含对 [infinite-canvas](https://github.com/basketikun/infinite-canvas) 的修改，原项目版权归 basketikun 所有，遵循 MIT 许可证。
+本项目基于 [infinite-canvas](https://github.com/basketikun/infinite-canvas) (MIT License) 进行独立二次开发，原始基础代码版权归 basketikun 所有。本项目的所有修改、新增代码、架构设计、文档等衍生成果，版权归 Nova Canvas (启画) 项目及其贡献者所有。
+
+> **再次强调**：这是一个 Hard Fork 独立项目，不与上游 infinite-canvas 同步代码、不共享迭代成果。
 
 ## 贡献
 
 欢迎提交 Issue 和 PR！请遵循项目的代码规范和提交规范。
 
+> 注意：PR 仅针对 Nova Canvas 项目本身，不涉及向 infinite-canvas 上游提交。
+
 ## 致谢
 
-- [infinite-canvas](https://github.com/basketikun/infinite-canvas) - 原始项目
-- 所有为本项目做出贡献的开发者
+- [infinite-canvas](https://github.com/basketikun/infinite-canvas) - 提供 MIT 许可的基础画布代码遗产
+- 所有为 Nova Canvas 项目做出贡献的开发者
