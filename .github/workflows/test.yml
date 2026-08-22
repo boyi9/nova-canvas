@@ -22,8 +22,6 @@ jobs:
       - name: Run tests
         run: go test ./internal/script/... ./internal/taskqueue/... -v
 
-
-
   security:
     runs-on: ubuntu-latest
     needs: test
