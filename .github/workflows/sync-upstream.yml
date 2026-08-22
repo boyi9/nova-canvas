@@ -1,4 +1,5 @@
 name: Sync Upstream Repo
+
 on:
   schedule:
     - cron: '0 20 * * *'
@@ -9,13 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync Upstream
-        uses: aormsby/Fork-Sync-With-Upstream
+        uses: repo-sync/github-sync@v2
         with:
           source_repo: "infinite-canvas/nova-qihua"
-          target_branch: "develop"
+          source_branch: "main"
+          destination_branch: "main"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
