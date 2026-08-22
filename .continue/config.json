@@ -1,7 +1,7 @@
 {
   "models": [
-    { "title": "deepseek-r1", "provider": "ollama", "model": "deepseek-r1:7b", "contextLength": 32768 },
     { "title": "qwen2.5-coder", "provider": "ollama", "model": "qwen2.5:7b", "contextLength": 32768 },
+    { "title": "deepseek-r1", "provider": "ollama", "model": "deepseek-r1:7b", "contextLength": 32768 },
     { "title": "qwen2.5", "provider": "ollama", "model": "qwen2.5:7b", "contextLength": 32768 },
     { "title": "nemotron-mini", "provider": "ollama", "model": "nemotron-mini:4b", "contextLength": 8192 },
     { "title": "llama3.2", "provider": "ollama", "model": "llama3.2:3b", "contextLength": 8192 }
@@ -20,12 +20,12 @@
     {
       "name": "gen-canvas001",
       "prompt": "参考 @Sprint1-W1-Deliverables.md 的 2.3 节，补全 CANVAS-001：用 ts-morph 做 AST 级导出/依赖分析，输出 compatibility-report.json + COMPATIBILITY_ANALYSIS.md",
-      "model": "deepseek-r1"
+      "model": "qwen2.5-coder"
     },
     {
       "name": "review-pr",
       "prompt": "对比 @Sprint1-W1-Deliverables.md 的验收清单，审查当前变更：1) 功能完整性 2) 单测覆盖率 3) 是否引入新依赖 4) MIT 合规性。输出 PR Review 报告。",
-      "model": "deepseek-r1"
+      "model": "qwen2.5-coder"
     },
     {
       "name": "sync-board",
@@ -40,7 +40,7 @@
     {
       "name": "debug-go-log",
       "prompt": "读取当前后端日志，定位错误根因，输出分步修复方案，生成对应修复代码片段。",
-      "model": "deepseek-r1"
+      "model": "qwen2.5-coder"
     },
     {
       "name": "fix-powershell-json",
