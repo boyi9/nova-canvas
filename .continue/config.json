@@ -70,7 +70,7 @@
     { "name": "file", "params": {} },
     { "name": "folder", "params": {} },
     { "name": "code", "params": {} },
-    { "name": "docs", "params": { "path": "D:/nova启画/novainfinite/docs" } }
+    { "name": "docs", "params": { "path": "D:/nova启画/novacanvas/docs" } }
   ],
   "tabAutocompleteModel": { "title": "nemotron-mini", "provider": "ollama" },
   "embeddingsProvider": { "provider": "ollama", "model": "nomic-embed-text" },
@@ -78,7 +78,7 @@
     "nova-canvas-ai001": {
       "command": "python",
       "args": ["-m", "backend.mcp.server"],
-      "env": { "PYTHONPATH": "D:\\nova启画\\novainfinite" }
+      "env": { "PYTHONPATH": "D:\\nova启画\\novacanvas" }
     }
   }
 }

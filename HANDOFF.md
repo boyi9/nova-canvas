@@ -1,39 +1,51 @@
-# HANDOFF.md — 双端接力交接单（OpenCode ⇄ Continue）
+# 协同开发测试任务：创建一个简单的 Canvas 节点类型扩展
 
-> **用途**：聊天历史在 OpenCode 与 Continue 之间不互通。真正的"交接"必须落盘为
-> **文件 + git commit + 本单**。任何一方准备把工作交给另一端前，填写本文件；
-> 接棒方开工前先读本文件与最近的 `git log`。
->
-> 完整项目约定见 `AGENTS.md`；任务状态以 `C:\board-import\` 的 jira/feishu/github 为准。
+## 任务描述
+创建一个新的 Canvas 节点类型 `NovaTextNode`，支持富文本编辑功能。
 
----
+## 验收标准
+1. ✅ 在 `web/src/components/canvas/nodes/` 下创建 `NovaTextNode.tsx`
+2. ✅ 实现基本的富文本编辑功能（加粗、斜体、下划线）
+3. ✅ 在 `builtin-nodes.tsx` 中注册该节点类型
+4. ✅ 编写对应的单元测试
+5. ✅ 通过 `pnpm test` 验证
 
-## 当前状态（交棒方填写）
-- **交棒自**：OpenCode / Continue
-- **进行中任务**：`<taskKey 或 条目，如 S1-W3-D4-03>`
-- **Git 分支**：`<branch>`
-- **最近 commit**：`<hash> — <message>`
-
-## 已完成
-- 
-
-## 进行中（未提交 / 未完成）
-- 
-
-## 下一步（接棒方该做什么）
-- [ ] 
-- [ ] 
-
-## 关键上下文 / 已踩的坑
-- 
-
-## 待同步看板
-- jira / feishu / github 状态：`<DONE / 进行中 / 阻塞>`
-- 如需更新，改 `C:\board-import\` 对应 JSON 并保持一致（三端应同为 11 条）
+## 协同分工
+- **OpenCode (云端)**：生成任务规格、架构设计、代码骨架
+- **Continue (本地)**：实现具体功能、编写测试、本地验证
+- **同步方式**：Git + GitHub，通过 HANDOFF.md 交接
 
 ---
 
-### 使用约定
-- 切换工具前：把上面内容填好并 `git commit`（message 含 `[handoff]` 便于检索）。
-- 接手工具时：先 `git log --oneline -10`、读 `HANDOFF.md`、再读 `AGENTS.md` 相关章节。
-- 本文件只保留**最新一次**交接；每次交棒覆盖更新即可。
+## 阶段 1：OpenCode 生成规格和骨架
+
+### 节点类型设计
+```typescript
+// NovaTextNode.tsx 设计规格
+interface NovaTextNodeProps {
+  node: CanvasNode;
+  onUpdate: (data: Partial<NodeData>) => void;
+  selected: boolean;
+  viewport: ViewportTransform;
+}
+
+// 功能需求：
+// 1. 富文本编辑器（基于 contenteditable 或 textarea）
+// 2. 工具栏：加粗、斜体、下划线、字号、颜色
+// 3. 支持键盘快捷键
+// 4. 自动保存到节点数据
+```
+
+---
+
+## 阶段 2：Continue 实现
+
+待 Continue 接手实现...
+
+---
+
+## 交接记录
+- 创建时间：2026-08-22
+- 交棒方：OpenCode
+- 接棒方：Continue
+- 状态：规格完成，待实现

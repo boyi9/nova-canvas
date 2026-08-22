@@ -16,7 +16,7 @@
   （**禁止用 `localhost`**，会解析到 IPv6 `::1` 导致 404/误报"模型不存在"）。
 - **资源约束**：`OLLAMA_MAX_LOADED_MODELS=1`、`OLLAMA_KEEP_ALIVE=1m`、
   `OLLAMA_NUM_PARALLEL=1`（已在用户环境变量中设置并作用于运行中的 Ollama）。
-  模型空闲 1 分钟后自动卸载，显存占用从 ~10.5GB 降到 ~3.4GB。
+  模型空闲 1 分钟后自动卸载，显存占用从 ~10.5GB 降至 ~3.4GB。
 - **已拉取模型（离线可用）**：
   | title | 模型 | contextLength | 用途 |
   |-------|------|---------------|------|
@@ -47,7 +47,7 @@
 - `ai_text_to_video` — 文生视频（OpenAI/Azure，**带成本熔断**，未配置返回 501）
 - **调用方式**：OpenCode 侧通过已注册的 MCP `nova-canvas-ai001`；
   Continue 侧通过 `.continue/config.json` 的 `mcpServers.nova-canvas-ai001`
-  （`python -m backend.mcp.server`，`PYTHONPATH=D:\nova启画\novainfinite`）。
+  （`python -m backend.mcp.server`，`PYTHONPATH=D:\nova启画\novacanvas`）。
 
 ## 4. 代码风格与提交
 - Python：遵循 PEP8，函数/类有 docstring；错误用 `AdapterError` 体系抛出。
@@ -57,7 +57,7 @@
   `Start-Process`、避免 `&&` 链与 `<<<` here-string。
 
 ## 5. 双端闭环接力协议（核心）
-两工具操作**同一份项目文件**（`D:\nova启画\novainfinite`），文件层实时互通。
+两工具操作**同一份项目文件**（`D:\nova启画\novacanvas`），文件层实时互通。
 接力靠以下"交接介质"，而非聊天历史（聊天框不互通）：
 1. **Git 为主轴**：改完即 `git commit`（message 写清"做了什么/下一步"）；
    接棒方先 `git log` / `git diff` 再开工。
