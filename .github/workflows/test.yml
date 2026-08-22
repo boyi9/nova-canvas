@@ -15,10 +15,13 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.25'
+      - name: Set workdir
+        run: cd backend
       - name: Download dependencies
         run: go mod download
       - name: Run tests
-        run: go test ./backend/internal/script/... ./backend/internal/taskqueue/... -v
+        run: go test ./internal/script/... ./internal/taskqueue/... -v
+
 
 
   security:
