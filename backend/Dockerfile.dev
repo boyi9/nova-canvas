@@ -1,0 +1,73 @@
+# Nova Canvas Backend - Development Dockerfile
+# INFRA-003: 开发环境部署完成
+
+FROM golang:1.25-alpine AS dev-base
+
+# 安装开发工具
+RUN apk add --no-cache \
+    git \
+    make \
+    bash \
+    curl \
+    python3 \
+    py3-pip \
+    nodejs \
+    npm
+
+# 设置 Go 代理
+ENV GOPROXY=https://goproxy.cn,direct
+ENV GOSUMDB=off
+ENV GOTOOLCHAIN=local
+
+WORKDIR /app
+
+# 复制 go.mod 和 go.sum 先缓存依赖
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+# 开发阶段：使用 air 热重载
+FROM dev-base AS dev
+
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+# 复制源码
+COPY backend/ ./backend/
+COPY web/ ./web/
+
+# 暴露端口
+EXPOSE 8080
+
+# 启动开发服务器（热重载）
+CMD ["air", "-c", ".air.toml"]
+
+# ============ 生产构建阶段 ============
+FROM dev-base AS builder
+
+WORKDIR /app
+COPY backend/ ./backend/
+COPY web/ ./web/
+
+# 构建后端
+WORKDIR /app/backend
+RUN CGO_ENABLED=0 GOOS=linux go build -o /nova-backend ./cmd/main.go
+
+# 构建前端
+WORKDIR /app/web
+RUN npm ci && npm run build
+
+# ============ 生产镜像 ============
+FROM alpine:3.20 AS production
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --from=builder /nova-backend ./nova-backend
+COPY --from=builder /app/web/dist ./web/dist
+COPY backend/.env.example ./.env
+
+EXPOSE 8080
+
+CMD ["./nova-backend"]

@@ -37,7 +37,7 @@
 
 ~~~csv
 Epic Key,Epic Name,Description,Status,Priority,Start Date,End Date
-EPIC-CANVAS,核心画布能力,兼容infinite-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力,To Do,P0,2025-01-06,2025-02-28
+EPIC-CANVAS,核心画布能力,兼容nova-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力,To Do,P0,2025-01-06,2025-02-28
 EPIC-AI,AI创作能力,保留原生浏览器前台直连OpenAI兼容接口能力，文生图、图生图、参考图编辑、文本问答、音频和视频生成五类核心能力,To Do,P0,2025-01-13,2025-02-14
 EPIC-AGENT,画布助手与Agent能力,围绕选中节点和上游节点对话、生图功能可用，生成结果可直接一键插回当前画布,To Do,P0,2025-01-20,2025-03-07
 EPIC-PLUGIN,插件系统,远程节点插件的URL动态安装/启用/更新/卸载全流程可用，配套TypeScript SDK开发文档完整,To Do,P0,2025-01-27,2025-03-14
@@ -49,7 +49,7 @@ EPIC-INFRA,基础部署与合规,保留原有Docker部署方案，用户配置�
 
 ~~~csv
 Story Key,Epic Key,Story Name,Description,Acceptance Criteria,Priority,Story Points,Sprint,Assignee Role,Labels,Dependencies
-CANVAS-001,EPIC-CANVAS,原有画布核心能力兼容性改造,"兼容infinite-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力，原有功能通过率100%，历史创建的画布项目可无缝迁移导入",原有功能通过率100%|历史画布无缝迁移导入|画布节点操作手册/快捷键体系同步更新,P0,8,Sprint 1,前端开发,"canvas,compat",INFRA-001;INFRA-002
+CANVAS-001,EPIC-CANVAS,原有画布核心能力兼容性改造,"兼容nova-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力，原有功能通过率100%，历史创建的画布项目可无缝迁移导入",原有功能通过率100%|历史画布无缝迁移导入|画布节点操作手册/快捷键体系同步更新,P0,8,Sprint 1,前端开发,"canvas,compat",INFRA-001;INFRA-002
 CANVAS-002,EPIC-CANVAS,画布操作手册与快捷键文档更新,更新画布节点操作手册、快捷键体系同步完成适配更新，与新版功能完全匹配,手册覆盖所有新功能|快捷键无冲突|中英文对照,P1,3,Sprint 3,产品经理,"docs,canvas",CANVAS-001
 AI-001,EPIC-AI,多OpenAI兼容接口调度能力开发,"保留原生浏览器前台直连OpenAI兼容接口能力，文生图、图生图、参考图编辑、文本问答、音频和视频生成五类核心能力调用成功率≥98%",五类能力调用成功率≥98%|自动熔断降级|请求耗时P99<30s,P0,8,Sprint 2,全栈/后端开发,"ai,api",INFRA-003
 AI-002,EPIC-AI,自定义生图脚本调用能力开发,自定义生图/视频接口调用脚本配置功能上线，支持灵活适配各类中转站与自建服务，用户可自行上传配置脚本完成私有服务对接,脚本配置UI可用|中转站/自建服务对接成功|脚本沙箱隔离,P0,8,Sprint 2,后端开发,"ai,script,security",AI-001;PLUGIN-003
@@ -61,7 +61,7 @@ PLUGIN-002,EPIC-PLUGIN,TypeScript SDK开发文档输出,配套的TypeScript SDK�
 PLUGIN-003,EPIC-PLUGIN,插件沙箱安全能力开发,所有插件运行在隔离iframe环境，默认禁止插件直接访问浏览器本地存储，新增插件权限申请校验机制,沙箱隔离生效|本地存储访问拦截|权限申请校验通过,P0,8,Sprint 2,后端开发,"plugin,security",PLUGIN-001
 PROMPT-001,EPIC-PROMPT,提示词库联网缓存能力开发,前端直连多个GitHub开源提示词项目，所有提示词资源可自动缓存到IndexedDB，本地离线访问可用率100%，检索响应耗时≤200ms,多源同步缓存|离线可用率100%|检索≤200ms|自动淘汰策略,P1,5,Sprint 2,前端开发,"prompt,cache",INFRA-003
 INFRA-001,EPIC-INFRA,开源仓库主干分支同步CI流水线搭建,建立每日自动同步上游主库的CI流水线，每日凌晨自动合并上游最新提交到开发分支，跑通全量回归测试,每日自动同步|全量回归测试通过|冲突自动报警,P0,3,Sprint 1,全栈/后端开发,"infra,ci",-
-INFRA-002,EPIC-INFRA,原有infinite-canvas全量用例回归验证,先完整拉取原生仓库全量单元测试用例，改造前后跑通全量回归测试,全量单测用例拉取|回归测试100%通过,P0,5,Sprint 1,测试/开发,"infra,test",INFRA-001
+INFRA-002,EPIC-INFRA,原有nova-canvas全量用例回归验证,先完整拉取原生仓库全量单元测试用例，改造前后跑通全量回归测试,全量单测用例拉取|回归测试100%通过,P0,5,Sprint 1,测试/开发,"infra,test",INFRA-001
 INFRA-003,EPIC-INFRA,开发环境、自动化测试环境部署完成,保留原有Docker部署方案，默认3000端口启动服务可用，配套Render部署指引更新完成,Docker一键启动|3000端口可用|Render指引更新,P0,5,Sprint 1,运维/开发,"infra,deploy",-
 INFRA-004,EPIC-INFRA,全场景集成测试用例执行，bug闭环,开发阶段提前在三类操作系统各做至少50次全流程验证，提前适配不同系统的端口占用、权限路径差异,集成测试100%通过|Bug零遗留|三平台各50次验证,P0,8,Sprint 3,测试工程师,"infra,test",ALL
 INFRA-005,EPIC-INFRA,开源协议合规全量梳理检查,安排专人梳理所有开源依赖的许可协议，所有分发页面保留原作者信息和开源标识，同步把修改后的代码回流上游开源社区,依赖许可协议台账|原作者信息保留|代码回流上游,P0,5,Sprint 3,产品+法务,"infra,compliance",-
@@ -77,10 +77,10 @@ Task Key,Story Key,Task Name,Description,Story Points,Assignee Role,Sprint,Week,
 S1-W1-D1-01,INFRA-001,CI流水线搭建-GitHub Actions配置,配置GitHub Actions每日定时触发同步上游主库,1,全栈/后端开发,Sprint 1,1,1,"ci,github-actions",-,Workflow文件生效|定时触发正常
 S1-W1-D1-02,INFRA-001,CI流水线搭建-合并冲突自动处理,实现上游提交自动合并到开发分支，冲突时自动创建PR并@相关人员,1,全栈/后端开发,Sprint 1,1,1,"ci,merge",S1-W1-D1-01,冲突自动创建PR|无冲突自动合并
 S1-W1-D1-03,INFRA-001,CI流水线搭建-全量回归测试集成,集成现有单测/集成测试到流水线，失败阻断合并,1,全栈/后端开发,Sprint 1,1,1,"ci,test",S1-W1-D1-02,测试失败阻断|通过自动合并
-S1-W1-D2-01,INFRA-002,拉取原生仓库全量单测用例,Clone infinite-canvas仓库，提取所有单元测试用例至本地测试目录,2,测试/开发,Sprint 1,1,2,"test,regression",S1-W1-D1-03,用例提取完整|目录结构清晰
+S1-W1-D2-01,INFRA-002,拉取原生仓库全量单测用例,Clone nova-canvas仓库，提取所有单元测试用例至本地测试目录,2,测试/开发,Sprint 1,1,2,"test,regression",S1-W1-D1-03,用例提取完整|目录结构清晰
 S1-W1-D2-02,INFRA-002,建立回归测试基线,运行提取的用例建立通过基线，记录失败用例并分类,2,测试/开发,Sprint 1,1,2,"test,baseline",S1-W1-D2-01,基线建立|失败用例分类记录
 S1-W1-D3-01,INFRA-002,回归测试自动化脚本编写,编写自动化运行脚本，支持一键执行全量回归测试,1,测试/开发,Sprint 1,1,3,"test,automation",S1-W1-D2-02,一键运行|生成测试报告
-S1-W1-D4-01,CANVAS-001,画布核心引擎兼容性分析,分析infinite-canvas核心渲染引擎、状态管理、插件系统架构,2,前端开发,Sprint 1,1,4,"canvas,analysis",INFRA-002,架构分析文档输出|风险点识别
+S1-W1-D4-01,CANVAS-001,画布核心引擎兼容性分析,分析nova-canvas核心渲染引擎、状态管理、插件系统架构,2,前端开发,Sprint 1,1,4,"canvas,analysis",INFRA-002,架构分析文档输出|风险点识别
 S1-W1-D4-02,CANVAS-001,画布核心能力兼容改造-渲染引擎,适配原有渲染引擎至新架构，保证节点拖拽缩放、连线、小地图功能正常,3,前端开发,Sprint 1,1,4,"canvas,render",S1-W1-D4-01,渲染无异常|性能无回退
 S1-W1-D5-01,CANVAS-001,画布核心能力兼容改造-状态管理,适配撤销重做、导入导出、多画布项目管理功能,2,前端开发,Sprint 1,1,5,"canvas,state",S1-W1-D4-02,撤销重做正常|导入导出无损
 S1-W1-D5-02,CANVAS-001,历史画布迁移验证,验证历史创建的画布项目可无缝迁移导入,1,前端开发,Sprint 1,1,5,"canvas,migration",S1-W1-D5-01,历史画布100%可导入|数据无丢失
@@ -123,7 +123,7 @@ S1-W5-D2-02,INFRA-004,自动化测试流水线搭建,搭建CI/CD集成测试流�
 S1-W5-D3-01,INFRA-004,三平台跨平台验证执行,在Windows/macOS/Linux各执行50次Agent全流程验证，记录失败案例,3,测试工程师,Sprint 3,5,3,"test,cross-platform",AGENT-003,三平台各50次|通过率100%
 S1-W5-D3-02,INFRA-004,大存储压力测试,模拟10GB画布素材本地存储场景，验证IndexedDB不溢出、自动清理生效,2,测试工程师,Sprint 3,5,3,"test,stress",PROMPT-001;CANVAS-001,10GB场景稳定|自动清理触发
 S1-W5-D4-01,INFRA-005,开源依赖许可协议扫描,使用工具扫描所有依赖许可协议，建立台账，识别风险依赖,2,产品+法务,Sprint 3,5,4,"compliance,license",-,台账建立完整|风险依赖标记
-S1-W5-D4-02,INFRA-005,代码回流上游PR提交,将修改的开源代码整理提交PR至infinite-canvas上游仓库,1,产品+法务,Sprint 3,5,4,"compliance,upstream",S1-W5-D4-01,PR提交成功|社区响应跟进
+S1-W5-D4-02,INFRA-005,代码回流上游PR提交,将修改的开源代码整理提交PR至nova-canvas上游仓库,1,产品+法务,Sprint 3,5,4,"compliance,upstream",S1-W5-D4-01,PR提交成功|社区响应跟进
 S1-W5-D5-01,CANVAS-002,画布操作手册编写,编写完整操作手册：基础操作、进阶技巧、快捷键大全、常见问题,2,产品经理,Sprint 3,5,5,"docs,canvas",CANVAS-001,手册覆盖所有功能|截图清晰
 S1-W5-D5-02,CANVAS-002,快捷键体系文档对照表,输出新旧快捷键对照表、冲突说明、自定义配置指引,1,产品经理,Sprint 3,5,5,"docs,shortcuts",S1-W5-D5-01,对照表准确|无冲突遗漏
 S1-W6-D1-01,DEPLOY-001,Docker生产环境优化,优化Dockerfile多阶段构建、镜像体积压缩、安全扫描通过,2,运维/开发,Sprint 3,6,1,"deploy,docker,prod",INFRA-003,镜像<500MB|安全扫描通过
@@ -147,7 +147,7 @@ agent,Agent智能体相关,#00875A,涉及MCP协议、本地Agent、画布助手�
 plugin,插件系统相关,#FF5630,涉及插件框架、SDK、沙箱安全的任务,Story;Task
 prompt,提示词库相关,#FF8B00,涉及提示词同步、缓存、检索的任务,Story;Task
 infra,基础设施相关,#0065FF,涉及CI/CD、部署、测试、合规的任务,Story;Task
-compat,兼容性改造,#B08800,涉及infinite-canvas原生能力兼容的任务,Story;Task
+compat,兼容性改造,#B08800,涉及nova-canvas原生能力兼容的任务,Story;Task
 security,安全相关,#DE350B,涉及沙箱隔离、权限控制、数据加密的任务,Story;Task
 deploy,部署相关,#36B37E,涉及Docker、Render、灰度发布的任务,Story;Task
 test,测试相关,#FFC400,涉及单测、集成测、压测、跨平台验证的任务,Story;Task
@@ -211,7 +211,7 @@ github-actions,GitHub Actions相关,#0065FF,涉及GitHub Actions CI/CD配置的�
 
 ~~~csv
 Sprint ID,Sprint Name,Goal,Start Date,End Date,Status,Capacity (Story Points),Committed Story Points
-SPRINT-1,Sprint 1: 基础设施与画布核心,"搭建CI/CD、开发环境、回归测试基线；完成infinite-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架",2025-01-06,2025-02-02,To Do,55,53
+SPRINT-1,Sprint 1: 基础设施与画布核心,"搭建CI/CD、开发环境、回归测试基线；完成nova-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架",2025-01-06,2025-02-02,To Do,55,53
 SPRINT-2,Sprint 2: 核心功能开发,"多OpenAI兼容接口调度、自定义生图脚本、画布助手对话生图、跨平台Agent适配、SDK文档、插件沙箱安全、提示词库缓存",2025-02-03,2025-03-02,To Do,70,68
 SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳理、文档完善、Docker/Render部署、灰度发布、正式上线72小时值守",2025-03-03,2025-03-28,To Do,55,52
 ~~~
@@ -229,11 +229,11 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
       "projectName": "Nova Canvas",
       "projectType": "software",
       "lead": "project-manager",
-      "description": "一站式多场景AI创意内容生产平台 - 基于infinite-canvas二次开发"
+      "description": "一站式多场景AI创意内容生产平台 - 基于nova-canvas二次开发"
     }
   ],
   "epics": [
-    {"key": "EPIC-CANVAS", "name": "核心画布能力", "summary": "兼容infinite-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力", "priority": "Highest", "status": "To Do", "startDate": "2025-01-06", "endDate": "2025-02-28", "labels": ["canvas", "p0", "compat"]},
+    {"key": "EPIC-CANVAS", "name": "核心画布能力", "summary": "兼容nova-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力", "priority": "Highest", "status": "To Do", "startDate": "2025-01-06", "endDate": "2025-02-28", "labels": ["canvas", "p0", "compat"]},
     {"key": "EPIC-AI", "name": "AI创作能力", "summary": "保留原生浏览器前台直连OpenAI兼容接口能力，文生图、图生图、参考图编辑、文本问答、音频和视频生成五类核心能力", "priority": "Highest", "status": "To Do", "startDate": "2025-01-13", "endDate": "2025-02-14", "labels": ["ai", "p0"]},
     {"key": "EPIC-AGENT", "name": "画布助手与Agent能力", "summary": "围绕选中节点和上游节点对话、生图功能可用，生成结果可直接一键插回当前画布", "priority": "Highest", "status": "To Do", "startDate": "2025-01-20", "endDate": "2025-03-07", "labels": ["agent", "p0", "mcp"]},
     {"key": "EPIC-PLUGIN", "name": "插件系统", "summary": "远程节点插件的URL动态安装/启用/更新/卸载全流程可用，配套TypeScript SDK开发文档完整", "priority": "Highest", "status": "To Do", "startDate": "2025-01-27", "endDate": "2025-03-14", "labels": ["plugin", "p0", "sdk"]},
@@ -241,7 +241,7 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
     {"key": "EPIC-INFRA", "name": "基础部署与合规", "summary": "保留原有Docker部署方案，用户配置本地加密存储，开源协议合规梳理", "priority": "Highest", "status": "To Do", "startDate": "2025-01-06", "endDate": "2025-03-28", "labels": ["infra", "p0", "deploy", "compliance"]}
   ],
   "stories": [
-    {"key": "CANVAS-001", "epicKey": "EPIC-CANVAS", "summary": "原有画布核心能力兼容性改造", "description": "兼容infinite-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力，原有功能通过率100%，历史创建的画布项目可无缝迁移导入", "acceptanceCriteria": "原有功能通过率100%|历史画布无缝迁移导入|画布节点操作手册/快捷键体系同步更新", "priority": "Highest", "storyPoints": 8, "sprint": "SPRINT-1", "assigneeRole": "前端开发", "labels": ["canvas", "p0", "compat"], "dependencies": ["INFRA-001", "INFRA-002"]},
+    {"key": "CANVAS-001", "epicKey": "EPIC-CANVAS", "summary": "原有画布核心能力兼容性改造", "description": "兼容nova-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力，原有功能通过率100%，历史创建的画布项目可无缝迁移导入", "acceptanceCriteria": "原有功能通过率100%|历史画布无缝迁移导入|画布节点操作手册/快捷键体系同步更新", "priority": "Highest", "storyPoints": 8, "sprint": "SPRINT-1", "assigneeRole": "前端开发", "labels": ["canvas", "p0", "compat"], "dependencies": ["INFRA-001", "INFRA-002"]},
     {"key": "CANVAS-002", "epicKey": "EPIC-CANVAS", "summary": "画布操作手册与快捷键文档更新", "description": "更新画布节点操作手册、快捷键体系同步完成适配更新，与新版功能完全匹配", "acceptanceCriteria": "手册覆盖所有新功能|快捷键无冲突|中英文对照", "priority": "High", "storyPoints": 3, "sprint": "SPRINT-3", "assigneeRole": "产品经理", "labels": ["docs", "canvas", "p1", "shortcuts"], "dependencies": ["CANVAS-001"]},
     {"key": "AI-001", "epicKey": "EPIC-AI", "summary": "多OpenAI兼容接口调度能力开发", "description": "保留原生浏览器前台直连OpenAI兼容接口能力，文生图、图生图、参考图编辑、文本问答、音频和视频生成五类核心能力调用成功率≥98%", "acceptanceCriteria": "五类能力调用成功率≥98%|自动熔断降级|请求耗时P99<30s", "priority": "Highest", "storyPoints": 8, "sprint": "SPRINT-2", "assigneeRole": "全栈/后端开发", "labels": ["ai", "api", "p0", "adapter"], "dependencies": ["INFRA-003"]},
     {"key": "AI-002", "epicKey": "EPIC-AI", "summary": "自定义生图脚本调用能力开发", "description": "自定义生图/视频接口调用脚本配置功能上线，支持灵活适配各类中转站与自建服务，用户可自行上传配置脚本完成私有服务对接", "acceptanceCriteria": "脚本配置UI可用|中转站/自建服务对接成功|脚本沙箱隔离", "priority": "Highest", "storyPoints": 8, "sprint": "SPRINT-2", "assigneeRole": "后端开发", "labels": ["ai", "script", "security", "p0", "sandbox"], "dependencies": ["AI-001", "PLUGIN-003"]},
@@ -253,7 +253,7 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
     {"key": "PLUGIN-003", "epicKey": "EPIC-PLUGIN", "summary": "插件沙箱安全能力开发", "description": "所有插件运行在隔离iframe环境，默认禁止插件直接访问浏览器本地存储，新增插件权限申请校验机制", "acceptanceCriteria": "沙箱隔离生效|本地存储访问拦截|权限申请校验通过", "priority": "Highest", "storyPoints": 8, "sprint": "SPRINT-2", "assigneeRole": "后端开发", "labels": ["plugin", "security", "p0", "sandbox", "permission"], "dependencies": ["PLUGIN-001"]},
     {"key": "PROMPT-001", "epicKey": "EPIC-PROMPT", "summary": "提示词库联网缓存能力开发", "description": "前端直连多个GitHub开源提示词项目，所有提示词资源可自动缓存到IndexedDB，本地离线访问可用率100%，检索响应耗时≤200ms", "acceptanceCriteria": "多源同步缓存|离线可用率100%|检索≤200ms|自动淘汰策略", "priority": "High", "storyPoints": 5, "sprint": "SPRINT-2", "assigneeRole": "前端开发", "labels": ["prompt", "cache", "p1", "indexeddb", "search", "perf"], "dependencies": ["INFRA-003"]},
     {"key": "INFRA-001", "epicKey": "EPIC-INFRA", "summary": "开源仓库主干分支同步CI流水线搭建", "description": "建立每日自动同步上游主库的CI流水线，每日凌晨自动合并上游最新提交到开发分支，跑通全量回归测试", "acceptanceCriteria": "每日自动同步|全量回归测试通过|冲突自动报警", "priority": "Highest", "storyPoints": 3, "sprint": "SPRINT-1", "assigneeRole": "全栈/后端开发", "labels": ["infra", "ci", "p0", "github-actions", "merge"], "dependencies": []},
-    {"key": "INFRA-002", "epicKey": "EPIC-INFRA", "summary": "原有infinite-canvas全量用例回归验证", "description": "先完整拉取原生仓库全量单元测试用例，改造前后跑通全量回归测试", "acceptanceCriteria": "全量单测用例拉取|回归测试100%通过", "priority": "Highest", "storyPoints": 5, "sprint": "SPRINT-1", "assigneeRole": "测试/开发", "labels": ["infra", "test", "p0", "regression", "baseline"], "dependencies": ["INFRA-001"]},
+    {"key": "INFRA-002", "epicKey": "EPIC-INFRA", "summary": "原有nova-canvas全量用例回归验证", "description": "先完整拉取原生仓库全量单元测试用例，改造前后跑通全量回归测试", "acceptanceCriteria": "全量单测用例拉取|回归测试100%通过", "priority": "Highest", "storyPoints": 5, "sprint": "SPRINT-1", "assigneeRole": "测试/开发", "labels": ["infra", "test", "p0", "regression", "baseline"], "dependencies": ["INFRA-001"]},
     {"key": "INFRA-003", "epicKey": "EPIC-INFRA", "summary": "开发环境、自动化测试环境部署完成", "description": "保留原有Docker部署方案，默认3000端口启动服务可用，配套Render部署指引更新完成", "acceptanceCriteria": "Docker一键启动|3000端口可用|Render指引更新", "priority": "Highest", "storyPoints": 5, "sprint": "SPRINT-1", "assigneeRole": "运维/开发", "labels": ["infra", "deploy", "p0", "docker"], "dependencies": []},
     {"key": "INFRA-004", "epicKey": "EPIC-INFRA", "summary": "全场景集成测试用例执行，bug闭环", "description": "开发阶段提前在三类操作系统各做至少50次全流程验证，提前适配不同系统的端口占用、权限路径差异", "acceptanceCriteria": "集成测试100%通过|Bug零遗留|三平台各50次验证", "priority": "Highest", "storyPoints": 8, "sprint": "SPRINT-3", "assigneeRole": "测试工程师", "labels": ["infra", "test", "p0", "cross-platform", "stress"], "dependencies": ["ALL"]},
     {"key": "INFRA-005", "epicKey": "EPIC-INFRA", "summary": "开源协议合规全量梳理检查", "description": "安排专人梳理所有开源依赖的许可协议，所有分发页面保留原作者信息和开源标识，同步把修改后的代码回流上游开源社区", "acceptanceCriteria": "依赖许可协议台账|原作者信息保留|代码回流上游", "priority": "Highest", "storyPoints": 5, "sprint": "SPRINT-3", "assigneeRole": "产品+法务", "labels": ["infra", "compliance", "p0", "license", "upstream"], "dependencies": []},
@@ -263,7 +263,7 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
   ],
   "tasks": [],
   "sprints": [
-    {"id": "SPRINT-1", "name": "Sprint 1: 基础设施与画布核心", "goal": "搭建CI/CD、开发环境、回归测试基线；完成infinite-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架", "startDate": "2025-01-06", "endDate": "2025-02-02", "status": "To Do", "capacity": 55, "committed": 53},
+    {"id": "SPRINT-1", "name": "Sprint 1: 基础设施与画布核心", "goal": "搭建CI/CD、开发环境、回归测试基线；完成nova-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架", "startDate": "2025-01-06", "endDate": "2025-02-02", "status": "To Do", "capacity": 55, "committed": 53},
     {"id": "SPRINT-2", "name": "Sprint 2: 核心功能开发", "goal": "多OpenAI兼容接口调度、自定义生图脚本、画布助手对话生图、跨平台Agent适配、SDK文档、插件沙箱安全、提示词库缓存", "startDate": "2025-02-03", "endDate": "2025-03-02", "status": "To Do", "capacity": 70, "committed": 68},
     {"id": "SPRINT-3", "name": "Sprint 3: 测试验收上线", "goal": "全场景集成测试、开源合规梳理、文档完善、Docker/Render部署、灰度发布、正式上线72小时值守", "startDate": "2025-03-03", "endDate": "2025-03-28", "status": "To Do", "capacity": 55, "committed": 52}
   ],
@@ -279,8 +279,8 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
   "format": "github-projects-v2",
   "project": {
     "title": "Nova Canvas Phase 1",
-    "shortDescription": "一站式多场景AI创意内容生产平台 - 基于infinite-canvas二次开发",
-    "readme": "# Nova Canvas Phase 1\n\n基于 infinite-canvas (MIT) 二次开发的全场景 AI 创意内容生产平台。\n\n## 核心目标\n- 兼容 infinite-canvas 100% 原生能力\n- 新增 AI 创作、Agent 智能体、插件系统、提示词库\n- 保持 MIT 开源协议，本地优先，数据安全\n\n## 3 个月 / 3 个 Sprint 交付计划",
+    "shortDescription": "一站式多场景AI创意内容生产平台 - 基于nova-canvas二次开发",
+    "readme": "# Nova Canvas Phase 1\n\n基于 nova-canvas (MIT) 二次开发的全场景 AI 创意内容生产平台。\n\n## 核心目标\n- 兼容 nova-canvas 100% 原生能力\n- 新增 AI 创作、Agent 智能体、插件系统、提示词库\n- 保持 MIT 开源协议，本地优先，数据安全\n\n## 3 个月 / 3 个 Sprint 交付计划",
     "fields": [
       {"name": "Epic", "dataType": "TEXT", "options": ["EPIC-CANVAS", "EPIC-AI", "EPIC-AGENT", "EPIC-PLUGIN", "EPIC-PROMPT", "EPIC-INFRA"]},
       {"name": "Story Points", "dataType": "NUMBER"},
@@ -306,7 +306,7 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
       {"type": "EPIC", "id": "EPIC-INFRA", "title": "基础部署与合规", "fields": {"Epic": "EPIC-INFRA", "Priority": "P0-必须交付", "Labels": ["infra", "p0", "deploy", "compliance"]}}
     ],
     "sprints": [
-      {"id": "SPRINT-1", "title": "Sprint 1: 基础设施与画布核心", "startDate": "2025-01-06", "endDate": "2025-02-02", "goal": "搭建CI/CD、开发环境、回归测试基线；完成infinite-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架"},
+      {"id": "SPRINT-1", "title": "Sprint 1: 基础设施与画布核心", "startDate": "2025-01-06", "endDate": "2025-02-02", "goal": "搭建CI/CD、开发环境、回归测试基线；完成nova-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架"},
       {"id": "SPRINT-2", "title": "Sprint 2: 核心功能开发", "startDate": "2025-02-03", "endDate": "2025-03-02", "goal": "多OpenAI兼容接口调度、自定义生图脚本、画布助手对话生图、跨平台Agent适配、SDK文档、插件沙箱安全、提示词库缓存"},
       {"id": "SPRINT-3", "title": "Sprint 3: 测试验收上线", "startDate": "2025-03-03", "endDate": "2025-03-28", "goal": "全场景集成测试、开源合规梳理、文档完善、Docker/Render部署、灰度发布、正式上线72小时值守"}
     ]
@@ -322,7 +322,7 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
   "format": "feishu-project-v1",
   "project": {
     "name": "Nova Canvas Phase 1",
-    "description": "一站式多场景AI创意内容生产平台 - 基于infinite-canvas二次开发",
+    "description": "一站式多场景AI创意内容生产平台 - 基于nova-canvas二次开发",
     "owner": "project-manager",
     "startDate": "2025-01-06",
     "endDate": "2025-03-28",
@@ -350,7 +350,7 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
       {"fieldKey": "acceptanceCriteria", "fieldName": "验收标准", "fieldType": "多行文本"}
     ],
     "epics": [
-      {"epicKey": "EPIC-CANVAS", "name": "核心画布能力", "description": "兼容infinite-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力", "color": "#00B8D9", "priority": "P0-必须交付", "startDate": "2025-01-06", "endDate": "2025-02-28"},
+      {"epicKey": "EPIC-CANVAS", "name": "核心画布能力", "description": "兼容nova-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力", "color": "#00B8D9", "priority": "P0-必须交付", "startDate": "2025-01-06", "endDate": "2025-02-28"},
       {"epicKey": "EPIC-AI", "name": "AI创作能力", "description": "保留原生浏览器前台直连OpenAI兼容接口能力，文生图、图生图、参考图编辑、文本问答、音频和视频生成五类核心能力", "color": "#6554C0", "priority": "P0-必须交付", "startDate": "2025-01-13", "endDate": "2025-02-14"},
       {"epicKey": "EPIC-AGENT", "name": "画布助手与Agent能力", "description": "围绕选中节点和上游节点对话、生图功能可用，生成结果可直接一键插回当前画布", "color": "#00875A", "priority": "P0-必须交付", "startDate": "2025-01-20", "endDate": "2025-03-07"},
       {"epicKey": "EPIC-PLUGIN", "name": "插件系统", "description": "远程节点插件的URL动态安装/启用/更新/卸载全流程可用，配套TypeScript SDK开发文档完整", "color": "#FF5630", "priority": "P0-必须交付", "startDate": "2025-01-27", "endDate": "2025-03-14"},
@@ -358,7 +358,7 @@ SPRINT-3,Sprint 3: 测试验收上线,"全场景集成测试、开源合规梳�
       {"epicKey": "EPIC-INFRA", "name": "基础部署与合规", "description": "保留原有Docker部署方案，用户配置本地加密存储，开源协议合规梳理", "color": "#0065FF", "priority": "P0-必须交付", "startDate": "2025-01-06", "endDate": "2025-03-28"}
     ],
     "sprints": [
-      {"sprintKey": "Sprint 1", "name": "Sprint 1: 基础设施与画布核心", "goal": "搭建CI/CD、开发环境、回归测试基线；完成infinite-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架", "startDate": "2025-01-06", "endDate": "2025-02-02", "capacity": 55},
+      {"sprintKey": "Sprint 1", "name": "Sprint 1: 基础设施与画布核心", "goal": "搭建CI/CD、开发环境、回归测试基线；完成nova-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架", "startDate": "2025-01-06", "endDate": "2025-02-02", "capacity": 55},
       {"sprintKey": "Sprint 2", "name": "Sprint 2: 核心功能开发", "goal": "多OpenAI兼容接口调度、自定义生图脚本、画布助手对话生图、跨平台Agent适配、SDK文档、插件沙箱安全、提示词库缓存", "startDate": "2025-02-03", "endDate": "2025-03-02", "capacity": 70},
       {"sprintKey": "Sprint 3", "name": "Sprint 3: 测试验收上线", "goal": "全场景集成测试、开源合规梳理、文档完善、Docker/Render部署、灰度发布、正式上线72小时值守", "startDate": "2025-03-03", "endDate": "2025-03-28", "capacity": 55}
     ],
@@ -403,7 +403,7 @@ const __dirname = dirname(__filename);
 
 // ============ 配置常量 ============
 
-const UPSTREAM_REPO = 'infinite-canvas/infinite-canvas';
+const UPSTREAM_REPO = 'nova-canvas/nova-canvas';
 const UPSTREAM_BRANCH = 'main';
 const TARGET_BRANCH = 'develop';
 const SYNC_SCHEDULE = '0 2 * * *'; // 每天凌晨 2 点 UTC
@@ -681,7 +681,7 @@ src/infra/ci-pipeline/INFRA-001/
 
 | 配置项 | 默认值 | 环境变量覆盖 | 说明 |
 |--------|--------|--------------|------|
-| 上游仓库 | `infinite-canvas/infinite-canvas` | `UPSTREAM_REPO` | 源仓库 |
+| 上游仓库 | `nova-canvas/nova-canvas` | `UPSTREAM_REPO` | 源仓库 |
 | 上游分支 | `main` | `UPSTREAM_BRANCH` | 源分支 |
 | 目标分支 | `develop` | `TARGET_BRANCH` | 合并目标 |
 | 同步时间 | `0 2 * * *` (UTC 2:00) | `SYNC_SCHEDULE` | Cron 表达式 |
@@ -743,7 +743,7 @@ pnpm test:coverage src/infra/ci-pipeline/INFRA-001/
 ## 📚 相关链接
 
 - [GitHub Actions 文档](https://docs.github.com/en/actions)
-- [infinite-canvas 上游仓库](https://github.com/infinite-canvas/infinite-canvas)
+- [nova-canvas 上游仓库](https://github.com/nova-canvas/nova-canvas)
 - [peter-evans/create-pull-request](https://github.com/peter-evans/create-pull-request)
 ~~~
 
@@ -836,7 +836,7 @@ describe('INFRA-001: CI流水线搭建 - GitHub Actions 配置', () => {
 
     it('应该包含上游仓库配置', () => {
       const yaml = generateSyncWorkflow();
-      expect(yaml).toContain('infinite-canvas/infinite-canvas');
+      expect(yaml).toContain('nova-canvas/nova-canvas');
     });
   });
 
@@ -945,7 +945,7 @@ on:
 
     it('生成的 workflow 应包含正确的上游仓库引用', () => {
       const yaml = generateSyncWorkflow();
-      expect(yaml).toContain('infinite-canvas/infinite-canvas');
+      expect(yaml).toContain('nova-canvas/nova-canvas');
     });
 
     it('生成的 workflow 应包含正确的分支名', () => {
@@ -967,7 +967,7 @@ on:
 /**
  * INFRA-002: 拉取原生仓库全量单测用例
  * Task: S1-W1-D2-01
- * Story: INFRA-002 原有infinite-canvas全量用例回归验证
+ * Story: INFRA-002 原有nova-canvas全量用例回归验证
  * Sprint: 1 | Week: 1 | Day: 2
  *
  * 验收标准：
@@ -985,7 +985,7 @@ const __dirname = dirname(__filename);
 
 // ============ 配置常量 ============
 
-const UPSTREAM_REPO_URL = 'https://github.com/infinite-canvas/infinite-canvas.git';
+const UPSTREAM_REPO_URL = 'https://github.com/nova-canvas/nova-canvas.git';
 const UPSTREAM_BRANCH = 'main';
 const LOCAL_TEST_DIR = 'tests/regression/upstream';
 const TEST_PATTERNS = [
@@ -1264,7 +1264,7 @@ export { cloneUpstreamRepo, extractTestFiles, parseTestCases, buildDirectoryStru
 # INFRA-002: 拉取原生仓库全量单测用例
 
 > **Task ID**: S1-W1-D2-01
-> **Story**: INFRA-002 原有infinite-canvas全量用例回归验证
+> **Story**: INFRA-002 原有nova-canvas全量用例回归验证
 > **Sprint**: 1 | **Week**: 1 | **Day**: 2
 > **Assignee**: 测试/开发
 > **Story Points**: 2
@@ -1275,7 +1275,7 @@ export { cloneUpstreamRepo, extractTestFiles, parseTestCases, buildDirectoryStru
 
 | # | 验收项 | 标准 | 状态 | 备注 |
 |---|--------|------|------|------|
-| 1 | 仓库克隆成功 | 浅克隆 infinite-canvas 主分支，耗时 < 60s | ☐ | |
+| 1 | 仓库克隆成功 | 浅克隆 nova-canvas 主分支，耗时 < 60s | ☐ | |
 | 2 | 测试文件提取完整 | 覆盖 `src/**/*.test.ts`、`src/**/__tests__/**` 等模式 | ☐ | |
 | 3 | 目录结构清晰 | 生成 `tests/regression/upstream/` 镜像目录结构 | ☐ | |
 | 4 | 测试用例解析 | 解析出 `describe/it/test` 套件与用例名 | ☐ | |
@@ -1329,7 +1329,7 @@ tests/regression/upstream/
 {
   "metadata": {
     "generatedAt": "2025-01-16T00:00:00.000Z",
-    "upstreamRepo": "https://github.com/infinite-canvas/infinite-canvas.git",
+    "upstreamRepo": "https://github.com/nova-canvas/nova-canvas.git",
     "upstreamBranch": "main",
     "totalFiles": 42,
     "totalCases": 156
@@ -1377,7 +1377,7 @@ chmod +x tests/regression/upstream/run-baseline.sh
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
-| `UPSTREAM_REPO_URL` | `https://github.com/infinite-canvas/infinite-canvas.git` | 上游仓库地址 |
+| `UPSTREAM_REPO_URL` | `https://github.com/nova-canvas/nova-canvas.git` | 上游仓库地址 |
 | `UPSTREAM_BRANCH` | `main` | 克隆分支 |
 | `LOCAL_TEST_DIR` | `tests/regression/upstream` | 本地存储目录 |
 | `TEST_PATTERNS` | 见源码 | 测试文件匹配模式 |
@@ -1417,7 +1417,7 @@ pnpm test:coverage src/infra/regression/INFRA-002/
 
 ## 📚 相关链接
 
-- [infinite-canvas 仓库](https://github.com/infinite-canvas/infinite-canvas)
+- [nova-canvas 仓库](https://github.com/nova-canvas/nova-canvas)
 - [Git 浅克隆文档](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt)
 - [Vitest 测试运行器](https://vitest.dev/)
 ~~~
@@ -1905,7 +1905,7 @@ export function generateCompatibilityReport(
 
   const report: CompatibilityReport = {
     generatedAt: new Date().toISOString(),
-    upstreamVersion: 'infinite-canvas@main',
+    upstreamVersion: 'nova-canvas@main',
     modules: upstreamModules,
     riskSummary,
     breakingChanges,
@@ -2049,7 +2049,7 @@ export { scanSourceDirectory, analyzeModule, identifyBreakingChanges, generateMi
 
 | # | 验收项 | 标准 | 状态 | 备注 |
 |---|--------|------|------|------|
-| 1 | 源码目录扫描 | 识别 infinite-canvas 核心模块（引擎/节点/图层/历史/视口/插件/工具/导入导出） | ☐ | |
+| 1 | 源码目录扫描 | 识别 nova-canvas 核心模块（引擎/节点/图层/历史/视口/插件/工具/导入导出） | ☐ | |
 | 2 | 模块导出分析 | 解析每个模块的 `export` 列表、依赖关系、复杂度 | ☐ | |
 | 3 | 架构分析文档输出 | 生成 `docs/architecture/canvas-compat/COMPATIBILITY_ANALYSIS.md` | ☐ | |
 | 4 | 风险点识别 | 高/中/低风险模块分类，输出 `riskSummary` | ☐ | |
@@ -2101,7 +2101,7 @@ docs/architecture/canvas-compat/
 ```json
 {
   "generatedAt": "2025-01-16T00:00:00.000Z",
-  "upstreamVersion": "infinite-canvas@main",
+  "upstreamVersion": "nova-canvas@main",
   "modules": [
     {
       "path": "canvas/engine",
@@ -2195,7 +2195,7 @@ pnpm test:coverage src/canvas/compat/CANVAS-001/
 
 ## 📚 相关链接
 
-- [infinite-canvas 源码](https://github.com/infinite-canvas/infinite-canvas/tree/main/src)
+- [nova-canvas 源码](https://github.com/nova-canvas/nova-canvas/tree/main/src)
 - [Fabric.js 迁移指南](http://fabricjs.com/docs/)
 - [TypeScript AST 解析](https://github.com/typescript-eslint/typescript-eslint)
 ~~~
@@ -2547,7 +2547,7 @@ export function helper() {}
 ~~~typescript
 /**
  * Nova Canvas MCP Demo - Shared Type Definitions
- * 与 infinite-canvas 核心数据结构对齐
+ * 与 nova-canvas 核心数据结构对齐
  */
 
 // ============ Canvas 核心数据结构 ============
@@ -3311,7 +3311,7 @@ import type {
   CANVAS_TOOLS,
 } from '../shared/types.js';
 
-// ============ 模拟 Canvas 存储（实际应对接 infinite-canvas 核心） ============
+// ============ 模拟 Canvas 存储（实际应对接 nova-canvas 核心） ============
 
 class MockCanvasStore {
   private project: CanvasProject;
@@ -3562,7 +3562,7 @@ export class CanvasBridge extends EventEmitter {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
-    // 这里可以连接真实的 infinite-canvas 核心
+    // 这里可以连接真实的 nova-canvas 核心
     // 例如：建立 WebSocket 连接到前端、注入 content script 等
 
     this.isInitialized = true;
@@ -4563,13 +4563,13 @@ mcpServers:
 
 ## 📄 许可证
 
-MIT License - 完全复用 infinite-canvas 原生 MIT 协议，无额外限制。
+MIT License - 完全复用 nova-canvas 原生 MIT 协议，无额外限制。
 
 ---
 
 ## 🔗 相关链接
 
-- [infinite-canvas 原项目](https://github.com/infinite-canvas/infinite-canvas)
+- [nova-canvas 原项目](https://github.com/nova-canvas/nova-canvas)
 - [MCP 协议规范](https://modelcontextprotocol.io)
 - [Codex App 插件文档](https://github.com/codex-app/codex)
 - [Claude Code MCP 文档](https://docs.anthropic.com/claude-code/mcp)

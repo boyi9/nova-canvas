@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"nova-canvas/backend/internal/api/v1"
-	"nova-canvas/backend/internal/model"
-	"nova-canvas/backend/pkg/errno"
+	"nova-canvas-backend/internal/api/v1"
+	"nova-canvas-backend/internal/model"
+	"nova-canvas-backend/pkg/errno"
 )
 
 // GenerationService 定义生成业务逻辑接口
@@ -32,8 +32,7 @@ type generationServiceImpl struct {
 	storageSvc   StorageService
 }
 
-// NewGenerationService 构造函数
-func NewGenerationService(
+// NewGenerationService 构造函�?func NewGenerationService(
 	db *gorm.DB,
 	taskRepo model.GenerationTaskRepository,
 	nodeRepo model.CanvasNodeRepository,
@@ -176,14 +175,12 @@ func (s *generationServiceImpl) CancelGeneration(ctx context.Context, userID uin
 		return errno.ErrForbidden.WithMessage("task not owned by user")
 	}
 
-	// 仅允许取消 pending/running 状态
-	if task.Status != model.TaskStatusPending && task.Status != model.TaskStatusRunning {
+	// 仅允许取�?pending/running 状�?	if task.Status != model.TaskStatusPending && task.Status != model.TaskStatusRunning {
 		return errno.ErrInvalidState.WithMessage("task cannot be cancelled")
 	}
 
-	// TODO: 如果是 running 状态，需要发送取消信号给 Worker
-	// 这里简化处理：直接更新状态
-	if err := s.taskRepo.UpdateStatus(ctx, task.ID, model.TaskStatusCancelled, "cancelled by user"); err != nil {
+	// TODO: 如果�?running 状态，需要发送取消信号给 Worker
+	// 这里简化处理：直接更新状�?	if err := s.taskRepo.UpdateStatus(ctx, task.ID, model.TaskStatusCancelled, "cancelled by user"); err != nil {
 		return errno.ErrInternal.WithMessage("failed to cancel task")
 	}
 

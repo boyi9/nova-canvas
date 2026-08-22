@@ -8,8 +8,8 @@ import (
 	"context"
 	"reflect"
 
-	"nova-canvas/backend/internal/api/v1"
-	"nova-canvas/backend/internal/service"
+	"nova-canvas-backend/internal/api/v1"
+	"nova-canvas-backend/internal/service"
 	gomock "go.uber.org/mock/gomock"
 )
 

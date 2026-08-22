@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nova-canvas/backend/internal/model"
-	"nova-canvas/backend/internal/service"
-	"nova-canvas/backend/internal/service/mocks"
-	"nova-canvas/backend/pkg/errno"
-	"nova-canvas/backend/pkg/response"
+	"nova-canvas-backend/internal/model"
+	"nova-canvas-backend/internal/service"
+	"nova-canvas-backend/internal/service/mocks"
+	"nova-canvas-backend/pkg/errno"
+	"nova-canvas-backend/pkg/response"
 )
 
 func setupTestHandler(t *testing.T) (*GenerationHandler, *mocks.MockGenerationService, *gin.Engine) {
@@ -69,10 +69,9 @@ func TestCreateGeneration_Success(t *testing.T) {
 		CreateGeneration(gomock.Any(), uint64(123), gomock.Any()).
 		Return(expectedResp, nil)
 
-	// 模拟中间件注入 userID
+	// 模拟中间件注�?userID
 	w := performRequest(router, "POST", "/api/v1/generations", reqBody, "valid-token")
-	// 注入 userID 到 context（实际由中间件完成，这里手动模拟）
-	// 在真实测试中应使用中间件或手动设置 context
+	// 注入 userID �?context（实际由中间件完成，这里手动模拟�?	// 在真实测试中应使用中间件或手动设�?context
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp response.Response

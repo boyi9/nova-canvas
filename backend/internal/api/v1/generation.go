@@ -7,10 +7,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 
-	"nova-canvas/backend/internal/model"
-	"nova-canvas/backend/internal/service"
-	"nova-canvas/backend/pkg/errno"
-	"nova-canvas/backend/pkg/response"
+	"nova-canvas-backend/internal/model"
+	"nova-canvas-backend/internal/service"
+	"nova-canvas-backend/pkg/errno"
+	"nova-canvas-backend/pkg/response"
 )
 
 // GenerationHandler 处理 AI 生成相关接口
@@ -20,8 +20,7 @@ type GenerationHandler struct {
 	validator *validator.Validate
 }
 
-// NewGenerationHandler 构造函数
-func NewGenerationHandler(db *gorm.DB, svc *service.GenerationService) *GenerationHandler {
+// NewGenerationHandler 构造函�?func NewGenerationHandler(db *gorm.DB, svc *service.GenerationService) *GenerationHandler {
 	return &GenerationHandler{
 		db:        db,
 		svc:       svc,
@@ -31,16 +30,15 @@ func NewGenerationHandler(db *gorm.DB, svc *service.GenerationService) *Generati
 
 // CreateGenerationRequest 创建生成任务请求
 // @Summary 创建 AI 生成任务
-// @Description 根据参考节点和提示词创建图片/视频生成任务，异步执行
-// @Tags Generation
+// @Description 根据参考节点和提示词创建图�?视频生成任务，异步执�?// @Tags Generation
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer JWT"
 // @Param request body CreateGenerationRequest true "生成参数"
 // @Success 200 {object} response.Response{data=CreateGenerationResponse} "创建成功"
 // @Failure 400 {object} response.Response "参数校验失败"
-// @Failure 401 {object} response.Response "未授权"
-// @Failure 404 {object} response.Response "用户/节点不存在"
+// @Failure 401 {object} response.Response "未授�?
+// @Failure 404 {object} response.Response "用户/节点不存�?
 // @Failure 500 {object} response.Response "内部错误"
 // @Router /api/v1/generations [post]
 func (h *GenerationHandler) CreateGeneration(c *gin.Context) {
@@ -81,15 +79,12 @@ type GetGenerationResponse struct {
 	TaskID     string  `json:"task_id"`
 	Status     string  `json:"status"`      // pending/running/succeeded/failed
 	Progress   int     `json:"progress"`    // 0-100
-	ResultURL  string  `json:"result_url"`  // 成功时返回
-	ErrorMsg   string  `json:"error_msg"`   // 失败时返回
-	CreatedAt  int64   `json:"created_at"`
+	ResultURL  string  `json:"result_url"`  // 成功时返�?	ErrorMsg   string  `json:"error_msg"`   // 失败时返�?	CreatedAt  int64   `json:"created_at"`
 	UpdatedAt  int64   `json:"updated_at"`
 }
 
 // GetGeneration 获取生成任务详情
-// @Summary 查询生成任务状态
-// @Description 根据任务ID查询生成任务的执行进度和结果
+// @Summary 查询生成任务状�?// @Description 根据任务ID查询生成任务的执行进度和结果
 // @Tags Generation
 // @Accept json
 // @Produce json
@@ -97,8 +92,8 @@ type GetGenerationResponse struct {
 // @Param task_id path string true "任务ID"
 // @Success 200 {object} response.Response{data=GetGenerationResponse} "查询成功"
 // @Failure 400 {object} response.Response "参数校验失败"
-// @Failure 401 {object} response.Response "未授权"
-// @Failure 404 {object} response.Response "任务不存在"
+// @Failure 401 {object} response.Response "未授�?
+// @Failure 404 {object} response.Response "任务不存�?
 // @Router /api/v1/generations/{task_id} [get]
 func (h *GenerationHandler) GetGeneration(c *gin.Context) {
 	var req GetGenerationRequest
@@ -145,11 +140,11 @@ type ListGenerationsResponse struct {
 // @Param Authorization header string true "Bearer JWT"
 // @Param page query int false "页码" default(1)
 // @Param page_size query int false "每页数量" default(20)
-// @Param status query string false "状态筛选" Enums(pending, running, succeeded, failed)
-// @Param node_type query string false "节点类型筛选" Enums(image, video)
+// @Param status query string false "状态筛�? Enums(pending, running, succeeded, failed)
+// @Param node_type query string false "节点类型筛�? Enums(image, video)
 // @Success 200 {object} response.Response{data=ListGenerationsResponse} "查询成功"
 // @Failure 400 {object} response.Response "参数校验失败"
-// @Failure 401 {object} response.Response "未授权"
+// @Failure 401 {object} response.Response "未授�?
 // @Router /api/v1/generations [get]
 func (h *GenerationHandler) ListGenerations(c *gin.Context) {
 	var req ListGenerationsRequest
@@ -178,9 +173,8 @@ type CancelGenerationRequest struct {
 	TaskID string `uri:"task_id" binding:"required,uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
-// CancelGeneration 取消正在执行的生成任务
-// @Summary 取消生成任务
-// @Description 仅支持取消 pending/running 状态的任务
+// CancelGeneration 取消正在执行的生成任�?// @Summary 取消生成任务
+// @Description 仅支持取�?pending/running 状态的任务
 // @Tags Generation
 // @Accept json
 // @Produce json
@@ -188,8 +182,8 @@ type CancelGenerationRequest struct {
 // @Param task_id path string true "任务ID"
 // @Success 200 {object} response.Response "取消成功"
 // @Failure 400 {object} response.Response "参数校验失败或状态不允许取消"
-// @Failure 401 {object} response.Response "未授权"
-// @Failure 404 {object} response.Response "任务不存在"
+// @Failure 401 {object} response.Response "未授�?
+// @Failure 404 {object} response.Response "任务不存�?
 // @Router /api/v1/generations/{task_id}/cancel [post]
 func (h *GenerationHandler) CancelGeneration(c *gin.Context) {
 	var req CancelGenerationRequest
@@ -249,7 +243,6 @@ type JSONMap map[string]interface{}
 // Validate 自定义校验：parameters 必须是有效的 JSON 对象
 func (r *CreateGenerationRequest) Validate() error {
 	if r.Parameters != nil {
-		// 这里可以加更复杂的校验，如模型特定参数
-	}
+		// 这里可以加更复杂的校验，如模型特定参�?	}
 	return nil
 }

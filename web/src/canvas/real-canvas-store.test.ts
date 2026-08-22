@@ -88,7 +88,17 @@ describe('RealCanvasStore', () => {
     const exported = store.toJSON();
     const newStore = new RealCanvasStore();
     newStore.fromJSON(exported);
-    expect(newStore.toJSON()).toEqual(exported);
+    const imported = newStore.toJSON();
+    // 允许 updatedAt 变化（导入算一次更新），其余字段完全一致
+    expect(imported.id).toBe(exported.id);
+    expect(imported.name).toBe(exported.name);
+    expect(imported.nodes).toEqual(exported.nodes);
+    expect(imported.connections).toEqual(exported.connections);
+    expect(imported.viewport).toEqual(exported.viewport);
+    expect(imported.meta.createdAt).toBe(exported.meta.createdAt);
+    expect(imported.meta.author).toBe(exported.meta.author);
+    expect(imported.meta.tags).toEqual(exported.meta.tags);
+    expect(imported.meta.description).toBe(exported.meta.description);
   });
 
   it('fromJSON 遇到非法数据应抛错', () => {

@@ -3,8 +3,8 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
-	"nova-canvas/backend/internal/api/v1/middleware"
-	"nova-canvas/backend/internal/service"
+	"nova-canvas-backend/internal/api/v1/middleware"
+	"nova-canvas-backend/internal/service"
 )
 
 // RegisterRoutes 注册所有 v1 路由
