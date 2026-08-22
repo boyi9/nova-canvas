@@ -22,12 +22,12 @@ jobs:
       - name: Run tests
         run: go test ./internal/script/... ./internal/taskqueue/... -v  # 确保路径正确
 
- security:
+  security:
     runs-on: ubuntu-latest
     needs: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5  # 升级到 V5
+        uses: actions/checkout@v5
       - name: Run security scan
         run: |
           cd backend
@@ -36,4 +36,3 @@ jobs:
         run: |
           cd backend
           go list -m all | grep -i vulnerable || echo "No known vulnerabilities found"
-
