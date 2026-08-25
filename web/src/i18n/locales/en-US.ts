@@ -226,6 +226,8 @@ export default {
         deleteCurrent: "Delete current canvas",
         importAsset: "Import asset",
         exportCurrent: "Export current canvas",
+        exportJianYing: "Export JianYing draft",
+        exportJianYingDone: "JianYing draft exported (with media archive)",
         undo: "Undo",
         redo: "Redo",
         openMenu: "Open canvas menu",

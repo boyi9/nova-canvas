@@ -226,6 +226,8 @@ export default {
         deleteCurrent: "删除当前画布",
         importAsset: "导入资产",
         exportCurrent: "导出当前画布",
+        exportJianYing: "导出剪映草稿",
+        exportJianYingDone: "已导出剪映草稿工程（含素材压缩包）",
         undo: "撤销",
         redo: "重做",
         openMenu: "打开画布菜单",

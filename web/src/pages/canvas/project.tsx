@@ -22,6 +22,7 @@ import { App, Button, Modal } from "antd";
 import { NODE_DEFAULT_SIZE, getNodeSpec } from "@/constant/canvas";
 import { ActiveConnectionPath, ConnectionPath } from "@/components/canvas/canvas-connections";
 import { analyzeAutoLinks } from "@/lib/canvas/auto-link";
+import { exportJianYingDraft } from "@/lib/canvas/video-draft-compiler";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -979,6 +980,20 @@ function NovaCanvasPage() {
         try {
             await exportCanvasProjects([project], project.title || t("canvas.title"));
             message.success(t("canvas.projectPage.exported"));
+        } catch (error) {
+            console.error(error);
+            message.error(t("canvas.sidePanel.exportFailed"));
+        } finally {
+            hide();
+        }
+    }, [message, projectId, t]);
+
+    const handleExportJianYing = useCallback(async () => {
+        const project = useCanvasStore.getState().projects.find((item) => item.id === projectId);
+        const hide = message.loading(t("canvas.projectPage.exporting"), 0);
+        try {
+            await exportJianYingDraft(nodesRef.current, connectionsRef.current, project?.title || t("canvas.title"));
+            message.success(t("canvas.exportJianYingDone"));
         } catch (error) {
             console.error(error);
             message.error(t("canvas.sidePanel.exportFailed"));
@@ -2841,6 +2856,7 @@ function NovaCanvasPage() {
                     onCreateProject={createAndOpenProject}
                     onDeleteProject={deleteCurrentProject}
                     onExportProject={exportCurrentProject}
+                    onExportJianYing={handleExportJianYing}
                     onImportImage={() => handleUploadRequest()}
                     onOpenPlugins={() => setPluginManagerOpen(true)}
                     onUndo={undoCanvas}
