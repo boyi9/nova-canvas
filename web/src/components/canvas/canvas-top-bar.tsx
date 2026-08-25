@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BookMarked, BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, ShoppingBag, Sparkles, Split, Terminal, Trash2, Undo2, Upload } from "lucide-react";
+import { BookMarked, BookOpen, Bot, Clapperboard, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, ShoppingBag, Sparkles, Split, Terminal, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -35,6 +35,7 @@ export function CanvasTopBar({
     onOpenBatchImage,
     onOpenVideo,
     onOpenFission,
+    onOpenScenario,
     onOpenEcommerceFlow,
     onOpenScripts,
     onUndo,
@@ -69,6 +70,7 @@ export function CanvasTopBar({
     onOpenBatchImage: () => void;
     onOpenVideo: () => void;
     onOpenFission: () => void;
+    onOpenScenario: () => void;
     onOpenEcommerceFlow: () => void;
     onOpenScripts: () => void;
     onUndo: () => void;
@@ -273,6 +275,18 @@ export function CanvasTopBar({
                             aria-label={t("fission.title")}
                         >
                             {t("fission.title")}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={t("scenario.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<Clapperboard className="size-4" />}
+                            onClick={onOpenScenario}
+                            aria-label={t("scenario.title")}
+                        >
+                            {t("scenario.title")}
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("flow.title")}>

@@ -248,6 +248,15 @@ export default {
         step: { arrange: "Arrange detail-page structure", images: "Batch-generate hero images", workflow: "Run workflow" },
         imagesDone: "images generated",
     },
+    scenario: {
+        title: "Scenario studio",
+        tab: { ad: "Ad storyboard", drama: "Short-drama script" },
+        adBriefPlaceholder: "Enter the ad theme / selling points",
+        dramaSynopsisPlaceholder: "Enter the story synopsis",
+        style: { tvc: "Brand TVC", social: "Social short video", festival: "Festival campaign" },
+        shot: "Shot",
+        generate: "Generate",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

@@ -149,3 +149,46 @@ func TestGenerateFission(t *testing.T) {
 	assert.NotEmpty(t, firstVariant["hook"])
 	assert.NotEmpty(t, firstVariant["copy"])
 }
+
+func TestGenerateAdScript(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	router := gin.New()
+	router.POST("/ai/ad-script", h.GenerateAdScript)
+
+	payload := `{"brief":"新款防晒霜","style":"social","duration":30}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/ai/ad-script", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	assert.Equal(t, "success", body["status"])
+	scenes, ok := body["scenes"].([]interface{})
+	assert.True(t, ok)
+	assert.Len(t, scenes, 4)
+}
+
+func TestGenerateDrama(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	router := gin.New()
+	router.POST("/ai/drama", h.GenerateDrama)
+
+	payload := `{"synopsis":"都市悬疑爱情","episodes":3}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/ai/drama", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	assert.Equal(t, "success", body["status"])
+	episodes, ok := body["episodes"].([]interface{})
+	assert.True(t, ok)
+	assert.Len(t, episodes, 3)
+	chars, ok := body["characters"].([]interface{})
+	assert.True(t, ok)
+	assert.GreaterOrEqual(t, len(chars), 1)
+}

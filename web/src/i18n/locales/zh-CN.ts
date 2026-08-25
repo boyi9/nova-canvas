@@ -248,6 +248,15 @@ export default {
         step: { arrange: "编排详情页结构", images: "批量生成主图", workflow: "运行工作流" },
         imagesDone: "张已生成",
     },
+    scenario: {
+        title: "场景工坊",
+        tab: { ad: "广告分镜", drama: "短剧剧本" },
+        adBriefPlaceholder: "输入广告主题 / 卖点",
+        dramaSynopsisPlaceholder: "输入故事梗概",
+        style: { tvc: "品牌 TVC", social: "社媒短视频", festival: "节日营销" },
+        shot: "镜头",
+        generate: "生成",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

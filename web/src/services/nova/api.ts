@@ -309,3 +309,47 @@ export async function generateFission(params: { reference: string; count?: numbe
     body: JSON.stringify(params),
   });
 }
+
+export interface AdScene {
+  shot: number;
+  visual: string;
+  voiceover: string;
+  duration: number;
+}
+
+export interface AdScriptResult {
+  id: string;
+  status: string;
+  brief: string;
+  style: string;
+  scenes: AdScene[];
+}
+
+export async function generateAdScript(params: { brief: string; style?: string; duration?: number }) {
+  return request<AdScriptResult>("/ai/ad-script", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export interface DramaEpisode {
+  index: number;
+  title: string;
+  outline: string;
+  scenes: string[];
+}
+
+export interface DramaResult {
+  id: string;
+  status: string;
+  synopsis: string;
+  characters: string[];
+  episodes: DramaEpisode[];
+}
+
+export async function generateDrama(params: { synopsis: string; episodes?: number }) {
+  return request<DramaResult>("/ai/drama", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
