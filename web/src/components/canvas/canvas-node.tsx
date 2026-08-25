@@ -8,6 +8,7 @@ import { getNodeDefinition } from "@/lib/canvas/node-registry";
 import { buildNodeContext } from "@/lib/canvas/plugin-node-context";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { CanvasResourceMentionTextarea } from "./canvas-resource-mention-textarea";
+import { NovaTextNodeRenderer } from "./nodes/NovaTextNode";
 import { CanvasNodeType, type CanvasNodeData, type CanvasNodeImage, type Position } from "@/types/canvas";
 import type { CanvasNodeContext, CanvasPluginHost } from "@/types/canvas-plugin";
 import type { CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
@@ -379,7 +380,7 @@ export const CanvasNode = React.memo(function CanvasNode({
                         onViewImage?.(data);
                         return;
                     }
-                    if (data.type !== CanvasNodeType.Text) return;
+                    if (data.type !== CanvasNodeType.Text && data.type !== CanvasNodeType.NovaText) return;
                     event.stopPropagation();
                     setIsEditingContent(true);
                 }}
@@ -456,6 +457,7 @@ function NodeContent(props: NodeContentRendererProps) {
 
 const nodeContentRenderers = {
     [CanvasNodeType.Text]: TextContent,
+    [CanvasNodeType.NovaText]: NovaTextContent,
     [CanvasNodeType.Image]: ImageNodeContent,
     [CanvasNodeType.Config]: EmptyImageContent,
     [CanvasNodeType.Video]: VideoNodeContent,
@@ -521,6 +523,18 @@ function MissingPluginContent({ theme, type }: Pick<NodeContentRendererProps, "t
             <span className="text-sm">{t("canvas.node.missingPlugin")}</span>
             <span className="text-[11px] opacity-70">{t("canvas.node.missingPluginDescription", { type })}</span>
         </div>
+    );
+}
+
+function NovaTextContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+    return (
+        <NovaTextNodeRenderer
+            node={node}
+            theme={theme}
+            isEditingContent={isEditingContent}
+            onContentChange={onContentChange}
+            onStopEditing={onStopEditing}
+        />
     );
 }
 

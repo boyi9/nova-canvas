@@ -37,7 +37,7 @@ export function CanvasNodePromptPanel({ node, isRunning, onPromptChange, onConfi
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
     const mode = modeOverride ?? defaultMode(node.type);
     const config = buildNodeConfig(globalConfig, node, mode);
-    const hasTextContent = node.type === CanvasNodeType.Text && Boolean(node.metadata?.content?.trim());
+    const hasTextContent = (node.type === CanvasNodeType.Text || node.type === CanvasNodeType.NovaText) && Boolean(node.metadata?.content?.trim());
     const hasImageContent = node.type === CanvasNodeType.Image && Boolean(node.metadata?.content);
     const isEditingExistingContent = hasTextContent || hasImageContent;
     const [prompt, setPrompt] = useState(node.metadata?.composerContent ?? node.metadata?.prompt ?? "");
@@ -157,7 +157,7 @@ export function CanvasNodePromptPanel({ node, isRunning, onPromptChange, onConfi
 }
 
 function defaultMode(type: CanvasNodeData["type"]): CanvasNodeGenerationMode {
-    return type === CanvasNodeType.Text ? "text" : type === CanvasNodeType.Video ? "video" : type === CanvasNodeType.Audio ? "audio" : "image";
+    return type === CanvasNodeType.Text || type === CanvasNodeType.NovaText ? "text" : type === CanvasNodeType.Video ? "video" : type === CanvasNodeType.Audio ? "audio" : "image";
 }
 
 function buildNodeConfig(globalConfig: AiConfig, node: CanvasNodeData, mode: CanvasNodeGenerationMode): AiConfig {

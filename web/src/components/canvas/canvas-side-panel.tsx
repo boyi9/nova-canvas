@@ -132,10 +132,10 @@ function TabButton({ label, active, theme, onClick }: { label: string; active: b
 // Canvas tab: list nodes and center, zoom, and select the clicked node.
 // ---------------------------------------------------------------------------
 
-const NODE_FILTER_VALUES = ["all", CanvasNodeType.Image, CanvasNodeType.Video, CanvasNodeType.Text, CanvasNodeType.Audio, CanvasNodeType.Config, CanvasNodeType.Group];
+const NODE_FILTER_VALUES = ["all", CanvasNodeType.Image, CanvasNodeType.Video, CanvasNodeType.Text, CanvasNodeType.NovaText, CanvasNodeType.Audio, CanvasNodeType.Config, CanvasNodeType.Group];
 
 function nodePreviewText(node: CanvasNodeData) {
-    if (node.type === CanvasNodeType.Text) return node.metadata?.content || node.metadata?.prompt || "";
+    if (node.type === CanvasNodeType.Text || node.type === CanvasNodeType.NovaText) return node.metadata?.content || node.metadata?.prompt || "";
     return getNodeDefinition(node.type)?.title || node.type;
 }
 

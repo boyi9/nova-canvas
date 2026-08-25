@@ -252,7 +252,7 @@ export default {
         },
         export: { defaultProjectName: "无限画布", defaultNodesName: "画布元素", item: "元素" },
         createMenu: {
-            fromNode: "引用该节点生成", close: "关闭", text: "文本生成", textDescription: "脚本、广告词、品牌文案", image: "图片生成", video: "视频生成", audio: "音频参考", config: "配置节点", configDescription: "模型、尺寸、数量和输入顺序", select: "选择节点",
+            fromNode: "引用该节点生成", close: "关闭", text: "文本生成", textDescription: "脚本、广告词、品牌文案", novaText: "富文本生成", novaTextDescription: "富文本编辑，支持格式化", image: "图片生成", video: "视频生成", audio: "音频参考", config: "配置节点", configDescription: "模型、尺寸、数量和输入顺序", select: "选择节点",
         },
         node: {
             node: "节点",

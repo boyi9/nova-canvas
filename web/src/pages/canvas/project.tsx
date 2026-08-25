@@ -1104,7 +1104,7 @@ function InfiniteCanvasPage() {
         if (wasClick && clickedNodeId) {
             const clickedNode = nodesRef.current.find((node) => node.id === clickedNodeId);
             const clickedDefinition = clickedNode ? getNodeDefinition(clickedNode.type) : undefined;
-            if (clickedNode?.type === CanvasNodeType.Text) {
+            if (clickedNode?.type === CanvasNodeType.Text || clickedNode?.type === CanvasNodeType.NovaText) {
                 setDialogNodeId((current) => (current === clickedNodeId ? current : null));
             } else if (clickedDefinition?.hidePanel) {
                 // Clicking a display-only plugin node selects it without opening a lower panel.
