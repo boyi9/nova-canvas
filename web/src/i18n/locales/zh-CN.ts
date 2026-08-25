@@ -270,6 +270,8 @@ export default {
         recipeApplyFailed: "配方应用失败",
         runWorkflow: "运行工作流",
         runWorkflowError: "工作流运行失败",
+        detailLayout: "详情页编排",
+        detailLayoutApplied: "已按爆款详情页结构编排 {{count}} 个节点",
         nodeTypes: { image: "图片", text: "文本", novaText: "富文本", config: "生成配置", video: "视频", audio: "音频", group: "组", product: "商品", storyboard: "分镜", videoTrack: "视频轨道", recipe: "配方", multimodal: "多模态" },
         toolbar: {
             select: "选择", pan: "移动", text: "文本", image: "图片", video: "视频", audio: "音频", config: "生成配置", group: "组", extensions: "扩展节点", upload: "上传资产", appearance: "画布外观", physics: "物理沙盒", clear: "清空画布",

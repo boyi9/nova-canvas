@@ -25,6 +25,7 @@ import { analyzeAutoLinks } from "@/lib/canvas/auto-link";
 import { exportJianYingDraft } from "@/lib/canvas/video-draft-compiler";
 import { scanCanvasCompliance, type CanvasComplianceReport } from "@/lib/canvas/canvas-compliance";
 import { canvasToWorkflowGraph, type WorkflowResult } from "@/lib/canvas/workflow-run";
+import { layoutEcommerceDetailPage } from "@/lib/canvas/detail-page-layout";
 import { runWorkflow } from "@/services/nova/api";
 import { RecipeBrowser, type CanvasSnapshot } from "@/components/canvas/recipe-browser";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
@@ -790,6 +791,17 @@ function NovaCanvasPage() {
         } catch (err) {
             setWorkflowRun({ open: true, loading: false, results: null, error: (err as Error)?.message || t("canvas.runWorkflowError") });
         }
+    }, [t]);
+
+    const handleArrangeDetailPage = useCallback(() => {
+        const { nodes: arranged, connections: extra } = layoutEcommerceDetailPage(nodesRef.current, connectionsRef.current);
+        setNodes(arranged);
+        setConnections((prev) => {
+            const existing = new Set(prev.map((connection) => `${connection.fromNodeId}->${connection.toNodeId}`));
+            const added = extra.filter((connection) => !existing.has(`${connection.fromNodeId}->${connection.toNodeId}`));
+            return [...prev, ...added];
+        });
+        message.success(t("canvas.detailLayoutApplied", { count: arranged.length }));
     }, [t]);
 
     const deselectCanvas = useCallback(() => {
@@ -2909,6 +2921,7 @@ function NovaCanvasPage() {
                     onCheckCompliance={handleCheckCompliance}
                     onOpenRecipes={() => setRecipeOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
+                    onArrangeDetailPage={handleArrangeDetailPage}
                     onImportImage={() => handleUploadRequest()}
                     onOpenPlugins={() => setPluginManagerOpen(true)}
                     onUndo={undoCanvas}
