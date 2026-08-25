@@ -95,3 +95,38 @@ func TestRunUpstreamFailureSkipsOutput(t *testing.T) {
 		t.Fatalf("expected downstream unaffected, got %v", scenes)
 	}
 }
+
+func TestRecipeInstantiate(t *testing.T) {
+	recipe := Recipe{
+		Name: "带货短视频",
+		Variables: []Variable{
+			{Name: "brand", Default: "默认品牌"},
+			{Name: "duration", Default: 15},
+		},
+		Graph: Graph{
+			Nodes: []Node{
+				{ID: "p", Type: "product", Params: map[string]any{"productName": "{{brand}}耳机"}},
+				{ID: "v", Type: "video_track", Params: map[string]any{"duration": "{{duration}}"}},
+			},
+			Edges: []Edge{{ID: "e", Source: "p", Target: "v"}},
+		},
+	}
+
+	// Default-only instantiation.
+	g := recipe.Instantiate(nil)
+	if g.Nodes[0].Params["productName"] != "默认品牌耳机" {
+		t.Fatalf("default not applied: %v", g.Nodes[0].Params["productName"])
+	}
+	if g.Nodes[1].Params["duration"] != "15" {
+		t.Fatalf("numeric default not applied: %v", g.Nodes[1].Params["duration"])
+	}
+
+	// Explicit values override defaults.
+	g2 := recipe.Instantiate(map[string]any{"brand": "nova"})
+	if g2.Nodes[0].Params["productName"] != "nova耳机" {
+		t.Fatalf("override not applied: %v", g2.Nodes[0].Params["productName"])
+	}
+	if len(g2.Edges) != 1 || g2.Edges[0].Source != "p" {
+		t.Fatalf("edges not copied: %v", g2.Edges)
+	}
+}

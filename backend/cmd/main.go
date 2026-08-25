@@ -86,6 +86,10 @@ func main() {
 			auth.POST("/compliance/check", h.CheckCompliance)
 			auth.POST("/agent/chat", h.ChatCompletion)
 			auth.POST("/workflows/run", h.RunWorkflow)
+			auth.POST("/recipes", h.SaveRecipe)
+			auth.GET("/recipes", h.ListRecipes)
+			auth.GET("/recipes/:id", h.GetRecipe)
+			auth.POST("/recipes/:id/apply", h.ApplyRecipe)
 		}
 	}
 
