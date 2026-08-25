@@ -1,7 +1,7 @@
 # W2 GitHub 仓库现状盘点报告
 
 > 生成时间：2026-08-20
-> 执行环境：Windows PowerShell 5.1, `D:\nova启画\novainfinite`
+> 执行环境：Windows PowerShell 5.1, `D:\nova启画\novacanvas`
 
 ---
 
@@ -9,7 +9,7 @@
 
 ### 1.1 分支与远程同步
 ```powershell
-PS D:\nova启画\novainfinite> git branch -v
+PS D:\nova启画\novacanvas> git branch -v
 * main db8eb4d [ahead 2] fix: repair sync-upstream.yml syntax error (duplicate uses:), upgrade checkout to v5
 ```
 - **当前分支**：`main`
@@ -18,7 +18,7 @@ PS D:\nova启画\novainfinite> git branch -v
 
 ### 1.2 最近 20 条提交历史
 ```powershell
-PS D:\nova启画\novainfinite> git log --oneline -20
+PS D:\nova启画\novacanvas> git log --oneline -20
 db8eb4d fix: repair sync-upstream.yml syntax error (duplicate uses:), upgrade checkout to v5
 0fb90d5 ci: upgrade actions/checkout and setup-node to v5 for Node 24
 b66936d feat(prompts): add freestylefly source
@@ -43,7 +43,7 @@ ca47eb6 feat(canvas): update canvas tool behavior to allow temporary switching b
 
 ### 1.3 工作区变更 (`git status`)
 ```powershell
-PS D:\nova启画\novainfinite> git status
+PS D:\nova启画\novacanvas> git status
 On branch main
 Your branch is ahead of 'origin/main' by 2 commits.
   (use "git push" to publish your local commits)
@@ -108,7 +108,7 @@ Untracked files:
 
 ### 2.1 工作流文件内容
 ```powershell
-PS D:\nova启画\novainfinite> cat .github/workflows/sync-upstream.yml
+PS D:\nova启画\novacanvas> cat .github/workflows/sync-upstream.yml
 name: Sync Upstream Repo
 on:
   schedule:
@@ -128,7 +128,7 @@ jobs:
       - name: Sync Upstream
         uses: aormsby/Fork-Sync-With-Upstream
         with:
-          source_repo: "infinite-canvas/nova-qihua"
+          source_repo: "nova-canvas/nova-qihua"
           target_branch: "develop"
 ```
 
@@ -139,7 +139,7 @@ jobs:
 **结论**：
 - 工作流文件**已存在且语法已修复**（升级到 `actions/checkout@v5`，修复了重复 `uses:` 问题）
 - 触发方式：每日定时 (20:00 UTC) + 手动 `workflow_dispatch`
-- 同步目标：`infinite-canvas/nova-qihua` 的 `develop` 分支
+- 同步目标：`nova-canvas/nova-qihua` 的 `develop` 分支
 - **无法直接查看云端运行记录**（本机未安装 `gh` CLI，需在 GitHub 网页 Actions 页面确认最近运行状态）
 
 ---
@@ -148,18 +148,18 @@ jobs:
 
 ### 3.1 `tests/regression/upstream/` 目录检查
 ```powershell
-PS D:\nova启画\novainfinite> ls tests/regression/upstream/ 2>&1
-Get-ChildItem : 找不到路径 'D:\nova启画\novainfinite\tests\regression\upstream\'，因为它不存在。
+PS D:\nova启画\novacanvas> ls tests/regression/upstream/ 2>&1
+Get-ChildItem : 找不到路径 'D:\nova启画\novacanvas\tests\regression\upstream\'，因为它不存在。
 ```
 ```powershell
-PS D:\nova启画\novainfinite> ls tests/ 2>&1
-Get-ChildItem : 找不到路径 'D:\nova启画\novainfinite\tests\'，因为它不存在。
+PS D:\nova启画\novacanvas> ls tests/ 2>&1
+Get-ChildItem : 找不到路径 'D:\nova启画\novacanvas\tests\'，因为它不存在。
 ```
 
 ### 3.2 `test-manifest.json` 检查
 ```powershell
-PS D:\nova启画\novainfinite> cat tests/regression/upstream/test-manifest.json 2>&1
-cat : 找不到路径 'D:\nova启画\novainfinite\tests\regression\upstream\test-manifest.json'，因为它不存在。
+PS D:\nova启画\novacanvas> cat tests/regression/upstream/test-manifest.json 2>&1
+cat : 找不到路径 'D:\nova启画\novacanvas\tests\regression\upstream\test-manifest.json'，因为它不存在。
 ```
 
 **结论**：
@@ -309,18 +309,18 @@ jobs:
       - name: Sync Upstream
         uses: aormsby/Fork-Sync-With-Upstream
         with:
-          source_repo: "infinite-canvas/nova-qihua"
+          source_repo: "nova-canvas/nova-qihua"
           target_branch: "develop"
 ```
 
 ### `tests/regression/upstream/` 检查结果
 ```
-Get-ChildItem : 找不到路径 'D:\nova启画\novainfinite\tests\regression\upstream\'，因为它不存在。
+Get-ChildItem : 找不到路径 'D:\nova启画\novacanvas\tests\regression\upstream\'，因为它不存在。
 ```
 
 ### `test-manifest.json` 检查结果
 ```
-cat : 找不到路径 'D:\nova启画\novainfinite\tests\regression\upstream\test-manifest.json'，因为它不存在。
+cat : 找不到路径 'D:\nova启画\novacanvas\tests\regression\upstream\test-manifest.json'，因为它不存在。
 ```
 
 ### 仓库根目录完整列表（`Get-ChildItem -Force`）

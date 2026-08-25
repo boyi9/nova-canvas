@@ -6,7 +6,7 @@
       "command": ["python", "-m", "backend.mcp.server"],
       "enabled": true,
       "environment": {
-        "PYTHONPATH": "D:\\nova启画\\novainfinite"
+        "PYTHONPATH": "D:\\nova启画\\novacanvas"
       }
     }
   }

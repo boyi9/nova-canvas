@@ -6,7 +6,7 @@ function Log($msg) { $report += $msg; Write-Host $msg }
 Log "========== Nova P0 Verify =========="
 Log "Time: $(Get-Date)"
 
-$backendDir = "D:\nova启画\novainfinite\backend"
+$backendDir = "D:\nova启画\novacanvas\backend"
 if (-not (Test-Path $backendDir)) { Log "ERROR: backend dir missing: $backendDir"; exit 1 }
 Log "OK backend dir exists"
 

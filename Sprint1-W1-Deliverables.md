@@ -2,7 +2,7 @@
 
 > **导出格式**：Markdown（单文件）
 > **生成日期**：2025-01-16
-> **项目根目录**：`D:\nova启画\novainfinite\`
+> **项目根目录**：`D:\nova启画\novacanvas\`
 > **范围**：Sprint 1 → Week 1 全部生成物（任务拆解记录 / 代码片段 / 调试日志）
 > **对应看板**：`board-import/*`
 
@@ -1645,7 +1645,7 @@ const __dirname = dirname(__filename);
 
 const UPSTREAM_SOURCE_DIR = 'tests/regression/upstream/src';
 const ANALYSIS_OUTPUT_DIR = 'docs/architecture/canvas-compat';
-const INFINITE_CANVAS_CORE_MODULES = [
+const NOVA_CANVAS_CORE_MODULES = [
   'canvas/engine',
   'canvas/nodes',
   'canvas/layers',
@@ -2158,7 +2158,7 @@ docs/architecture/canvas-compat/
 |--------|--------|------|
 | `UPSTREAM_SOURCE_DIR` | `tests/regression/upstream/src` | 上游源码目录 |
 | `ANALYSIS_OUTPUT_DIR` | `docs/architecture/canvas-compat` | 分析报告输出目录 |
-| `INFINITE_CANVAS_CORE_MODULES` | 见源码 | 核心模块白名单 |
+| `NOVA_CANVAS_CORE_MODULES` | 见源码 | 核心模块白名单 |
 
 ---
 

@@ -3,7 +3,7 @@
       {"fieldKey": "acceptanceCriteria", "fieldName": "验收标准", "fieldType": "多行文本"}
     ],
     "epics": [
-      {"epicKey": "EPIC-CANVAS", "name": "核心画布能力", "description": "兼容infinite-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力", "color": "#00B8D9", "priority": "P0-必须交付", "startDate": "2025-01-06", "endDate": "2025-02-28"},
+      {"epicKey": "EPIC-CANVAS", "name": "核心画布能力", "description": "兼容nova-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力", "color": "#00B8D9", "priority": "P0-必须交付", "startDate": "2025-01-06", "endDate": "2025-02-28"},
       {"epicKey": "EPIC-AI", "name": "AI创作能力", "description": "保留原生浏览器前台直连OpenAI兼容接口能力，文生图、图生图、参考图编辑、文本问答、音频和视频生成五类核心能力", "color": "#6554C0", "priority": "P0-必须交付", "startDate": "2025-01-13", "endDate": "2025-02-14"},
       {"epicKey": "EPIC-AGENT", "name": "画布助手与Agent能力", "description": "围绕选中节点和上游节点对话、生图功能可用，生成结果可直接一键插回当前画布", "color": "#00875A", "priority": "P0-必须交付", "startDate": "2025-01-20", "endDate": "2025-03-07"},
       {"epicKey": "EPIC-PLUGIN", "name": "插件系统", "description": "远程节点插件的URL动态安装/启用/更新/卸载全流程可用，配套TypeScript SDK开发文档完整", "color": "#FF5630", "priority": "P0-必须交付", "startDate": "2025-01-27", "endDate": "2025-03-14"},
@@ -11,7 +11,7 @@
       {"epicKey": "EPIC-INFRA", "name": "基础部署与合规", "description": "保留原有Docker部署方案，用户配置本地加密存储，开源协议合规梳理", "color": "#0065FF", "priority": "P0-必须交付", "startDate": "2025-01-06", "endDate": "2025-03-28"}
     ],
     "sprints": [
-      {"sprintKey": "Sprint 1", "name": "Sprint 1: 基础设施与画布核心", "goal": "搭建CI/CD、开发环境、回归测试基线；完成infinite-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架", "startDate": "2025-01-06", "endDate": "2025-02-02", "capacity": 55},
+      {"sprintKey": "Sprint 1", "name": "Sprint 1: 基础设施与画布核心", "goal": "搭建CI/CD、开发环境、回归测试基线；完成nova-canvas画布核心能力兼容改造；MCP协议对接层基础封装；远程插件安装基础框架", "startDate": "2025-01-06", "endDate": "2025-02-02", "capacity": 55},
       {"sprintKey": "Sprint 2", "name": "Sprint 2: 核心功能开发", "goal": "多OpenAI兼容接口调度、自定义生图脚本、画布助手对话生图、跨平台Agent适配、SDK文档、插件沙箱安全、提示词库缓存", "startDate": "2025-02-03", "endDate": "2025-03-02", "capacity": 70},
       {"sprintKey": "Sprint 3", "name": "Sprint 3: 测试验收上线", "goal": "全场景集成测试、开源合规梳理、文档完善、Docker/Render部署、灰度发布、正式上线72小时值守", "startDate": "2025-03-03", "endDate": "2025-03-28", "capacity": 55}
     ],
@@ -56,7 +56,7 @@ const __dirname = dirname(__filename);
 
 // ============ 配置常量 ============
 
-const UPSTREAM_REPO = 'infinite-canvas/infinite-canvas';
+const UPSTREAM_REPO = 'nova-canvas/nova-canvas';
 const UPSTREAM_BRANCH = 'main';
 const TARGET_BRANCH = 'develop';
 const SYNC_SCHEDULE = '0 2 * * *'; // 每天凌晨 2 点 UTC
@@ -334,7 +334,7 @@ src/infra/ci-pipeline/INFRA-001/
 
 | 配置项 | 默认值 | 环境变量覆盖 | 说明 |
 |--------|--------|--------------|------|
-| 上游仓库 | `infinite-canvas/infinite-canvas` | `UPSTREAM_REPO` | 源仓库 |
+| 上游仓库 | `nova-canvas/nova-canvas` | `UPSTREAM_REPO` | 源仓库 |
 | 上游分支 | `main` | `UPSTREAM_BRANCH` | 源分支 |
 | 目标分支 | `develop` | `TARGET_BRANCH` | 合并目标 |
 | 同步时间 | `0 2 * * *` (UTC 2:00) | `SYNC_SCHEDULE` | Cron 表达式 |
@@ -396,7 +396,7 @@ pnpm test:coverage src/infra/ci-pipeline/INFRA-001/
 ## 📚 相关链接
 
 - [GitHub Actions 文档](https://docs.github.com/en/actions)
-- [infinite-canvas 上游仓库](https://github.com/infinite-canvas/infinite-canvas)
+- [nova-canvas 上游仓库](https://basketikun/infinite-canvas/nova-canvas)
 - [peter-evans/create-pull-request](https://github.com/peter-evans/create-pull-request)
 ~~~
 
@@ -489,7 +489,7 @@ describe('INFRA-001: CI流水线搭建 - GitHub Actions 配置', () => {
 
     it('应该包含上游仓库配置', () => {
       const yaml = generateSyncWorkflow();
-      expect(yaml).toContain('infinite-canvas/infinite-canvas');
+      expect(yaml).toContain('nova-canvas/nova-canvas');
     });
   });
 
@@ -598,7 +598,7 @@ on:
 
     it('生成的 workflow 应包含正确的上游仓库引用', () => {
       const yaml = generateSyncWorkflow();
-      expect(yaml).toContain('infinite-canvas/infinite-canvas');
+      expect(yaml).toContain('nova-canvas/nova-canvas');
     });
 
     it('生成的 workflow 应包含正确的分支名', () => {
@@ -620,7 +620,7 @@ on:
 /**
  * INFRA-002: 拉取原生仓库全量单测用例
  * Task: S1-W1-D2-01
- * Story: INFRA-002 原有infinite-canvas全量用例回归验证
+ * Story: INFRA-002 原有nova-canvas全量用例回归验证
  * Sprint: 1 | Week: 1 | Day: 2
  *
  * 验收标准：
@@ -638,7 +638,7 @@ const __dirname = dirname(__filename);
 
 // ============ 配置常量 ============
 
-const UPSTREAM_REPO_URL = 'https://github.com/infinite-canvas/infinite-canvas.git';
+const UPSTREAM_REPO_URL = 'https://basketikun/infinite-canvas/nova-canvas.git';
 const UPSTREAM_BRANCH = 'main';
 const LOCAL_TEST_DIR = 'tests/regression/upstream';
 const TEST_PATTERNS = [

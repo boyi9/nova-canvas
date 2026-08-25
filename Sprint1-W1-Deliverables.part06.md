@@ -170,7 +170,7 @@ import type {
   CANVAS_TOOLS,
 } from '../shared/types.js';
 
-// ============ 模拟 Canvas 存储（实际应对接 infinite-canvas 核心） ============
+// ============ 模拟 Canvas 存储（实际应对接 nova-canvas 核心） ============
 
 class MockCanvasStore {
   private project: CanvasProject;
@@ -421,7 +421,7 @@ export class CanvasBridge extends EventEmitter {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
-    // 这里可以连接真实的 infinite-canvas 核心
+    // 这里可以连接真实的 nova-canvas 核心
     // 例如：建立 WebSocket 连接到前端、注入 content script 等
 
     this.isInitialized = true;

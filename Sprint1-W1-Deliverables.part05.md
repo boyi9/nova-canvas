@@ -8,7 +8,7 @@
 |--------|--------|------|
 | `UPSTREAM_SOURCE_DIR` | `tests/regression/upstream/src` | 上游源码目录 |
 | `ANALYSIS_OUTPUT_DIR` | `docs/architecture/canvas-compat` | 分析报告输出目录 |
-| `INFINITE_CANVAS_CORE_MODULES` | 见源码 | 核心模块白名单 |
+| `NOVA_CANVAS_CORE_MODULES` | 见源码 | 核心模块白名单 |
 
 ---
 
@@ -45,7 +45,7 @@ pnpm test:coverage src/canvas/compat/CANVAS-001/
 
 ## 📚 相关链接
 
-- [infinite-canvas 源码](https://github.com/infinite-canvas/infinite-canvas/tree/main/src)
+- [nova-canvas 源码](https://basketikun/infinite-canvas/nova-canvas/tree/main/src)
 - [Fabric.js 迁移指南](http://fabricjs.com/docs/)
 - [TypeScript AST 解析](https://github.com/typescript-eslint/typescript-eslint)
 ~~~
@@ -397,7 +397,7 @@ export function helper() {}
 ~~~typescript
 /**
  * Nova Canvas MCP Demo - Shared Type Definitions
- * 与 infinite-canvas 核心数据结构对齐
+ * 与 nova-canvas 核心数据结构对齐
  */
 
 // ============ Canvas 核心数据结构 ============

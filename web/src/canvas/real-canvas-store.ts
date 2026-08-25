@@ -1,7 +1,7 @@
 /**
  * CANVAS-001: 真实Canvas状态管理实现
  * 替换 MCP Demo 中的 MockCanvasStore
- * 对接 infinite-canvas 原生数据结构（Node/Connection/Project）
+ * 对接 nova-canvas 原生数据结构（Node/Connection/Project）
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -221,7 +221,7 @@ export class RealCanvasStore extends EventEmitter {
     return project.viewport;
   }
 
-  // ===== 序列化 / 反序列化（对接 infinite-canvas 导入导出） =====
+  // ===== 序列化 / 反序列化（对接 nova-canvas 导入导出） =====
 
   toJSON(): CanvasProject {
     return this.getActiveProject();

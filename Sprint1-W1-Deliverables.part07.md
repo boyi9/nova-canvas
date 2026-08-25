@@ -484,13 +484,13 @@ mcpServers:
 
 ## 📄 许可证
 
-MIT License - 完全复用 infinite-canvas 原生 MIT 协议，无额外限制。
+MIT License - 完全复用 nova-canvas 原生 MIT 协议，无额外限制。
 
 ---
 
 ## 🔗 相关链接
 
-- [infinite-canvas 原项目](https://github.com/infinite-canvas/infinite-canvas)
+- [nova-canvas 原项目](https://basketikun/infinite-canvas/nova-canvas)
 - [MCP 协议规范](https://modelcontextprotocol.io)
 - [Codex App 插件文档](https://github.com/codex-app/codex)
 - [Claude Code MCP 文档](https://docs.anthropic.com/claude-code/mcp)

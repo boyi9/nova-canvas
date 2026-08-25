@@ -59,7 +59,7 @@ func TestGojaSandbox_ExecuteJS_Timeout(t *testing.T) {
 
 	source := `
 		while (true) {
-			// infinite loop
+			// nova loop
 		}
 	`
 

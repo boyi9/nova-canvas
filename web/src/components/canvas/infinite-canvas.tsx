@@ -1,1 +1,0 @@
-export { NovaCanvas as InfiniteCanvas } from "./nova-canvas";

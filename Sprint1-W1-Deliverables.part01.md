@@ -2,7 +2,7 @@
 
 > **导出格式**：Markdown（单文件）
 > **生成日期**：2025-01-16
-> **项目根目录**：`D:\nova启画\novainfinite\`
+> **项目根目录**：`D:\nova启画\novacanvas\`
 > **范围**：Sprint 1 → Week 1 全部生成物（任务拆解记录 / 代码片段 / 调试日志）
 > **对应看板**：`board-import/*`
 
@@ -37,7 +37,7 @@
 
 ~~~csv
 Epic Key,Epic Name,Description,Status,Priority,Start Date,End Date
-EPIC-CANVAS,核心画布能力,兼容infinite-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力,To Do,P0,2025-01-06,2025-02-28
+EPIC-CANVAS,核心画布能力,兼容nova-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力,To Do,P0,2025-01-06,2025-02-28
 EPIC-AI,AI创作能力,保留原生浏览器前台直连OpenAI兼容接口能力，文生图、图生图、参考图编辑、文本问答、音频和视频生成五类核心能力,To Do,P0,2025-01-13,2025-02-14
 EPIC-AGENT,画布助手与Agent能力,围绕选中节点和上游节点对话、生图功能可用，生成结果可直接一键插回当前画布,To Do,P0,2025-01-20,2025-03-07
 EPIC-PLUGIN,插件系统,远程节点插件的URL动态安装/启用/更新/卸载全流程可用，配套TypeScript SDK开发文档完整,To Do,P0,2025-01-27,2025-03-14
@@ -49,7 +49,7 @@ EPIC-INFRA,基础部署与合规,保留原有Docker部署方案，用户配置�
 
 ~~~csv
 Story Key,Epic Key,Story Name,Description,Acceptance Criteria,Priority,Story Points,Sprint,Assignee Role,Labels,Dependencies
-CANVAS-001,EPIC-CANVAS,原有画布核心能力兼容性改造,"兼容infinite-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力，原有功能通过率100%，历史创建的画布项目可无缝迁移导入",原有功能通过率100%|历史画布无缝迁移导入|画布节点操作手册/快捷键体系同步更新,P0,8,Sprint 1,前端开发,"canvas,compat",INFRA-001;INFRA-002
+CANVAS-001,EPIC-CANVAS,原有画布核心能力兼容性改造,"兼容nova-canvas原生多画布项目、节点拖拽缩放、连线、小地图、撤销重做、导入导出全部原有能力，原有功能通过率100%，历史创建的画布项目可无缝迁移导入",原有功能通过率100%|历史画布无缝迁移导入|画布节点操作手册/快捷键体系同步更新,P0,8,Sprint 1,前端开发,"canvas,compat",INFRA-001;INFRA-002
 CANVAS-002,EPIC-CANVAS,画布操作手册与快捷键文档更新,更新画布节点操作手册、快捷键体系同步完成适配更新，与新版功能完全匹配,手册覆盖所有新功能|快捷键无冲突|中英文对照,P1,3,Sprint 3,产品经理,"docs,canvas",CANVAS-001
 AI-001,EPIC-AI,多OpenAI兼容接口调度能力开发,"保留原生浏览器前台直连OpenAI兼容接口能力，文生图、图生图、参考图编辑、文本问答、音频和视频生成五类核心能力调用成功率≥98%",五类能力调用成功率≥98%|自动熔断降级|请求耗时P99<30s,P0,8,Sprint 2,全栈/后端开发,"ai,api",INFRA-003
 AI-002,EPIC-AI,自定义生图脚本调用能力开发,自定义生图/视频接口调用脚本配置功能上线，支持灵活适配各类中转站与自建服务，用户可自行上传配置脚本完成私有服务对接,脚本配置UI可用|中转站/自建服务对接成功|脚本沙箱隔离,P0,8,Sprint 2,后端开发,"ai,script,security",AI-001;PLUGIN-003
@@ -61,7 +61,7 @@ PLUGIN-002,EPIC-PLUGIN,TypeScript SDK开发文档输出,配套的TypeScript SDK�
 PLUGIN-003,EPIC-PLUGIN,插件沙箱安全能力开发,所有插件运行在隔离iframe环境，默认禁止插件直接访问浏览器本地存储，新增插件权限申请校验机制,沙箱隔离生效|本地存储访问拦截|权限申请校验通过,P0,8,Sprint 2,后端开发,"plugin,security",PLUGIN-001
 PROMPT-001,EPIC-PROMPT,提示词库联网缓存能力开发,前端直连多个GitHub开源提示词项目，所有提示词资源可自动缓存到IndexedDB，本地离线访问可用率100%，检索响应耗时≤200ms,多源同步缓存|离线可用率100%|检索≤200ms|自动淘汰策略,P1,5,Sprint 2,前端开发,"prompt,cache",INFRA-003
 INFRA-001,EPIC-INFRA,开源仓库主干分支同步CI流水线搭建,建立每日自动同步上游主库的CI流水线，每日凌晨自动合并上游最新提交到开发分支，跑通全量回归测试,每日自动同步|全量回归测试通过|冲突自动报警,P0,3,Sprint 1,全栈/后端开发,"infra,ci",-
-INFRA-002,EPIC-INFRA,原有infinite-canvas全量用例回归验证,先完整拉取原生仓库全量单元测试用例，改造前后跑通全量回归测试,全量单测用例拉取|回归测试100%通过,P0,5,Sprint 1,测试/开发,"infra,test",INFRA-001
+INFRA-002,EPIC-INFRA,原有nova-canvas全量用例回归验证,先完整拉取原生仓库全量单元测试用例，改造前后跑通全量回归测试,全量单测用例拉取|回归测试100%通过,P0,5,Sprint 1,测试/开发,"infra,test",INFRA-001
 INFRA-003,EPIC-INFRA,开发环境、自动化测试环境部署完成,保留原有Docker部署方案，默认3000端口启动服务可用，配套Render部署指引更新完成,Docker一键启动|3000端口可用|Render指引更新,P0,5,Sprint 1,运维/开发,"infra,deploy",-
 INFRA-004,EPIC-INFRA,全场景集成测试用例执行，bug闭环,开发阶段提前在三类操作系统各做至少50次全流程验证，提前适配不同系统的端口占用、权限路径差异,集成测试100%通过|Bug零遗留|三平台各50次验证,P0,8,Sprint 3,测试工程师,"infra,test",ALL
 INFRA-005,EPIC-INFRA,开源协议合规全量梳理检查,安排专人梳理所有开源依赖的许可协议，所有分发页面保留原作者信息和开源标识，同步把修改后的代码回流上游开源社区,依赖许可协议台账|原作者信息保留|代码回流上游,P0,5,Sprint 3,产品+法务,"infra,compliance",-
@@ -77,10 +77,10 @@ Task Key,Story Key,Task Name,Description,Story Points,Assignee Role,Sprint,Week,
 S1-W1-D1-01,INFRA-001,CI流水线搭建-GitHub Actions配置,配置GitHub Actions每日定时触发同步上游主库,1,全栈/后端开发,Sprint 1,1,1,"ci,github-actions",-,Workflow文件生效|定时触发正常
 S1-W1-D1-02,INFRA-001,CI流水线搭建-合并冲突自动处理,实现上游提交自动合并到开发分支，冲突时自动创建PR并@相关人员,1,全栈/后端开发,Sprint 1,1,1,"ci,merge",S1-W1-D1-01,冲突自动创建PR|无冲突自动合并
 S1-W1-D1-03,INFRA-001,CI流水线搭建-全量回归测试集成,集成现有单测/集成测试到流水线，失败阻断合并,1,全栈/后端开发,Sprint 1,1,1,"ci,test",S1-W1-D1-02,测试失败阻断|通过自动合并
-S1-W1-D2-01,INFRA-002,拉取原生仓库全量单测用例,Clone infinite-canvas仓库，提取所有单元测试用例至本地测试目录,2,测试/开发,Sprint 1,1,2,"test,regression",S1-W1-D1-03,用例提取完整|目录结构清晰
+S1-W1-D2-01,INFRA-002,拉取原生仓库全量单测用例,Clone nova-canvas仓库，提取所有单元测试用例至本地测试目录,2,测试/开发,Sprint 1,1,2,"test,regression",S1-W1-D1-03,用例提取完整|目录结构清晰
 S1-W1-D2-02,INFRA-002,建立回归测试基线,运行提取的用例建立通过基线，记录失败用例并分类,2,测试/开发,Sprint 1,1,2,"test,baseline",S1-W1-D2-01,基线建立|失败用例分类记录
 S1-W1-D3-01,INFRA-002,回归测试自动化脚本编写,编写自动化运行脚本，支持一键执行全量回归测试,1,测试/开发,Sprint 1,1,3,"test,automation",S1-W1-D2-02,一键运行|生成测试报告
-S1-W1-D4-01,CANVAS-001,画布核心引擎兼容性分析,分析infinite-canvas核心渲染引擎、状态管理、插件系统架构,2,前端开发,Sprint 1,1,4,"canvas,analysis",INFRA-002,架构分析文档输出|风险点识别
+S1-W1-D4-01,CANVAS-001,画布核心引擎兼容性分析,分析nova-canvas核心渲染引擎、状态管理、插件系统架构,2,前端开发,Sprint 1,1,4,"canvas,analysis",INFRA-002,架构分析文档输出|风险点识别
 S1-W1-D4-02,CANVAS-001,画布核心能力兼容改造-渲染引擎,适配原有渲染引擎至新架构，保证节点拖拽缩放、连线、小地图功能正常,3,前端开发,Sprint 1,1,4,"canvas,render",S1-W1-D4-01,渲染无异常|性能无回退
 S1-W1-D5-01,CANVAS-001,画布核心能力兼容改造-状态管理,适配撤销重做、导入导出、多画布项目管理功能,2,前端开发,Sprint 1,1,5,"canvas,state",S1-W1-D4-02,撤销重做正常|导入导出无损
 S1-W1-D5-02,CANVAS-001,历史画布迁移验证,验证历史创建的画布项目可无缝迁移导入,1,前端开发,Sprint 1,1,5,"canvas,migration",S1-W1-D5-01,历史画布100%可导入|数据无丢失
@@ -123,7 +123,7 @@ S1-W5-D2-02,INFRA-004,自动化测试流水线搭建,搭建CI/CD集成测试流�
 S1-W5-D3-01,INFRA-004,三平台跨平台验证执行,在Windows/macOS/Linux各执行50次Agent全流程验证，记录失败案例,3,测试工程师,Sprint 3,5,3,"test,cross-platform",AGENT-003,三平台各50次|通过率100%
 S1-W5-D3-02,INFRA-004,大存储压力测试,模拟10GB画布素材本地存储场景，验证IndexedDB不溢出、自动清理生效,2,测试工程师,Sprint 3,5,3,"test,stress",PROMPT-001;CANVAS-001,10GB场景稳定|自动清理触发
 S1-W5-D4-01,INFRA-005,开源依赖许可协议扫描,使用工具扫描所有依赖许可协议，建立台账，识别风险依赖,2,产品+法务,Sprint 3,5,4,"compliance,license",-,台账建立完整|风险依赖标记
-S1-W5-D4-02,INFRA-005,代码回流上游PR提交,将修改的开源代码整理提交PR至infinite-canvas上游仓库,1,产品+法务,Sprint 3,5,4,"compliance,upstream",S1-W5-D4-01,PR提交成功|社区响应跟进
+S1-W5-D4-02,INFRA-005,代码回流上游PR提交,将修改的开源代码整理提交PR至nova-canvas上游仓库,1,产品+法务,Sprint 3,5,4,"compliance,upstream",S1-W5-D4-01,PR提交成功|社区响应跟进
 S1-W5-D5-01,CANVAS-002,画布操作手册编写,编写完整操作手册：基础操作、进阶技巧、快捷键大全、常见问题,2,产品经理,Sprint 3,5,5,"docs,canvas",CANVAS-001,手册覆盖所有功能|截图清晰
 S1-W5-D5-02,CANVAS-002,快捷键体系文档对照表,输出新旧快捷键对照表、冲突说明、自定义配置指引,1,产品经理,Sprint 3,5,5,"docs,shortcuts",S1-W5-D5-01,对照表准确|无冲突遗漏
 S1-W6-D1-01,DEPLOY-001,Docker生产环境优化,优化Dockerfile多阶段构建、镜像体积压缩、安全扫描通过,2,运维/开发,Sprint 3,6,1,"deploy,docker,prod",INFRA-003,镜像<500MB|安全扫描通过

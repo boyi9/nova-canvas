@@ -4,7 +4,7 @@ import simpleGit, { SimpleGit } from "simple-git";
 import * as fs from "fs";
 import * as path from "path";
 
-const UPSTREAM_REPO = "https://github.com/infinite-canvas/nova-qihua.git";
+const UPSTREAM_REPO = "https://basketikun/infinite-canvas/nova-qihua.git";
 const CLONE_DIR = path.resolve("tmp/upstream-clone");
 const OUTPUT_DIR = path.resolve("tests/regression/upstream");
 const MANIFEST_PATH = path.join(OUTPUT_DIR, "test-manifest.json");

@@ -87,7 +87,7 @@ type AgentHelloEvent = { ok?: boolean; protocolVersion?: number; clientId?: stri
 type AgentWorkspaceEvent = { activeThreadId?: string; threadId?: string; sourceClientId?: string; emptyThread?: boolean; draftThread?: boolean; conversation?: AgentConversationState };
 type AgentChatEvent = { threadId?: string; turnId?: string; sourceClientId?: string; replayed?: boolean; message?: AgentChatItem };
 type AgentBootstrapEvent = { type?: "codex.preparing" | "codex.prepare_failed" | "mcp.startup" | "mcp.complete"; phase?: "preheat" | "runtime"; threadId?: string; name?: string; status?: "starting" | "ready" | "failed" | "cancelled"; error?: string | null; failureReason?: string | null };
-type AgentClientGlobal = typeof globalThis & { __infiniteCanvasAgentClientIdPromise?: Promise<string> };
+type AgentClientGlobal = typeof globalThis & { __novaCanvasAgentClientIdPromise?: Promise<string> };
 
 function authoritativeHistoryTurnKeys(threadId: string, settledTurnIds: string[]) {
     return new Set(settledTurnIds.map((turnId) => `${threadId}\0${turnId}`));
@@ -1428,7 +1428,7 @@ export function LocalAgentPanel({ embedded, headless, autoConnect }: { embedded?
 
 function acquireAgentClientId() {
     const scope = globalThis as AgentClientGlobal;
-    scope.__infiniteCanvasAgentClientIdPromise ||= (async () => {
+    scope.__novaCanvasAgentClientIdPromise ||= (async () => {
         const storedClientId = readAgentClientId();
         let clientId = storedClientId || randomId();
         if (!navigator.locks) {
@@ -1437,7 +1437,7 @@ function acquireAgentClientId() {
         }
         while (true) {
             const acquired = await new Promise<boolean>((resolve, reject) => {
-                void navigator.locks.request(`infinite-canvas-agent:${clientId}`, { ifAvailable: true }, async (lock) => {
+                void navigator.locks.request(`nova-canvas-agent:${clientId}`, { ifAvailable: true }, async (lock) => {
                     if (!lock) return resolve(false);
                     resolve(true);
                     await new Promise<void>(() => undefined);
@@ -1454,7 +1454,7 @@ function acquireAgentClientId() {
         saveAgentClientId(clientId);
         return clientId;
     });
-    return scope.__infiniteCanvasAgentClientIdPromise;
+    return scope.__novaCanvasAgentClientIdPromise;
 }
 
 function readAgentClientId() {

@@ -10,7 +10,7 @@ Log "========== Nova启画 P0 验证脚本 =========="
 Log "时间: $(Get-Date)"
 
 # ---------- 0. 目录定位 ----------
-$backendDir = "D:\nova启画\novainfinite\backend"
+$backendDir = "D:\nova启画\novacanvas\backend"
 if (-not (Test-Path $backendDir)) { Log "❌ 后端目录不存在: $backendDir"; exit 1 }
 Log "✅ 后端目录存在"
 

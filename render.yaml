@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: infinite-canvas
+    name: nova-canvas
     runtime: docker
     plan: free
     autoDeployTrigger: off

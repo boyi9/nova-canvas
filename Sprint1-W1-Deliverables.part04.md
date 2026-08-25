@@ -51,7 +51,7 @@ export { cloneUpstreamRepo, extractTestFiles, parseTestCases, buildDirectoryStru
 # INFRA-002: 拉取原生仓库全量单测用例
 
 > **Task ID**: S1-W1-D2-01
-> **Story**: INFRA-002 原有infinite-canvas全量用例回归验证
+> **Story**: INFRA-002 原有nova-canvas全量用例回归验证
 > **Sprint**: 1 | **Week**: 1 | **Day**: 2
 > **Assignee**: 测试/开发
 > **Story Points**: 2
@@ -62,7 +62,7 @@ export { cloneUpstreamRepo, extractTestFiles, parseTestCases, buildDirectoryStru
 
 | # | 验收项 | 标准 | 状态 | 备注 |
 |---|--------|------|------|------|
-| 1 | 仓库克隆成功 | 浅克隆 infinite-canvas 主分支，耗时 < 60s | ☐ | |
+| 1 | 仓库克隆成功 | 浅克隆 nova-canvas 主分支，耗时 < 60s | ☐ | |
 | 2 | 测试文件提取完整 | 覆盖 `src/**/*.test.ts`、`src/**/__tests__/**` 等模式 | ☐ | |
 | 3 | 目录结构清晰 | 生成 `tests/regression/upstream/` 镜像目录结构 | ☐ | |
 | 4 | 测试用例解析 | 解析出 `describe/it/test` 套件与用例名 | ☐ | |
@@ -116,7 +116,7 @@ tests/regression/upstream/
 {
   "metadata": {
     "generatedAt": "2025-01-16T00:00:00.000Z",
-    "upstreamRepo": "https://github.com/infinite-canvas/infinite-canvas.git",
+    "upstreamRepo": "https://basketikun/infinite-canvas/nova-canvas.git",
     "upstreamBranch": "main",
     "totalFiles": 42,
     "totalCases": 156
@@ -164,7 +164,7 @@ chmod +x tests/regression/upstream/run-baseline.sh
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
-| `UPSTREAM_REPO_URL` | `https://github.com/infinite-canvas/infinite-canvas.git` | 上游仓库地址 |
+| `UPSTREAM_REPO_URL` | `https://basketikun/infinite-canvas/nova-canvas.git` | 上游仓库地址 |
 | `UPSTREAM_BRANCH` | `main` | 克隆分支 |
 | `LOCAL_TEST_DIR` | `tests/regression/upstream` | 本地存储目录 |
 | `TEST_PATTERNS` | 见源码 | 测试文件匹配模式 |
@@ -204,7 +204,7 @@ pnpm test:coverage src/infra/regression/INFRA-002/
 
 ## 📚 相关链接
 
-- [infinite-canvas 仓库](https://github.com/infinite-canvas/infinite-canvas)
+- [nova-canvas 仓库](https://basketikun/infinite-canvas/nova-canvas)
 - [Git 浅克隆文档](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt)
 - [Vitest 测试运行器](https://vitest.dev/)
 ~~~
@@ -432,7 +432,7 @@ const __dirname = dirname(__filename);
 
 const UPSTREAM_SOURCE_DIR = 'tests/regression/upstream/src';
 const ANALYSIS_OUTPUT_DIR = 'docs/architecture/canvas-compat';
-const INFINITE_CANVAS_CORE_MODULES = [
+const NOVA_CANVAS_CORE_MODULES = [
   'canvas/engine',
   'canvas/nodes',
   'canvas/layers',
@@ -692,7 +692,7 @@ export function generateCompatibilityReport(
 
   const report: CompatibilityReport = {
     generatedAt: new Date().toISOString(),
-    upstreamVersion: 'infinite-canvas@main',
+    upstreamVersion: 'nova-canvas@main',
     modules: upstreamModules,
     riskSummary,
     breakingChanges,
@@ -836,7 +836,7 @@ export { scanSourceDirectory, analyzeModule, identifyBreakingChanges, generateMi
 
 | # | 验收项 | 标准 | 状态 | 备注 |
 |---|--------|------|------|------|
-| 1 | 源码目录扫描 | 识别 infinite-canvas 核心模块（引擎/节点/图层/历史/视口/插件/工具/导入导出） | ☐ | |
+| 1 | 源码目录扫描 | 识别 nova-canvas 核心模块（引擎/节点/图层/历史/视口/插件/工具/导入导出） | ☐ | |
 | 2 | 模块导出分析 | 解析每个模块的 `export` 列表、依赖关系、复杂度 | ☐ | |
 | 3 | 架构分析文档输出 | 生成 `docs/architecture/canvas-compat/COMPATIBILITY_ANALYSIS.md` | ☐ | |
 | 4 | 风险点识别 | 高/中/低风险模块分类，输出 `riskSummary` | ☐ | |
@@ -888,7 +888,7 @@ docs/architecture/canvas-compat/
 ```json
 {
   "generatedAt": "2025-01-16T00:00:00.000Z",
-  "upstreamVersion": "infinite-canvas@main",
+  "upstreamVersion": "nova-canvas@main",
   "modules": [
     {
       "path": "canvas/engine",

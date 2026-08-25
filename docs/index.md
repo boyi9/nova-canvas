@@ -1,4 +1,4 @@
-# Infinite Canvas Documentation Index
+# Nova Canvas Documentation Index
 
 ## Overview
 

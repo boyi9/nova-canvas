@@ -9,7 +9,7 @@ import { getMDXComponents } from '@/components/mdx';
 
 const messages = {
   en: {
-    title: 'Infinite Canvas Documentation',
+    title: 'Nova Canvas Documentation',
     description: 'Features, canvas guides, deployment, development, business, and support',
     index: 'index.md',
   },

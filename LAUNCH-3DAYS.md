@@ -18,14 +18,14 @@ ollama pull nomic-embed-text
 
 ### 1.2 放置 Continue 配置（已生成，直接覆盖）
 ```powershell
-# 已生成到 D:\nova启画\novainfinite\.continue\config.json
+# 已生成到 D:\nova启画\novacanvas\.continue\config.json
 # 无需手动编辑，直接使用
 ```
 
 ### 1.3 初始化知识库（把战略文档“压缩”进规范文件）
 ```powershell
 # 1) 确保目录存在
-mkdir -Force D:\nova启画\novainfinite\.continue\knowledge
+mkdir -Force D:\nova启画\novacanvas\.continue\knowledge
 
 # 2) coding-rules.md 已生成（含 MIT红线、Go环境锁定、.env去BOM、路径兼容、避坑清单）
 # 3) 抽取架构/契约到单独文件（供云端/本地随时 @file 引用）
@@ -35,10 +35,10 @@ mkdir -Force D:\nova启画\novainfinite\.continue\knowledge
 ```
 
 **产出验证**：
-- `D:\nova启画\novainfinite\.continue\knowledge\coding-rules.md` 存在
-- `D:\nova启画\novainfinite\.continue\knowledge\architecture.md` 存在
-- `D:\nova启画\novainfinite\.continue\knowledge\api-contracts.md` 存在
-- `D:\nova启画\novainfinite\.continue\config.json` 存在
+- `D:\nova启画\novacanvas\.continue\knowledge\coding-rules.md` 存在
+- `D:\nova启画\novacanvas\.continue\knowledge\architecture.md` 存在
+- `D:\nova启画\novacanvas\.continue\knowledge\api-contracts.md` 存在
+- `D:\nova启画\novacanvas\.continue\config.json` 存在
 
 ---
 

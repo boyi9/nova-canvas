@@ -146,13 +146,13 @@ export class CanvasSession {
         this.preparedConversationThreadId = threadId;
         const statuses = this.conversationState.mcpStatuses;
         const hasPending = !this.conversationInventoryComplete || Object.values(statuses).some((item) => item.status === "starting");
-        const requiredFailure = statuses["infinite-canvas"]?.status !== "ready";
+        const requiredFailure = statuses["nova-canvas"]?.status !== "ready";
         const hasFailure = Object.values(statuses).some((item) => item.status === "failed" || item.status === "cancelled");
-        const requiredFailureDetail = statuses["infinite-canvas"]?.error;
+        const requiredFailureDetail = statuses["nova-canvas"]?.error;
         return this.updateConversation({
             threadId,
             status: hasPending ? "preparing" : requiredFailure ? "failed" : hasFailure ? "warning" : "ready",
-            error: requiredFailure ? `Infinite Canvas MCP 初始化失败${requiredFailureDetail ? `：${requiredFailureDetail}` : ""}` : undefined,
+            error: requiredFailure ? `Nova Canvas MCP 初始化失败${requiredFailureDetail ? `：${requiredFailureDetail}` : ""}` : undefined,
         });
     }
 
