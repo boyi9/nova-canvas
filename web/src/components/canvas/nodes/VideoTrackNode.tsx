@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import type { CanvasNodeData } from "@/types/canvas";
+import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
 
 type VideoTrackNodeProps = {
     node: CanvasNodeData;
     theme: (typeof import("@/lib/canvas-theme"))["canvasThemes"][keyof (typeof import("@/lib/canvas-theme"))["canvasThemes"]];
     isEditingContent: boolean;
     onContentChange: (nodeId: string, content: string) => void;
+    onMetadataChange: (nodeId: string, patch: Partial<CanvasNodeMetadata>) => void;
     onStopEditing: () => void;
 };
 
-export function VideoTrackNodeRenderer({ node, theme, isEditingContent, onContentChange, onStopEditing }: VideoTrackNodeProps) {
+export function VideoTrackNodeRenderer({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: VideoTrackNodeProps) {
     const metadata = node.metadata || {};
     const [clips, setClips] = useState<string[]>(metadata.clips || []);
     const [duration, setDuration] = useState(metadata.duration || 0);
@@ -20,8 +21,7 @@ export function VideoTrackNodeRenderer({ node, theme, isEditingContent, onConten
     }, [metadata.clips, metadata.duration]);
 
     const saveToNode = () => {
-        const content = JSON.stringify({ clips, duration });
-        onContentChange(node.id, content);
+        onMetadataChange(node.id, { clips, duration });
     };
 
     return (

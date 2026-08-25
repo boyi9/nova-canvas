@@ -15,11 +15,26 @@ function builtinResource(node: CanvasNodeData): CanvasNodeResource | null {
     if (node.type === CanvasNodeType.Audio && node.metadata?.content) return { kind: "audio", url: node.metadata.content };
     if (node.type === CanvasNodeType.Text && (node.metadata?.content || node.metadata?.prompt)) return { kind: "text", text: node.metadata.content || node.metadata.prompt };
     if (node.type === CanvasNodeType.NovaText && node.metadata?.content) return { kind: "text", text: node.metadata.content };
-    if (node.type === CanvasNodeType.Product && node.metadata?.content) return { kind: "text", text: node.metadata.content };
-    if (node.type === CanvasNodeType.Storyboard && node.metadata?.content) return { kind: "text", text: node.metadata.content };
-    if (node.type === CanvasNodeType.Recipe && node.metadata?.content) return { kind: "text", text: node.metadata.content };
-    if (node.type === CanvasNodeType.Multimodal && node.metadata?.content) return { kind: "text", text: node.metadata.content };
-    if (node.type === CanvasNodeType.VideoTrack && node.metadata?.content) return { kind: "text", text: node.metadata.content };
+    if (node.type === CanvasNodeType.Product) {
+        const summary = [node.metadata?.productName, node.metadata?.price].filter(Boolean).join(" · ");
+        if (summary) return { kind: "text", text: summary };
+    }
+    if (node.type === CanvasNodeType.Storyboard) {
+        const summary = (node.metadata?.scenes || []).join(" / ");
+        if (summary) return { kind: "text", text: summary };
+    }
+    if (node.type === CanvasNodeType.Recipe) {
+        const summary = [node.metadata?.recipeName, Object.entries(node.metadata?.params || {}).map(([k, v]) => `${k}: ${v}`).join(", ")].filter(Boolean).join(" · ");
+        if (summary) return { kind: "text", text: summary };
+    }
+    if (node.type === CanvasNodeType.Multimodal) {
+        const summary = (node.metadata?.modalities || []).join(", ");
+        if (summary) return { kind: "text", text: summary };
+    }
+    if (node.type === CanvasNodeType.VideoTrack) {
+        const summary = (node.metadata?.clips || []).join(" / ");
+        if (summary) return { kind: "text", text: summary };
+    }
     return null;
 }
 

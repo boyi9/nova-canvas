@@ -14,13 +14,24 @@ import { StoryboardNodeRenderer } from "./nodes/StoryboardNode";
 import { VideoTrackNodeRenderer } from "./nodes/VideoTrackNode";
 import { RecipeNodeRenderer } from "./nodes/RecipeNode";
 import { MultimodalNodeRenderer } from "./nodes/MultimodalNode";
-import { CanvasNodeType, type CanvasNodeData, type CanvasNodeImage, type Position } from "@/types/canvas";
+import { CanvasNodeType, type CanvasNodeData, type CanvasNodeImage, type CanvasNodeMetadata, type Position } from "@/types/canvas";
 import type { CanvasNodeContext, CanvasPluginHost } from "@/types/canvas-plugin";
 import type { CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
 import { useTranslation } from "react-i18next";
 
 type ResizeCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 const selectionBlue = "#2f80ff";
+
+// Node types whose content is inline-editable (double-click / edit request).
+const EDITABLE_NODE_TYPES = new Set<CanvasNodeType>([
+    CanvasNodeType.Text,
+    CanvasNodeType.NovaText,
+    CanvasNodeType.Product,
+    CanvasNodeType.Storyboard,
+    CanvasNodeType.VideoTrack,
+    CanvasNodeType.Recipe,
+    CanvasNodeType.Multimodal,
+]);
 
 type CanvasNodeProps = {
     data: CanvasNodeData;
@@ -50,6 +61,7 @@ type CanvasNodeProps = {
     onResize: (nodeId: string, width: number, height: number, position?: Position) => void;
     onResizeEnd: (nodeId: string) => void;
     onContentChange: (nodeId: string, content: string) => void;
+    onMetadataChange: (nodeId: string, patch: Partial<CanvasNodeMetadata>) => void;
     onTitleChange: (nodeId: string, title: string) => void;
     onToggleBatch?: (nodeId: string) => void;
     onSetBatchPrimary?: (nodeId: string, imageId: string) => void;
@@ -74,6 +86,7 @@ type NodeContentRendererProps = {
     renderNodeContent?: (node: CanvasNodeData) => ReactNode;
     pluginContext?: CanvasNodeContext | null;
     onContentChange: (nodeId: string, content: string) => void;
+    onMetadataChange: (nodeId: string, patch: Partial<CanvasNodeMetadata>) => void;
     onStopEditing: () => void;
     mentionReferences: CanvasResourceReference[];
     onRetry?: (node: CanvasNodeData) => void;
@@ -114,6 +127,7 @@ export const CanvasNode = React.memo(function CanvasNode({
     onResize,
     onResizeEnd,
     onContentChange,
+    onMetadataChange,
     onTitleChange,
     onToggleBatch,
     onSetBatchPrimary,
@@ -209,7 +223,7 @@ export const CanvasNode = React.memo(function CanvasNode({
     }, [isEditingContent]);
 
     useEffect(() => {
-        if (!editRequestNonce || data.type !== CanvasNodeType.Text) return;
+        if (!editRequestNonce || !EDITABLE_NODE_TYPES.has(data.type)) return;
         setIsEditingContent(true);
     }, [data.type, editRequestNonce]);
 
@@ -385,7 +399,7 @@ export const CanvasNode = React.memo(function CanvasNode({
                         onViewImage?.(data);
                         return;
                     }
-                    if (data.type !== CanvasNodeType.Text && data.type !== CanvasNodeType.NovaText) return;
+                    if (!EDITABLE_NODE_TYPES.has(data.type)) return;
                     event.stopPropagation();
                     setIsEditingContent(true);
                 }}
@@ -411,6 +425,7 @@ export const CanvasNode = React.memo(function CanvasNode({
                         pluginContext={pluginContext}
                         mentionReferences={mentionReferences}
                         onContentChange={onContentChange}
+                        onMetadataChange={onMetadataChange}
                         onStopEditing={() => setIsEditingContent(false)}
                         onRetry={onRetry}
                         onGenerateImage={onGenerateImage}
@@ -548,61 +563,66 @@ function NovaTextContent({ node, theme, isEditingContent, onContentChange, onSto
     );
 }
 
-function ProductNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+function ProductNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
     return (
         <ProductNodeRenderer
             node={node}
             theme={theme}
             isEditingContent={isEditingContent}
             onContentChange={onContentChange}
+            onMetadataChange={onMetadataChange}
             onStopEditing={onStopEditing}
         />
     );
 }
 
-function StoryboardNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+function StoryboardNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
     return (
         <StoryboardNodeRenderer
             node={node}
             theme={theme}
             isEditingContent={isEditingContent}
             onContentChange={onContentChange}
+            onMetadataChange={onMetadataChange}
             onStopEditing={onStopEditing}
         />
     );
 }
 
-function VideoTrackNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+function VideoTrackNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
     return (
         <VideoTrackNodeRenderer
             node={node}
             theme={theme}
             isEditingContent={isEditingContent}
             onContentChange={onContentChange}
+            onMetadataChange={onMetadataChange}
             onStopEditing={onStopEditing}
         />
     );
 }
 
-function RecipeNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+function RecipeNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
     return (
         <RecipeNodeRenderer
             node={node}
             theme={theme}
             isEditingContent={isEditingContent}
             onContentChange={onContentChange}
+            onMetadataChange={onMetadataChange}
             onStopEditing={onStopEditing}
         />
     );
 }
 
-function MultimodalNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+function MultimodalNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
     return (
         <MultimodalNodeRenderer
             node={node}
             theme={theme}
             isEditingContent={isEditingContent}
             onContentChange={onContentChange}
+            onMetadataChange={onMetadataChange}
             onStopEditing={onStopEditing}
         />
     );

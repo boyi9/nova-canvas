@@ -36,6 +36,7 @@ import { Minimap } from "@/components/canvas/canvas-mini-map";
 import { CanvasNode } from "@/components/canvas/canvas-node";
 import { CanvasNodePromptPanel, type CanvasNodeGenerationMode } from "@/components/canvas/canvas-node-prompt-panel";
 import { CanvasToolbar } from "@/components/canvas/canvas-toolbar";
+import { NodePhysicsSim } from "@/lib/canvas/physics-sandbox";
 import { AssetPickerModal, type InsertAssetPayload } from "@/components/canvas/asset-picker-modal";
 import { CanvasSidePanel } from "@/components/canvas/canvas-side-panel";
 import { CanvasZoomControls } from "@/components/canvas/canvas-zoom-controls";
@@ -166,6 +167,10 @@ function NovaCanvasPage() {
     const didInitialCenterRef = useRef(false);
     const rafRef = useRef<number | null>(null);
     const nodeDraggingRef = useRef(false);
+    const physicsSimRef = useRef<NodePhysicsSim | null>(null);
+    const physicsRafRef = useRef<number | null>(null);
+    const lastPhysicsTimeRef = useRef<number>(0);
+    const physicsFloorRef = useRef<number | null>(null);
     const dragRef = useRef<{
         isDraggingNode: boolean;
         hasMoved: boolean;
@@ -237,6 +242,7 @@ function NovaCanvasPage() {
     const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
     const [expandedImageNodeId, setExpandedImageNodeId] = useState<string | null>(null);
     const [isNodeDragging, setIsNodeDragging] = useState(false);
+    const [physicsEnabled, setPhysicsEnabled] = useState(false);
     const [isNodeResizing, setIsNodeResizing] = useState(false);
     const [dropTargetGroupId, setDropTargetGroupId] = useState<string | null>(null);
 
@@ -1447,6 +1453,63 @@ function NovaCanvasPage() {
     const handleNodeContentChange = useCallback((nodeId: string, content: string) => {
         setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, metadata: { ...node.metadata, content } } : node)));
     }, []);
+
+    const handleNodeMetadataChange = useCallback((nodeId: string, patch: Partial<CanvasNodeMetadata>) => {
+        setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, metadata: { ...node.metadata, ...patch } } : node)));
+    }, []);
+
+    // Newton physics sandbox: when enabled, gravity + AABB collisions settle nodes;
+    // the node(s) being dragged are pinned so they shove the others around.
+    useEffect(() => {
+        if (!physicsEnabled) {
+            if (physicsRafRef.current != null) cancelAnimationFrame(physicsRafRef.current);
+            physicsRafRef.current = null;
+            physicsSimRef.current?.reset();
+            physicsFloorRef.current = null;
+            return;
+        }
+        if (!physicsSimRef.current) physicsSimRef.current = new NodePhysicsSim();
+        const sim = physicsSimRef.current;
+        const currentNodes = nodesRef.current;
+        if (currentNodes.length && physicsFloorRef.current == null) {
+            const maxBottom = currentNodes.reduce((max, node) => Math.max(max, node.position.y + node.height), -Infinity);
+            physicsFloorRef.current = maxBottom + 240;
+            sim.setConfig({ floorY: physicsFloorRef.current });
+        }
+        lastPhysicsTimeRef.current = 0;
+        const loop = (time: number) => {
+            const dt = lastPhysicsTimeRef.current ? Math.min(0.05, (time - lastPhysicsTimeRef.current) / 1000) : 1 / 60;
+            lastPhysicsTimeRef.current = time;
+            const nodes = nodesRef.current;
+            const pinned = new Set<string>();
+            if (dragRef.current.isDraggingNode) {
+                for (const item of dragRef.current.initialSelectedNodes) pinned.add(item.id);
+            }
+            const positions = sim.step(nodes, dt, pinned);
+            if (physicsFloorRef.current == null && nodes.length) {
+                const maxBottom = nodes.reduce((max, node) => Math.max(max, node.position.y + node.height), -Infinity);
+                physicsFloorRef.current = maxBottom + 240;
+                sim.setConfig({ floorY: physicsFloorRef.current });
+            }
+            let moved = false;
+            setNodes((prev) =>
+                prev.map((node) => {
+                    const next = positions.get(node.id);
+                    if (!next) return node;
+                    if (Math.abs(next.x - node.position.x) < 0.25 && Math.abs(next.y - node.position.y) < 0.25) return node;
+                    moved = true;
+                    return { ...node, position: next };
+                })
+            );
+            if (!moved) lastPhysicsTimeRef.current = time - (1 / 60) * 1000;
+            physicsRafRef.current = requestAnimationFrame(loop);
+        };
+        physicsRafRef.current = requestAnimationFrame(loop);
+        return () => {
+            if (physicsRafRef.current != null) cancelAnimationFrame(physicsRafRef.current);
+            physicsRafRef.current = null;
+        };
+    }, [physicsEnabled]);
 
     const handleNodeTitleChange = useCallback((nodeId: string, title: string) => {
         setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, title } : node)));
@@ -2853,8 +2916,9 @@ function NovaCanvasPage() {
                             onResizeStart={handleNodeResizeStart}
                             onResize={handleNodeResize}
                             onResizeEnd={handleNodeResizeEnd}
-                            onContentChange={handleNodeContentChange}
-                            onTitleChange={handleNodeTitleChange}
+                        onContentChange={handleNodeContentChange}
+                        onMetadataChange={handleNodeMetadataChange}
+                        onTitleChange={handleNodeTitleChange}
                             onToggleBatch={toggleBatchExpanded}
                             onSetBatchPrimary={setBatchPrimary}
                             onDuplicateBatchImage={duplicateBatchImage}
@@ -2944,6 +3008,8 @@ function NovaCanvasPage() {
                     onCanvasToolChange={setCanvasTool}
                     onBackgroundModeChange={setBackgroundMode}
                     onShowImageInfoChange={setShowImageInfo}
+                    physicsEnabled={physicsEnabled}
+                    onPhysicsToggle={() => setPhysicsEnabled((value) => !value)}
                 />
 
                 {isMiniMapOpen ? <Minimap nodes={nodes} viewport={viewport} viewportSize={size} onViewportChange={setViewport} /> : null}

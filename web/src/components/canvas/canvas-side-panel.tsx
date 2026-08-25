@@ -135,7 +135,13 @@ function TabButton({ label, active, theme, onClick }: { label: string; active: b
 const NODE_FILTER_VALUES = ["all", CanvasNodeType.Image, CanvasNodeType.Video, CanvasNodeType.Text, CanvasNodeType.NovaText, CanvasNodeType.Audio, CanvasNodeType.Config, CanvasNodeType.Group, CanvasNodeType.Product, CanvasNodeType.Storyboard, CanvasNodeType.VideoTrack, CanvasNodeType.Recipe, CanvasNodeType.Multimodal];
 
 function nodePreviewText(node: CanvasNodeData) {
-    if (node.type === CanvasNodeType.Text || node.type === CanvasNodeType.NovaText || node.type === CanvasNodeType.Product || node.type === CanvasNodeType.Storyboard || node.type === CanvasNodeType.Recipe || node.type === CanvasNodeType.Multimodal || node.type === CanvasNodeType.VideoTrack) return node.metadata?.content || node.metadata?.prompt || "";
+    const m = node.metadata || {};
+    if (node.type === CanvasNodeType.Text || node.type === CanvasNodeType.NovaText) return m.content || m.prompt || "";
+    if (node.type === CanvasNodeType.Product) return [m.productName, m.price].filter(Boolean).join(" · ") || "";
+    if (node.type === CanvasNodeType.Storyboard) return (m.scenes || []).join(" / ") || "";
+    if (node.type === CanvasNodeType.Recipe) return [m.recipeName, Object.entries(m.params || {}).map(([k, v]) => `${k}: ${v}`).join(", ")].filter(Boolean).join(" · ") || "";
+    if (node.type === CanvasNodeType.Multimodal) return (m.modalities || []).join(", ") || "";
+    if (node.type === CanvasNodeType.VideoTrack) return (m.clips || []).join(" / ") || "";
     return getNodeDefinition(node.type)?.title || node.type;
 }
 
@@ -150,7 +156,7 @@ function CanvasNodesTab({ nodes, selectedNodeIds, onFocusNode, onPreviewNode, th
 
     const filtered = useMemo(() => {
         const query = keyword.trim().toLowerCase();
-        return nodes.filter((node) => (typeFilter === "all" || node.type === typeFilter) && (!query || [node.title, node.metadata?.content, node.metadata?.prompt].filter(Boolean).join(" ").toLowerCase().includes(query)));
+        return nodes.filter((node) => (typeFilter === "all" || node.type === typeFilter) && (!query || [node.title, nodePreviewText(node)].filter(Boolean).join(" ").toLowerCase().includes(query)));
     }, [nodes, keyword, typeFilter]);
 
     const exitSelect = () => {

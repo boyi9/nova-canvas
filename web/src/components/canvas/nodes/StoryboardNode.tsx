@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import type { CanvasNodeData } from "@/types/canvas";
+import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
 
 type StoryboardNodeProps = {
     node: CanvasNodeData;
     theme: (typeof import("@/lib/canvas-theme"))["canvasThemes"][keyof (typeof import("@/lib/canvas-theme"))["canvasThemes"]];
     isEditingContent: boolean;
     onContentChange: (nodeId: string, content: string) => void;
+    onMetadataChange: (nodeId: string, patch: Partial<CanvasNodeMetadata>) => void;
     onStopEditing: () => void;
 };
 
-export function StoryboardNodeRenderer({ node, theme, isEditingContent, onContentChange, onStopEditing }: StoryboardNodeProps) {
+export function StoryboardNodeRenderer({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: StoryboardNodeProps) {
     const metadata = node.metadata || {};
     const [scenes, setScenes] = useState<string[]>(metadata.scenes || []);
 
@@ -18,8 +19,7 @@ export function StoryboardNodeRenderer({ node, theme, isEditingContent, onConten
     }, [metadata.scenes]);
 
     const saveToNode = () => {
-        const content = JSON.stringify({ scenes });
-        onContentChange(node.id, content);
+        onMetadataChange(node.id, { scenes });
     };
 
     return (

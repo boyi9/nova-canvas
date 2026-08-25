@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import type { CanvasNodeData } from "@/types/canvas";
+import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
 
 type RecipeNodeProps = {
     node: CanvasNodeData;
     theme: (typeof import("@/lib/canvas-theme"))["canvasThemes"][keyof (typeof import("@/lib/canvas-theme"))["canvasThemes"]];
     isEditingContent: boolean;
     onContentChange: (nodeId: string, content: string) => void;
+    onMetadataChange: (nodeId: string, patch: Partial<CanvasNodeMetadata>) => void;
     onStopEditing: () => void;
 };
 
-export function RecipeNodeRenderer({ node, theme, isEditingContent, onContentChange, onStopEditing }: RecipeNodeProps) {
+export function RecipeNodeRenderer({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: RecipeNodeProps) {
     const metadata = node.metadata || {};
     const [recipeName, setRecipeName] = useState(metadata.recipeName || "");
     const [params, setParams] = useState<Record<string, string>>(metadata.params || {});
@@ -20,8 +21,7 @@ export function RecipeNodeRenderer({ node, theme, isEditingContent, onContentCha
     }, [metadata.recipeName, metadata.params]);
 
     const saveToNode = () => {
-        const content = JSON.stringify({ recipeName, params });
-        onContentChange(node.id, content);
+        onMetadataChange(node.id, { recipeName, params });
     };
 
     const updateParam = (key: string, value: string) => {

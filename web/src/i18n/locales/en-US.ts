@@ -82,7 +82,7 @@ export default {
         importFailed: "Import failed. Select a valid asset package.",
         deleted: "Asset deleted",
         packageName: "my-assets.zip",
-        kinds: { text: "Text", novaText: "Rich Text", image: "Image", video: "Video" },
+        kinds: { text: "Text", novaText: "Rich Text", image: "Image", video: "Video", audio: "Audio", product: "Product", storyboard: "Storyboard", videoTrack: "Video Track", recipe: "Recipe", multimodal: "Multimodal" },
         fields: {
             title: "Title",
             titleRequired: "Enter a title",
@@ -242,7 +242,7 @@ export default {
         openAgent: "Open local Codex panel",
         nodeTypes: { image: "Image", text: "Text", novaText: "Rich Text", config: "Generation config", video: "Video", audio: "Audio", group: "Group", product: "Product", storyboard: "Storyboard", videoTrack: "Video Track", recipe: "Recipe", multimodal: "Multimodal" },
         toolbar: {
-            select: "Select", pan: "Move", text: "Text", image: "Image", video: "Video", audio: "Audio", config: "Generation config", group: "Group", extensions: "Extension nodes", upload: "Upload assets", appearance: "Canvas appearance", clear: "Clear canvas",
+            select: "Select", pan: "Move", text: "Text", image: "Image", video: "Video", audio: "Audio", config: "Generation config", group: "Group", extensions: "Extension nodes", upload: "Upload assets", appearance: "Canvas appearance", physics: "Physics sandbox", clear: "Clear canvas",
             themeMode: "Theme", light: "Light", dark: "Dark", gridStyle: "Grid style", dots: "Dots", lines: "Lines", blank: "Blank", imageInfo: "Image info",
         },
         project: {

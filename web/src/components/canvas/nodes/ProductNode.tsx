@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import type { CanvasNodeData } from "@/types/canvas";
+import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
 
 type ProductNodeProps = {
     node: CanvasNodeData;
     theme: (typeof import("@/lib/canvas-theme"))["canvasThemes"][keyof (typeof import("@/lib/canvas-theme"))["canvasThemes"]];
     isEditingContent: boolean;
     onContentChange: (nodeId: string, content: string) => void;
+    onMetadataChange: (nodeId: string, patch: Partial<CanvasNodeMetadata>) => void;
     onStopEditing: () => void;
 };
 
-export function ProductNodeRenderer({ node, theme, isEditingContent, onContentChange, onStopEditing }: ProductNodeProps) {
+export function ProductNodeRenderer({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: ProductNodeProps) {
     const metadata = node.metadata || {};
     const [productName, setProductName] = useState(metadata.productName || "");
     const [price, setPrice] = useState(metadata.price || "");
@@ -22,8 +23,7 @@ export function ProductNodeRenderer({ node, theme, isEditingContent, onContentCh
     }, [metadata.productName, metadata.price, metadata.sellingPoints]);
 
     const saveToNode = () => {
-        const content = JSON.stringify({ productName, price, sellingPoints });
-        onContentChange(node.id, content);
+        onMetadataChange(node.id, { productName, price, sellingPoints });
     };
 
     return (

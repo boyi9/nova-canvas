@@ -78,6 +78,16 @@ export type CanvasNodeMetadata = {
     durationMs?: number;
     groupId?: string;
     interactive?: boolean; // Plugin node interaction/move state; see CanvasNodeDefinition.interactionToggle.
+    // Scenario node fields (Product / Storyboard / VideoTrack / Recipe / Multimodal)
+    productName?: string;
+    price?: string;
+    sellingPoints?: string[];
+    scenes?: string[];
+    clips?: string[];
+    duration?: number;
+    recipeName?: string;
+    params?: Record<string, string>;
+    modalities?: string[];
 };
 
 export type CanvasNodeData = {

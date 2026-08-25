@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
-import type { CanvasNodeData } from "@/types/canvas";
+import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
 
 type MultimodalNodeProps = {
     node: CanvasNodeData;
     theme: (typeof import("@/lib/canvas-theme"))["canvasThemes"][keyof (typeof import("@/lib/canvas-theme"))["canvasThemes"]];
     isEditingContent: boolean;
     onContentChange: (nodeId: string, content: string) => void;
+    onMetadataChange: (nodeId: string, patch: Partial<CanvasNodeMetadata>) => void;
     onStopEditing: () => void;
 };
 
 const MODALITY_OPTIONS = ["image", "video", "audio", "text"];
 
-export function MultimodalNodeRenderer({ node, theme, isEditingContent, onContentChange, onStopEditing }: MultimodalNodeProps) {
+export function MultimodalNodeRenderer({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: MultimodalNodeProps) {
     const metadata = node.metadata || {};
     const [modalities, setModalities] = useState<string[]>(metadata.modalities || []);
 
@@ -22,8 +23,7 @@ export function MultimodalNodeRenderer({ node, theme, isEditingContent, onConten
     const toggleModality = (modality: string) => {
         setModalities((prev) => {
             const next = prev.includes(modality) ? prev.filter((m) => m !== modality) : [...prev, modality];
-            const content = JSON.stringify({ modalities: next });
-            onContentChange(node.id, content);
+            onMetadataChange(node.id, { modalities: next });
             return next;
         });
     };
