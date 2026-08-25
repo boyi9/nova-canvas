@@ -85,6 +85,7 @@ func main() {
 			auth.GET("/templates/:id", h.GetTemplate)
 			auth.POST("/compliance/check", h.CheckCompliance)
 			auth.POST("/agent/chat", h.ChatCompletion)
+			auth.POST("/workflows/run", h.RunWorkflow)
 		}
 	}
 

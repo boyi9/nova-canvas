@@ -1,7 +1,5 @@
 package canvas
 
-import "time"
-
 type NodeType string
 
 const (
