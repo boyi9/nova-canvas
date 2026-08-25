@@ -203,6 +203,14 @@ export default {
         source: "视频创作台",
         empty: "还没有生成视频",
     },
+    aiChat: {
+        title: "AI 模型对话",
+        providerPlaceholder: "选择模型提供商",
+        emptyThread: "还没有对话，发送一条消息开始吧",
+        inputPlaceholder: "输入消息，Enter 发送，Shift+Enter 换行",
+        send: "发送",
+        error: "出错了，请稍后重试",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

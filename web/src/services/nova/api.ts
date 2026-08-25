@@ -163,3 +163,24 @@ export async function chatCompletion(messages: ChatMessage[], scene: string) {
     body: JSON.stringify({ messages, scene }),
   });
 }
+
+export interface AIProvider {
+  id: string;
+  name: string;
+  kind: string;
+  base_url: string;
+  model: string;
+  enabled: boolean;
+}
+
+export async function listProviders(): Promise<AIProvider[]> {
+  const data = await request<{ providers: AIProvider[] }>("/ai/providers");
+  return data.providers || [];
+}
+
+export async function chatWithProvider(provider: string, messages: ChatMessage[]) {
+  return request<{ reply: string; provider: string }>("/ai/chat", {
+    method: "POST",
+    body: JSON.stringify({ provider, messages }),
+  });
+}

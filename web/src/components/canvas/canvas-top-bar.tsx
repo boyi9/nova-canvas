@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BookMarked, BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, Trash2, Undo2, Upload } from "lucide-react";
+import { BookMarked, BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, Sparkles, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -31,6 +31,7 @@ export function CanvasTopBar({
     onOpenRecipes,
     onRunWorkflow,
     onArrangeDetailPage,
+    onOpenProviderChat,
     onUndo,
     onRedo,
     agentOpen,
@@ -59,6 +60,7 @@ export function CanvasTopBar({
     onOpenRecipes: () => void;
     onRunWorkflow: () => void;
     onArrangeDetailPage: () => void;
+    onOpenProviderChat: () => void;
     onUndo: () => void;
     onRedo: () => void;
     agentOpen: boolean;
@@ -201,6 +203,18 @@ export function CanvasTopBar({
                             aria-label={t("canvas.detailLayout")}
                         >
                             {t("canvas.detailLayout")}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={t("aiChat.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<Sparkles className="size-4" />}
+                            onClick={onOpenProviderChat}
+                            aria-label={t("aiChat.title")}
+                        >
+                            {t("aiChat.title")}
                         </Button>
                     </Tooltip>
                     <Button

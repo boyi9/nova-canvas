@@ -203,6 +203,14 @@ export default {
         source: "Video Studio",
         empty: "No video generated yet",
     },
+    aiChat: {
+        title: "AI model chat",
+        providerPlaceholder: "Select a model provider",
+        emptyThread: "No messages yet. Send one to start.",
+        inputPlaceholder: "Type a message. Enter to send, Shift+Enter for newline",
+        send: "Send",
+        error: "Something went wrong. Please try again.",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

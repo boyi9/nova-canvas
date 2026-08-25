@@ -28,6 +28,7 @@ import { canvasToWorkflowGraph, type WorkflowResult } from "@/lib/canvas/workflo
 import { layoutEcommerceDetailPage } from "@/lib/canvas/detail-page-layout";
 import { runWorkflow } from "@/services/nova/api";
 import { RecipeBrowser, type CanvasSnapshot } from "@/components/canvas/recipe-browser";
+import { AIProviderChat } from "@/components/ai-provider-chat";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -239,6 +240,7 @@ function NovaCanvasPage() {
     const [infoNodeId, setInfoNodeId] = useState<string | null>(null);
     const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
     const [recipeOpen, setRecipeOpen] = useState(false);
+    const [providerChatOpen, setProviderChatOpen] = useState(false);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2920,6 +2922,7 @@ function NovaCanvasPage() {
                     onExportJianYing={handleExportJianYing}
                     onCheckCompliance={handleCheckCompliance}
                     onOpenRecipes={() => setRecipeOpen(true)}
+                    onOpenProviderChat={() => setProviderChatOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
                     onImportImage={() => handleUploadRequest()}
@@ -2937,6 +2940,11 @@ function NovaCanvasPage() {
                     onClose={() => setRecipeOpen(false)}
                     onApplyGraph={handleApplyRecipeGraph}
                     getSnapshot={getCanvasSnapshot}
+                />
+
+                <AIProviderChat
+                    open={providerChatOpen}
+                    onClose={() => setProviderChatOpen(false)}
                 />
 
                 <Modal
