@@ -30,6 +30,7 @@ import { runWorkflow } from "@/services/nova/api";
 import { RecipeBrowser, type CanvasSnapshot } from "@/components/canvas/recipe-browser";
 import { AIProviderChat } from "@/components/ai-provider-chat";
 import { BatchHeroImage, type ProductOption } from "@/components/batch-hero-image";
+import { ScriptRunner } from "@/components/script-runner";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -243,6 +244,7 @@ function NovaCanvasPage() {
     const [recipeOpen, setRecipeOpen] = useState(false);
     const [providerChatOpen, setProviderChatOpen] = useState(false);
     const [batchImageOpen, setBatchImageOpen] = useState(false);
+    const [scriptsOpen, setScriptsOpen] = useState(false);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2926,6 +2928,7 @@ function NovaCanvasPage() {
                     onOpenRecipes={() => setRecipeOpen(true)}
                     onOpenProviderChat={() => setProviderChatOpen(true)}
                     onOpenBatchImage={() => setBatchImageOpen(true)}
+                    onOpenScripts={() => setScriptsOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
                     onImportImage={() => handleUploadRequest()}
@@ -2960,6 +2963,11 @@ function NovaCanvasPage() {
                             title: node.title,
                             prompt: String(node.metadata?.prompt || node.metadata?.productName || node.title || ""),
                         }))}
+                />
+
+                <ScriptRunner
+                    open={scriptsOpen}
+                    onClose={() => setScriptsOpen(false)}
                 />
 
                 <Modal

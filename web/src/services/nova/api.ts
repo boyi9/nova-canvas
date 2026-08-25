@@ -198,3 +198,60 @@ export async function batchGenerateImages(params: { prompt: string; count?: numb
     body: JSON.stringify(params),
   });
 }
+
+export interface ScriptConfig {
+  language: string;
+  source: string;
+  args?: string[];
+  env?: Record<string, string>;
+  permissions?: string[];
+  limits?: {
+    max_memory_mb?: number;
+    max_cpu_percent?: number;
+    max_execution_time?: number;
+    max_output_size?: number;
+  };
+  working_dir?: string;
+}
+
+export interface ScriptDef {
+  id: string;
+  name: string;
+  config: ScriptConfig;
+}
+
+export interface ScriptExecutionResult {
+  task_id: string;
+  status: string;
+  exit_code: number;
+  output: string;
+  error: string;
+  duration_ms: number;
+  result?: Record<string, unknown>;
+}
+
+export async function listScripts(): Promise<ScriptDef[]> {
+  const data = await request<{ scripts: ScriptDef[] }>("/scripts");
+  return data.scripts || [];
+}
+
+export async function saveScript(name: string, config: ScriptConfig) {
+  return request<ScriptDef>("/scripts", {
+    method: "POST",
+    body: JSON.stringify({ name, config }),
+  });
+}
+
+export async function runScript(id: string) {
+  return request<ScriptExecutionResult>(`/scripts/${id}/run`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export async function runScriptInline(config: ScriptConfig) {
+  return request<ScriptExecutionResult>("/scripts/run", {
+    method: "POST",
+    body: JSON.stringify(config),
+  });
+}

@@ -84,3 +84,21 @@ func TestBatchGenerateImagesMock(t *testing.T) {
 	assert.Contains(t, first["url"].(string), "data:image/svg+xml;base64,")
 	assert.Equal(t, "mock", first["model"])
 }
+
+func TestRunScriptInlineJS(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	router := gin.New()
+	router.POST("/scripts/run", h.RunScriptInline)
+
+	payload := `{"language":"javascript","source":"const x = 21; const result = { doubled: x * 2 }; console.log('done'); result;"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/scripts/run", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	assert.Equal(t, "success", body["status"])
+	assert.Contains(t, body["output"].(string), "doubled")
+}

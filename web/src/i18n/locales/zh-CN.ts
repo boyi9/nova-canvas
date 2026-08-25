@@ -219,6 +219,14 @@ export default {
         generate: "生成",
         generating: "正在生成主图变体…",
     },
+    scripts: {
+        title: "自定义脚本",
+        namePlaceholder: "脚本名称",
+        save: "保存",
+        run: "运行",
+        saved: "已保存脚本",
+        error: "脚本执行出错",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

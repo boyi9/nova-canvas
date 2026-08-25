@@ -219,6 +219,14 @@ export default {
         generate: "Generate",
         generating: "Generating hero image variants…",
     },
+    scripts: {
+        title: "Custom scripts",
+        namePlaceholder: "Script name",
+        save: "Save",
+        run: "Run",
+        saved: "Saved scripts",
+        error: "Script execution error",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

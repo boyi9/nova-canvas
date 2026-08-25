@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BookMarked, BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, Sparkles, Trash2, Undo2, Upload } from "lucide-react";
+import { BookMarked, BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, Sparkles, Terminal, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -33,6 +33,7 @@ export function CanvasTopBar({
     onArrangeDetailPage,
     onOpenProviderChat,
     onOpenBatchImage,
+    onOpenScripts,
     onUndo,
     onRedo,
     agentOpen,
@@ -63,6 +64,7 @@ export function CanvasTopBar({
     onArrangeDetailPage: () => void;
     onOpenProviderChat: () => void;
     onOpenBatchImage: () => void;
+    onOpenScripts: () => void;
     onUndo: () => void;
     onRedo: () => void;
     agentOpen: boolean;
@@ -229,6 +231,18 @@ export function CanvasTopBar({
                             aria-label={t("batchImage.title")}
                         >
                             {t("batchImage.title")}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={t("scripts.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<Terminal className="size-4" />}
+                            onClick={onOpenScripts}
+                            aria-label={t("scripts.title")}
+                        >
+                            {t("scripts.title")}
                         </Button>
                     </Tooltip>
                     <Button
