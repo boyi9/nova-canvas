@@ -6,7 +6,11 @@ import { uploadImage } from "@/services/image-storage";
 import { imageAspectOptions, imageQualityOptions } from "@/components/image-settings-panel";
 import { videoResolutionOptions, videoSecondOptions, videoSizeOptions } from "@/components/video-settings-panel";
 import type { CanvasAgentSnapshot } from "@/lib/canvas/canvas-agent-ops";
+import { buildRecipeApplyOps } from "@/lib/canvas/recipe-apply-ops";
+import { instantiateRecipeGraph } from "@/lib/canvas/recipe-adapter";
+import { applyRecipe, listRecipes } from "@/services/nova/api";
 import { useCanvasStore } from "@/stores/canvas/use-canvas-store";
+import { useAgentStore } from "@/stores/use-agent-store";
 import { useAssetStore } from "@/stores/use-asset-store";
 import { modelOptionLabel, modelOptionName, normalizeModelOptionValue, selectableModelsByCapability, useConfigStore } from "@/stores/use-config-store";
 import { useWorkbenchAgentStore } from "@/stores/use-workbench-agent-store";
@@ -24,6 +28,8 @@ export const SITE_TOOL_NAMES = [
     "prompts_search",
     "assets_list",
     "assets_add",
+    "recipe_list",
+    "recipe_apply",
 ] as const;
 
 export type SiteToolName = (typeof SITE_TOOL_NAMES)[number];
@@ -46,6 +52,8 @@ export const SITE_TOOL_LABELS: Record<SiteToolName, string> = {
     get prompts_search() { return siteText("promptSearch"); },
     get assets_list() { return siteText("assetList"); },
     get assets_add() { return siteText("assetAdd"); },
+    get recipe_list() { return siteText("recipeList"); },
+    get recipe_apply() { return siteText("recipeApply"); },
 };
 
 type SiteToolInput = Record<string, unknown>;
@@ -73,6 +81,10 @@ export async function runSiteTool(name: SiteToolName, input: SiteToolInput, navi
             return listAssets(input);
         case "assets_add":
             return addAsset(input);
+        case "recipe_list":
+            return listRecipesTool(input);
+        case "recipe_apply":
+            return applyRecipeTool(input, context);
         default:
             throw new Error(siteText("unknownTool", { name }));
     }
@@ -316,4 +328,29 @@ function paginate(input: SiteToolInput, total: number, defaultSize: number) {
     const page = Math.min(maxPage, Math.max(1, Math.floor(Number(input.page)) || 1));
     const start = (page - 1) * pageSize;
     return { page, pageSize, start, end: start + pageSize };
+}
+
+async function listRecipesTool(_input: SiteToolInput) {
+    const data = await listRecipes();
+    return {
+        total: data.recipes.length,
+        recipes: data.recipes.map((recipe) => ({
+            id: recipe.id,
+            name: recipe.name,
+            variables: (recipe.variables || []).map((variable) => variable.name),
+        })),
+    };
+}
+
+async function applyRecipeTool(input: SiteToolInput, context: SiteToolContext) {
+    const id = typeof input.id === "string" ? input.id : "";
+    if (!id) throw new Error(siteText("recipeIdRequired"));
+    const values = (input.values && typeof input.values === "object" ? input.values : {}) as Record<string, unknown>;
+    const { graph } = await applyRecipe(id, values);
+    const { nodes, connections } = instantiateRecipeGraph(graph, { x: 80, y: 80 });
+    const ops = buildRecipeApplyOps(nodes, connections);
+    const canvasContext = useAgentStore.getState().canvasContext;
+    if (!canvasContext) throw new Error(siteText("canvasLoading"));
+    canvasContext.applyOps(ops);
+    return { ok: true, applied: nodes.length, connections: connections.length };
 }
