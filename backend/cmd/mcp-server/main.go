@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -15,10 +14,10 @@ import (
 
 func main() {
 	transport := flag.String("transport", "stdio", "传输方式: stdio | websocket")
-	port := flag.Int("port", 3001, "WebSocket 端口")
-	useCodex := flag.Bool("codex", false, "使用 Codex Agent 配置")
-	useClaude := flag.Bool("claude-code", false, "使用 Claude Code Agent 配置")
-	configPath := flag.String("config", "", "Agent 配置文件路径")
+	flag.Int("port", 3001, "WebSocket 端口")
+	flag.Bool("codex", false, "使用 Codex Agent 配置")
+	flag.Bool("claude-code", false, "使用 Claude Code Agent 配置")
+	flag.String("config", "", "Agent 配置文件路径")
 	flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())

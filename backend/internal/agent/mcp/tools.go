@@ -348,8 +348,8 @@ func (ct *CanvasTools) handleCreateNode(ctx context.Context, args map[string]int
 		}
 	}
 
-	data, _ := json.Marshal(map[string]interface{}{"success": true, "node": created})
-	return []ToolContent{{Type: "text", Text: string(data)}}, nil
+	payload, _ := json.Marshal(map[string]interface{}{"success": true, "node": created})
+	return []ToolContent{{Type: "text", Text: string(payload)}}, nil
 }
 
 func (ct *CanvasTools) handleUpdateNode(ctx context.Context, args map[string]interface{}) ([]ToolContent, error) {
@@ -375,8 +375,8 @@ func (ct *CanvasTools) handleUpdateNode(ctx context.Context, args map[string]int
 		return nil, fmt.Errorf("更新节点失败: %w", err)
 	}
 
-	data, _ := json.Marshal(map[string]interface{}{"success": true, "node": updated})
-	return []ToolContent{{Type: "text", Text: string(data)}}, nil
+	payload, _ := json.Marshal(map[string]interface{}{"success": true, "node": updated})
+	return []ToolContent{{Type: "text", Text: string(payload)}}, nil
 }
 
 func (ct *CanvasTools) handleDeleteNodes(ctx context.Context, args map[string]interface{}) ([]ToolContent, error) {

@@ -112,9 +112,11 @@ type ToolInputSchema struct {
 }
 
 type PropertyDef struct {
-	Type        string `json:"type"`
-	Description string `json:"description,omitempty"`
-	Enum        []string `json:"enum,omitempty"`
+	Type        string                 `json:"type"`
+	Description string                 `json:"description,omitempty"`
+	Enum        []string               `json:"enum,omitempty"`
+	Properties  map[string]PropertyDef `json:"properties,omitempty"`
+	Required    []string               `json:"required,omitempty"`
 }
 
 type ListToolsRequest struct{}
