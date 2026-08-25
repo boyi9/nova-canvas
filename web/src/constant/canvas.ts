@@ -18,6 +18,11 @@ export const NODE_DEFAULT_SIZE = {
     [CanvasNodeType.Video]: { width: 420, height: 236, get title() { return i18n.t("canvas.nodeTypes.video"); } },
     [CanvasNodeType.Audio]: { width: 340, height: 120, get title() { return i18n.t("canvas.nodeTypes.audio"); } },
     [CanvasNodeType.Group]: { width: 760, height: 480, get title() { return i18n.t("canvas.nodeTypes.group"); } },
+    [CanvasNodeType.Product]: { width: 340, height: 420, get title() { return i18n.t("canvas.nodeTypes.product"); } },
+    [CanvasNodeType.Storyboard]: { width: 420, height: 300, get title() { return i18n.t("canvas.nodeTypes.storyboard"); } },
+    [CanvasNodeType.VideoTrack]: { width: 600, height: 200, get title() { return i18n.t("canvas.nodeTypes.videoTrack"); } },
+    [CanvasNodeType.Recipe]: { width: 340, height: 300, get title() { return i18n.t("canvas.nodeTypes.recipe"); } },
+    [CanvasNodeType.Multimodal]: { width: 420, height: 320, get title() { return i18n.t("canvas.nodeTypes.multimodal"); } },
 } satisfies Record<CanvasNodeType, { width: number; height: number; title: string }>;
 
 export const NODE_SPECS = {
@@ -48,6 +53,26 @@ export const NODE_SPECS = {
     [CanvasNodeType.Group]: {
         width: 760, height: 480, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Group].title; },
         metadata: { status: "idle" },
+    },
+    [CanvasNodeType.Product]: {
+        width: 340, height: 420, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Product].title; },
+        metadata: { status: "idle", content: "", productName: "", price: "", sellingPoints: [] },
+    },
+    [CanvasNodeType.Storyboard]: {
+        width: 420, height: 300, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Storyboard].title; },
+        metadata: { status: "idle", content: "", scenes: [] },
+    },
+    [CanvasNodeType.VideoTrack]: {
+        width: 600, height: 200, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.VideoTrack].title; },
+        metadata: { status: "idle", content: "", duration: 0, clips: [] },
+    },
+    [CanvasNodeType.Recipe]: {
+        width: 340, height: 300, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Recipe].title; },
+        metadata: { status: "idle", content: "", recipeName: "", params: {} },
+    },
+    [CanvasNodeType.Multimodal]: {
+        width: 420, height: 320, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Multimodal].title; },
+        metadata: { status: "idle", content: "", modalities: [] },
     },
 } satisfies Record<CanvasNodeType, CanvasNodeSpec>;
 

@@ -240,7 +240,7 @@ export default {
         agentDisconnected: "Codex 未连接",
         connecting: "连接中",
         openAgent: "打开本地 Codex 面板",
-        nodeTypes: { image: "图片", text: "文本", novaText: "富文本", config: "生成配置", video: "视频", audio: "音频", group: "组" },
+        nodeTypes: { image: "图片", text: "文本", novaText: "富文本", config: "生成配置", video: "视频", audio: "音频", group: "组", product: "商品", storyboard: "分镜", videoTrack: "视频轨道", recipe: "配方", multimodal: "多模态" },
         toolbar: {
             select: "选择", pan: "移动", text: "文本", image: "图片", video: "视频", audio: "音频", config: "生成配置", group: "组", extensions: "扩展节点", upload: "上传资产", appearance: "画布外观", clear: "清空画布",
             themeMode: "主题模式", light: "浅色", dark: "深色", gridStyle: "网格样式", dots: "点", lines: "线", blank: "空白", imageInfo: "图片信息",
@@ -252,7 +252,7 @@ export default {
         },
         export: { defaultProjectName: "无限画布", defaultNodesName: "画布元素", item: "元素" },
         createMenu: {
-            fromNode: "引用该节点生成", close: "关闭", text: "文本生成", textDescription: "脚本、广告词、品牌文案", novaText: "富文本生成", novaTextDescription: "富文本编辑，支持格式化", image: "图片生成", video: "视频生成", audio: "音频参考", config: "配置节点", configDescription: "模型、尺寸、数量和输入顺序", select: "选择节点",
+            fromNode: "引用该节点生成", close: "关闭", text: "文本生成", textDescription: "脚本、广告词、品牌文案", novaText: "富文本生成", novaTextDescription: "富文本编辑，支持格式化", product: "商品节点", productDescription: "商品名称、价格、卖点", storyboard: "分镜节点", storyboardDescription: "分镜脚本、场景描述", videoTrack: "视频轨道", videoTrackDescription: "视频片段、时长", recipe: "配方节点", recipeDescription: "品牌配方、参数", multimodal: "多模态节点", multimodalDescription: "多模态输入组合", image: "图片生成", video: "视频生成", audio: "音频参考", config: "配置节点", configDescription: "模型、尺寸、数量和输入顺序", select: "选择节点",
         },
         node: {
             node: "节点",

@@ -1,4 +1,4 @@
-import { FileText, Group, Image as ImageIcon, Music2, Settings2, Video, Type } from "lucide-react";
+import { FileText, Group, Image as ImageIcon, Music2, Settings2, Video, Type, Package, Clapperboard, Film, Bookmark, Layers } from "lucide-react";
 
 import i18n from "@/i18n";
 
@@ -15,6 +15,11 @@ function builtinResource(node: CanvasNodeData): CanvasNodeResource | null {
     if (node.type === CanvasNodeType.Audio && node.metadata?.content) return { kind: "audio", url: node.metadata.content };
     if (node.type === CanvasNodeType.Text && (node.metadata?.content || node.metadata?.prompt)) return { kind: "text", text: node.metadata.content || node.metadata.prompt };
     if (node.type === CanvasNodeType.NovaText && node.metadata?.content) return { kind: "text", text: node.metadata.content };
+    if (node.type === CanvasNodeType.Product && node.metadata?.content) return { kind: "text", text: node.metadata.content };
+    if (node.type === CanvasNodeType.Storyboard && node.metadata?.content) return { kind: "text", text: node.metadata.content };
+    if (node.type === CanvasNodeType.Recipe && node.metadata?.content) return { kind: "text", text: node.metadata.content };
+    if (node.type === CanvasNodeType.Multimodal && node.metadata?.content) return { kind: "text", text: node.metadata.content };
+    if (node.type === CanvasNodeType.VideoTrack && node.metadata?.content) return { kind: "text", text: node.metadata.content };
     return null;
 }
 
@@ -28,6 +33,11 @@ const BUILTIN_DEFINITIONS: CanvasNodeDefinition[] = [
     { type: CanvasNodeType.Audio, title: i18n.t("assets.kinds.audio"), icon: <Music2 className={iconClass} />, minimapColor: "#a855f7", resource: builtinResource },
     { type: CanvasNodeType.Config, title: i18n.t("canvas.configNode.title"), icon: <Settings2 className={iconClass} />, minimapColor: "#60a5fa", hasSourceHandle: false },
     { type: CanvasNodeType.Group, title: i18n.t("canvas.node.group"), icon: <Group className={iconClass} />, minimapColor: "#94a3b8" },
+    { type: CanvasNodeType.Product, title: i18n.t("assets.kinds.product"), icon: <Package className={iconClass} />, minimapColor: "#f59e0b", resource: builtinResource },
+    { type: CanvasNodeType.Storyboard, title: i18n.t("assets.kinds.storyboard"), icon: <Clapperboard className={iconClass} />, minimapColor: "#ef4444", resource: builtinResource },
+    { type: CanvasNodeType.VideoTrack, title: i18n.t("assets.kinds.videoTrack"), icon: <Film className={iconClass} />, minimapColor: "#ec4899", resource: builtinResource },
+    { type: CanvasNodeType.Recipe, title: i18n.t("assets.kinds.recipe"), icon: <Bookmark className={iconClass} />, minimapColor: "#8b5cf6", resource: builtinResource },
+    { type: CanvasNodeType.Multimodal, title: i18n.t("assets.kinds.multimodal"), icon: <Layers className={iconClass} />, minimapColor: "#06b6d4", resource: builtinResource },
 ].map((def) => {
     const spec = NODE_SPECS[def.type];
     return { ...def, title: spec.title, defaultSize: { width: spec.width, height: spec.height }, defaultMetadata: spec.metadata };

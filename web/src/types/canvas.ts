@@ -17,6 +17,11 @@ export enum CanvasNodeType {
     Video = "video",
     Audio = "audio",
     Group = "group",
+    Product = "product",
+    Storyboard = "storyboard",
+    VideoTrack = "video_track",
+    Recipe = "recipe",
+    Multimodal = "multimodal",
 }
 
 // Node types are open strings: built-ins use CanvasNodeType and plugins use "<pluginId>:<name>".

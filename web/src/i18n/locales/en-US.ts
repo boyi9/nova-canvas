@@ -240,7 +240,7 @@ export default {
         agentDisconnected: "Codex disconnected",
         connecting: "Connecting",
         openAgent: "Open local Codex panel",
-        nodeTypes: { image: "Image", text: "Text", novaText: "Rich Text", config: "Generation config", video: "Video", audio: "Audio", group: "Group" },
+        nodeTypes: { image: "Image", text: "Text", novaText: "Rich Text", config: "Generation config", video: "Video", audio: "Audio", group: "Group", product: "Product", storyboard: "Storyboard", videoTrack: "Video Track", recipe: "Recipe", multimodal: "Multimodal" },
         toolbar: {
             select: "Select", pan: "Move", text: "Text", image: "Image", video: "Video", audio: "Audio", config: "Generation config", group: "Group", extensions: "Extension nodes", upload: "Upload assets", appearance: "Canvas appearance", clear: "Clear canvas",
             themeMode: "Theme", light: "Light", dark: "Dark", gridStyle: "Grid style", dots: "Dots", lines: "Lines", blank: "Blank", imageInfo: "Image info",
@@ -252,7 +252,7 @@ export default {
         },
         export: { defaultProjectName: "Infinite Canvas", defaultNodesName: "Canvas elements", item: "Element" },
         createMenu: {
-            fromNode: "Generate from this node", close: "Close", text: "Generate text", textDescription: "Scripts, ad copy, and brand content", novaText: "Generate rich text", novaTextDescription: "Rich text editing with formatting support", image: "Generate image", video: "Generate video", audio: "Audio reference", config: "Configuration node", configDescription: "Model, size, count, and input order", select: "Select a node",
+            fromNode: "Generate from this node", close: "Close", text: "Generate text", textDescription: "Scripts, ad copy, and brand content", novaText: "Generate rich text", novaTextDescription: "Rich text editing with formatting support", product: "Product node", productDescription: "Product name, price, selling points", storyboard: "Storyboard node", storyboardDescription: "Storyboard script, scene description", videoTrack: "Video track", videoTrackDescription: "Video clips, duration", recipe: "Recipe node", recipeDescription: "Brand recipe, parameters", multimodal: "Multimodal node", multimodalDescription: "Multimodal input combination", image: "Generate image", video: "Generate video", audio: "Audio reference", config: "Configuration node", configDescription: "Model, size, count, and input order", select: "Select a node",
         },
         node: {
             node: "Node",

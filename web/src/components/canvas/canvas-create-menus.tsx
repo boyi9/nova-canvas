@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ImageIcon, List, Music2, Settings2, Type, Video, X } from "lucide-react";
+import { ImageIcon, List, Music2, Settings2, Type, Video, X, Package, Clapperboard, Film, Bookmark, Layers } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { canvasThemes } from "@/lib/canvas-theme";
@@ -18,7 +18,7 @@ export function ConnectionCreateMenu({
     onClose,
 }: {
     pending: PendingConnectionCreate;
-    onCreate: (type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.NovaText | CanvasNodeType.Config | CanvasNodeType.Video | CanvasNodeType.Audio) => void;
+    onCreate: (type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.NovaText | CanvasNodeType.Config | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Product | CanvasNodeType.Storyboard | CanvasNodeType.VideoTrack | CanvasNodeType.Recipe | CanvasNodeType.Multimodal) => void;
     onClose: () => void;
 }) {
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
@@ -42,6 +42,11 @@ export function ConnectionCreateMenu({
             <div className="grid gap-1">
                 <ConnectionCreateOption theme={theme} icon={<List className="size-5" />} title={t("canvas.createMenu.text")} description={t("canvas.createMenu.textDescription")} onClick={() => onCreate(CanvasNodeType.Text)} />
                 <ConnectionCreateOption theme={theme} icon={<Type className="size-5" />} title={t("assets.kinds.novaText")} description={t("canvas.createMenu.novaTextDescription")} onClick={() => onCreate(CanvasNodeType.NovaText)} />
+                <ConnectionCreateOption theme={theme} icon={<Package className="size-5" />} title={t("assets.kinds.product")} onClick={() => onCreate(CanvasNodeType.Product)} />
+                <ConnectionCreateOption theme={theme} icon={<Clapperboard className="size-5" />} title={t("assets.kinds.storyboard")} onClick={() => onCreate(CanvasNodeType.Storyboard)} />
+                <ConnectionCreateOption theme={theme} icon={<Film className="size-5" />} title={t("assets.kinds.videoTrack")} onClick={() => onCreate(CanvasNodeType.VideoTrack)} />
+                <ConnectionCreateOption theme={theme} icon={<Bookmark className="size-5" />} title={t("assets.kinds.recipe")} onClick={() => onCreate(CanvasNodeType.Recipe)} />
+                <ConnectionCreateOption theme={theme} icon={<Layers className="size-5" />} title={t("assets.kinds.multimodal")} onClick={() => onCreate(CanvasNodeType.Multimodal)} />
                 <ConnectionCreateOption theme={theme} icon={<ImageIcon className="size-5" />} title={t("canvas.createMenu.image")} onClick={() => onCreate(CanvasNodeType.Image)} />
                 <ConnectionCreateOption theme={theme} icon={<Video className="size-5" />} title={t("canvas.createMenu.video")} onClick={() => onCreate(CanvasNodeType.Video)} />
                 <ConnectionCreateOption theme={theme} icon={<Music2 className="size-5" />} title={t("canvas.createMenu.audio")} onClick={() => onCreate(CanvasNodeType.Audio)} />

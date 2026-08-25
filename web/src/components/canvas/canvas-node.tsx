@@ -9,6 +9,11 @@ import { buildNodeContext } from "@/lib/canvas/plugin-node-context";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { CanvasResourceMentionTextarea } from "./canvas-resource-mention-textarea";
 import { NovaTextNodeRenderer } from "./nodes/NovaTextNode";
+import { ProductNodeRenderer } from "./nodes/ProductNode";
+import { StoryboardNodeRenderer } from "./nodes/StoryboardNode";
+import { VideoTrackNodeRenderer } from "./nodes/VideoTrackNode";
+import { RecipeNodeRenderer } from "./nodes/RecipeNode";
+import { MultimodalNodeRenderer } from "./nodes/MultimodalNode";
 import { CanvasNodeType, type CanvasNodeData, type CanvasNodeImage, type Position } from "@/types/canvas";
 import type { CanvasNodeContext, CanvasPluginHost } from "@/types/canvas-plugin";
 import type { CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
@@ -463,6 +468,11 @@ const nodeContentRenderers = {
     [CanvasNodeType.Video]: VideoNodeContent,
     [CanvasNodeType.Audio]: AudioNodeContent,
     [CanvasNodeType.Group]: GroupNodeContent,
+    [CanvasNodeType.Product]: ProductNodeContent,
+    [CanvasNodeType.Storyboard]: StoryboardNodeContent,
+    [CanvasNodeType.VideoTrack]: VideoTrackNodeContent,
+    [CanvasNodeType.Recipe]: RecipeNodeContent,
+    [CanvasNodeType.Multimodal]: MultimodalNodeContent,
 } satisfies Record<CanvasNodeType, (props: NodeContentRendererProps) => ReactNode>;
 
 function GroupNodeContent({ node, theme, groupChildCount }: NodeContentRendererProps) {
@@ -529,6 +539,66 @@ function MissingPluginContent({ theme, type }: Pick<NodeContentRendererProps, "t
 function NovaTextContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
     return (
         <NovaTextNodeRenderer
+            node={node}
+            theme={theme}
+            isEditingContent={isEditingContent}
+            onContentChange={onContentChange}
+            onStopEditing={onStopEditing}
+        />
+    );
+}
+
+function ProductNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+    return (
+        <ProductNodeRenderer
+            node={node}
+            theme={theme}
+            isEditingContent={isEditingContent}
+            onContentChange={onContentChange}
+            onStopEditing={onStopEditing}
+        />
+    );
+}
+
+function StoryboardNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+    return (
+        <StoryboardNodeRenderer
+            node={node}
+            theme={theme}
+            isEditingContent={isEditingContent}
+            onContentChange={onContentChange}
+            onStopEditing={onStopEditing}
+        />
+    );
+}
+
+function VideoTrackNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+    return (
+        <VideoTrackNodeRenderer
+            node={node}
+            theme={theme}
+            isEditingContent={isEditingContent}
+            onContentChange={onContentChange}
+            onStopEditing={onStopEditing}
+        />
+    );
+}
+
+function RecipeNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+    return (
+        <RecipeNodeRenderer
+            node={node}
+            theme={theme}
+            isEditingContent={isEditingContent}
+            onContentChange={onContentChange}
+            onStopEditing={onStopEditing}
+        />
+    );
+}
+
+function MultimodalNodeContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
+    return (
+        <MultimodalNodeRenderer
             node={node}
             theme={theme}
             isEditingContent={isEditingContent}
