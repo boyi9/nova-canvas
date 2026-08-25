@@ -373,6 +373,58 @@ Week 0    Week 2    Week 4    Week 6    Week 8    Week 10   Week 12
 
 ---
 
+## 🚀 扩展路线图（按 README 愿景 v2.1）
+
+> **对齐说明**：本计划以 `D:\nova启画\README.md` (v2.1) 愿景为准，扩展覆盖 7层架构 + 15 Skill Agent + 3大场景。  
+> **技术栈务实调整**：前端保留 React 19 + Vite（已建成），不重写 Next.js；后端保留 Go 1.22 + Gin。  
+> **排期扩展**：原 3 Sprint / 12周 → 扩展为 6 Sprint / 24周（工作量 ×2）。
+
+### 架构层 → Sprint 映射
+
+| 架构层 | 对应 Sprint | 核心交付 |
+|--------|------------|---------|
+| L7 前端交互层 | S1-S2 | 画布内核 / 三模式工作台 / Agent面板 / 源文件导出 |
+| L6 Agent编排层 | S3-S4 | 15 Skill Agent / MCP协议 / Skill市场 |
+| L5 工作流引擎层 | S3 | 节点式工作流 / 资产库 / AutoLink |
+| L4 源文件编译层 | S4-S5 | PSD编译器 / 剪映草稿 / FCPXML / SVG/PPTX |
+| L3 AI模型能力层 | S2-S5 | 多模型路由 / 分层生图 / 风格迁移 |
+| L2 基础设施层 | S1-S6 | GPU池 / MinIO / PostgreSQL+Redis+Qdrant |
+| L1 数据资产层 | S5-S6 | 模板库1000+ / 爆款库10万+ / 配方库 |
+
+### 15 Skill Agent 分配
+
+| Sprint | Skill | 说明 |
+|--------|-------|------|
+| S3 | `url-to-product` / `product-understand` | 商品理解链路 |
+| S3 | `storyboard-4grid/9grid/25grid` / `character-threeview` | 分镜与角色 |
+| S4 | `multi-camera` / `focus-zoom` / `smart-pull-film` | 镜头与参考片拆解 |
+| S4 | `style-migrate` / `product-retouch` | 风格与精修 |
+| S5 | `hot-replicate` / `one-click-video` / `batch-generate` | 爆款裂变与批量 |
+| S5 | `recipe-save/apply` / `digital-human` | 配方与数字人 |
+| S6 | `compliance-check` | 合规预审 |
+
+### 扩展后里程碑
+
+```
+W0   W4    W8    W12   W16   W20   W24
+ │    │     │     │     │     │     │
+ ▼    ▼     ▼     ▼     ▼     ▼     ▼
+S1   S2    S3    S4    S5    S6    GA
+画布  核心   Agent 源文件 场景  合规  上线
+核心  功能  编排  编译   深化  优化
+```
+
+### 扩展 Sprint 概览
+
+| Sprint | 主题 | 核心目标 |
+|--------|------|---------|
+| S4 | 源文件编译层 | PSD/剪映/FCPXML/SVG/PPTX 编译器 |
+| S5 | 场景深化 | 电商/广告/短剧全链路 + 爆款裂变 + 数字人 |
+| S6 | 合规与优化 | 广告法预审 / 性能 / 安全 / GA上线 |
+
+---
+
 > **文档维护**：Nova Canvas 项目组  
 > **更新频率**：每Sprint Review后更新  
-> **下次更新**：Sprint 1 Review 后
+> **下次更新**：Sprint 1 Review 后  
+> **版本**：v1.1 (扩展路线图已追加)
