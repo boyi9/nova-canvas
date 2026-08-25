@@ -265,6 +265,13 @@ export default {
         searchPlaceholder: "Search prompts / tags",
         empty: "No matching prompts",
     },
+    canvasCompliance: {
+        title: "Canvas compliance",
+        checked: "texts checked",
+        issues: "with issues",
+        clean: "All compliant ✅",
+        empty: "No text on canvas to check",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

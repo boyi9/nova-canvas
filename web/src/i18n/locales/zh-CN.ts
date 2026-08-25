@@ -265,6 +265,13 @@ export default {
         searchPlaceholder: "搜索提示词 / 标签",
         empty: "没有匹配的提示词",
     },
+    canvasCompliance: {
+        title: "画布合规检查",
+        checked: "项文本已检查",
+        issues: "项存在问题",
+        clean: "全部合规 ✅",
+        empty: "画布中没有可检查的文本",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

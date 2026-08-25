@@ -37,6 +37,7 @@ export function CanvasTopBar({
     onOpenFission,
     onOpenScenario,
     onOpenPromptLibrary,
+    onOpenCanvasCompliance,
     onOpenEcommerceFlow,
     onOpenScripts,
     onUndo,
@@ -73,6 +74,7 @@ export function CanvasTopBar({
     onOpenFission: () => void;
     onOpenScenario: () => void;
     onOpenPromptLibrary: () => void;
+    onOpenCanvasCompliance: () => void;
     onOpenEcommerceFlow: () => void;
     onOpenScripts: () => void;
     onUndo: () => void;
@@ -301,6 +303,18 @@ export function CanvasTopBar({
                             aria-label={t("promptLib.title")}
                         >
                             {t("promptLib.title")}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={t("canvasCompliance.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<ShieldCheck className="size-4" />}
+                            onClick={onOpenCanvasCompliance}
+                            aria-label={t("canvasCompliance.title")}
+                        >
+                            {t("canvasCompliance.title")}
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("flow.title")}>

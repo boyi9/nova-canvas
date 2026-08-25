@@ -45,3 +45,17 @@ describe("layoutEcommerceDetailPage", () => {
         expect(connections.filter((c) => c.fromNodeId === "t" && c.toNodeId === "p")).toHaveLength(1);
     });
 });
+
+describe("layoutEcommerceDetailPage performance", () => {
+    it("lays out 100 nodes within a 100ms budget", () => {
+        const nodes: CanvasNodeData[] = [];
+        for (let i = 0; i < 100; i += 1) {
+            nodes.push(node(`n${i}`, i % 2 === 0 ? "product" : "image", i * 10));
+        }
+        const start = performance.now();
+        const { nodes: out } = layoutEcommerceDetailPage(nodes, []);
+        const elapsed = performance.now() - start;
+        expect(out).toHaveLength(100);
+        expect(elapsed).toBeLessThan(100);
+    });
+});

@@ -192,3 +192,25 @@ func TestGenerateDrama(t *testing.T) {
 	assert.True(t, ok)
 	assert.GreaterOrEqual(t, len(chars), 1)
 }
+
+func TestCheckComplianceBatch(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	router := gin.New()
+	router.POST("/compliance/check-batch", h.CheckComplianceBatch)
+
+	payload := `{"texts":["这款产品第一品牌，100%有效","普通好用的杯子"]}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/compliance/check-batch", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	results, ok := body["results"].([]interface{})
+	assert.True(t, ok)
+	assert.Len(t, results, 2)
+	first := results[0].(map[string]interface{})
+	assert.False(t, first["is_valid"].(bool))
+	assert.Greater(t, len(first["violations"].([]interface{})), 0)
+}

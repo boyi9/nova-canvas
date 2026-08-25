@@ -36,6 +36,7 @@ import { HitFission } from "@/components/hit-fission";
 import { EcommerceFullFlow } from "@/components/ecommerce-full-flow";
 import { ScenarioStudio } from "@/components/scenario-studio";
 import { PromptLibrary } from "@/components/prompt-library";
+import { CanvasComplianceModal } from "@/components/canvas-compliance-modal";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -255,6 +256,7 @@ function NovaCanvasPage() {
     const [ecommerceFlowOpen, setEcommerceFlowOpen] = useState(false);
     const [scenarioOpen, setScenarioOpen] = useState(false);
     const [promptLibOpen, setPromptLibOpen] = useState(false);
+    const [canvasComplianceOpen, setCanvasComplianceOpen] = useState(false);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2943,6 +2945,7 @@ function NovaCanvasPage() {
                     onOpenFission={() => setFissionOpen(true)}
                     onOpenScenario={() => setScenarioOpen(true)}
                     onOpenPromptLibrary={() => setPromptLibOpen(true)}
+                    onOpenCanvasCompliance={() => setCanvasComplianceOpen(true)}
                     onOpenEcommerceFlow={() => setEcommerceFlowOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
@@ -3017,6 +3020,23 @@ function NovaCanvasPage() {
                 <PromptLibrary
                     open={promptLibOpen}
                     onClose={() => setPromptLibOpen(false)}
+                />
+
+                <CanvasComplianceModal
+                    open={canvasComplianceOpen}
+                    onClose={() => setCanvasComplianceOpen(false)}
+                    collectTexts={() =>
+                        nodesRef.current
+                            .map((n) =>
+                                [
+                                    typeof n.metadata?.title === "string" ? n.metadata.title : "",
+                                    typeof n.metadata?.prompt === "string" ? n.metadata.prompt : "",
+                                    typeof n.metadata?.productName === "string" ? n.metadata.productName : "",
+                                    Array.isArray(n.metadata?.sellingPoints) ? n.metadata.sellingPoints.join(" ") : "",
+                                ].join(" ")
+                            )
+                            .filter((t) => t.trim().length > 0)
+                    }
                 />
 
                 <Modal

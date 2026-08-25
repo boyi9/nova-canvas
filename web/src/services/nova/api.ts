@@ -353,3 +353,23 @@ export async function generateDrama(params: { synopsis: string; episodes?: numbe
     body: JSON.stringify(params),
   });
 }
+
+export interface ComplianceViolation {
+  keyword: string;
+  category: string;
+  suggestion: string;
+}
+
+export interface ComplianceBatchItem {
+  text: string;
+  is_valid: boolean;
+  violations: ComplianceViolation[];
+  score: number;
+}
+
+export async function checkComplianceBatch(texts: string[]) {
+  return request<{ results: ComplianceBatchItem[] }>("/compliance/check-batch", {
+    method: "POST",
+    body: JSON.stringify({ texts }),
+  });
+}

@@ -491,22 +491,13 @@ func (h *Handler) GetTemplate(c *gin.Context) {
 	c.JSON(http.StatusOK, tpl)
 }
 
-func (h *Handler) CheckCompliance(c *gin.Context) {
-	var req struct {
-		Text string `json:"text" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		errs.RespondError(c, errs.ErrBadRequest(err.Error()))
-		return
-	}
+type ComplianceViolation struct {
+	Keyword    string `json:"keyword"`
+	Category   string `json:"category"`
+	Suggestion string `json:"suggestion"`
+}
 
-	type Violation struct {
-		Keyword    string `json:"keyword"`
-		Category   string `json:"category"`
-		Suggestion string `json:"suggestion"`
-	}
-
-	var violations []Violation
+func checkComplianceText(text string) (violations []ComplianceViolation, score int) {
 	checks := map[string][]struct{ word, category, suggestion string }{
 		"绝对化用语": {
 			{"最", "绝对化用语", "建议删除或改为'优质'"},
@@ -522,22 +513,60 @@ func (h *Handler) CheckCompliance(c *gin.Context) {
 
 	for _, items := range checks {
 		for _, item := range items {
-			if containsSubstring(req.Text, item.word) {
-				violations = append(violations, Violation{
+			if containsSubstring(text, item.word) {
+				violations = append(violations, ComplianceViolation{
 					Keyword: item.word, Category: item.category, Suggestion: item.suggestion,
 				})
 			}
 		}
 	}
 
-	score := 100 - len(violations)*10
-	if score < 0 { score = 0 }
+	score = 100 - len(violations)*10
+	if score < 0 {
+		score = 0
+	}
+	return violations, score
+}
 
+func (h *Handler) CheckCompliance(c *gin.Context) {
+	var req struct {
+		Text string `json:"text" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errs.RespondError(c, errs.ErrBadRequest(err.Error()))
+		return
+	}
+
+	violations, score := checkComplianceText(req.Text)
 	c.JSON(http.StatusOK, gin.H{
 		"is_valid":   len(violations) == 0,
 		"violations": violations,
 		"score":      score,
 	})
+}
+
+// CheckComplianceBatch checks an array of texts (e.g. every text-bearing node on a
+// canvas) in a single request and returns per-item results.
+func (h *Handler) CheckComplianceBatch(c *gin.Context) {
+	var req struct {
+		Texts []string `json:"texts" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errs.RespondError(c, errs.ErrBadRequest(err.Error()))
+		return
+	}
+
+	results := make([]gin.H, 0, len(req.Texts))
+	for _, text := range req.Texts {
+		violations, score := checkComplianceText(text)
+		results = append(results, gin.H{
+			"text":       text,
+			"is_valid":   len(violations) == 0,
+			"violations": violations,
+			"score":      score,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"results": results})
 }
 
 func containsSubstring(s, sub string) bool {
