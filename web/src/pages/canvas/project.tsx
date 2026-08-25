@@ -21,6 +21,7 @@ import { fitNodeSize, nodeSizeFromRatio } from "@/lib/canvas/canvas-node-size";
 import { App, Button, Modal } from "antd";
 import { NODE_DEFAULT_SIZE, getNodeSpec } from "@/constant/canvas";
 import { ActiveConnectionPath, ConnectionPath } from "@/components/canvas/canvas-connections";
+import { analyzeAutoLinks } from "@/lib/canvas/auto-link";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -736,6 +737,16 @@ function NovaCanvasPage() {
         setSelectedConnectionId((current) => (current === connectionId ? null : current));
         setContextMenu((current) => (current?.type === "connection" && current.connectionId === connectionId ? null : current));
     }, []);
+
+    const handleAutoLink = useCallback(() => {
+        const proposed = analyzeAutoLinks(nodesRef.current, connectionsRef.current);
+        if (!proposed.length) {
+            message.info(t("canvas.autoLinkNone"));
+            return;
+        }
+        setConnections((prev) => [...prev, ...proposed]);
+        message.success(t("canvas.autoLinkDone", { count: proposed.length }));
+    }, [t]);
 
     const deselectCanvas = useCallback(() => {
         cancelPendingConnectionCreate();
@@ -2837,6 +2848,7 @@ function NovaCanvasPage() {
                     agentOpen={agentPanelOpen}
                     compactAgentStatus={{ connected: localAgentConnected, enabled: localAgentEnabled, activity: localAgentActivity }}
                     onToggleAgent={toggleAgentPanel}
+                    onAutoLink={handleAutoLink}
                 />
 
                 <NovaCanvas

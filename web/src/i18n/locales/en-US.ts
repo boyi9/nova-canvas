@@ -240,6 +240,9 @@ export default {
         agentDisconnected: "Codex disconnected",
         connecting: "Connecting",
         openAgent: "Open local Codex panel",
+        autoLink: "AutoLink",
+        autoLinkDone: "Auto-created {{count}} semantic connection(s)",
+        autoLinkNone: "No new semantic associations found",
         nodeTypes: { image: "Image", text: "Text", novaText: "Rich Text", config: "Generation config", video: "Video", audio: "Audio", group: "Group", product: "Product", storyboard: "Storyboard", videoTrack: "Video Track", recipe: "Recipe", multimodal: "Multimodal" },
         toolbar: {
             select: "Select", pan: "Move", text: "Text", image: "Image", video: "Video", audio: "Audio", config: "Generation config", group: "Group", extensions: "Extension nodes", upload: "Upload assets", appearance: "Canvas appearance", physics: "Physics sandbox", clear: "Clear canvas",

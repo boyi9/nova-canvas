@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Bot, Download, Home, Images, Menu, PanelLeftClose, PanelLeftOpen, Plus, Redo2, Trash2, Undo2, Upload } from "lucide-react";
+import { BookOpen, Bot, Download, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Plus, Redo2, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -31,6 +31,7 @@ export function CanvasTopBar({
     agentOpen,
     compactAgentStatus,
     onToggleAgent,
+    onAutoLink,
 }: {
     title: string;
     titleDraft: string;
@@ -53,6 +54,7 @@ export function CanvasTopBar({
     agentOpen: boolean;
     compactAgentStatus: { connected: boolean; enabled: boolean; activity: string };
     onToggleAgent: () => void;
+    onAutoLink: () => void;
 }) {
     const colorTheme = useThemeStore((state) => state.theme);
     const { t } = useTranslation();
@@ -141,6 +143,18 @@ export function CanvasTopBar({
                 <div className="pointer-events-auto flex items-center gap-1.5">
                     <UserStatusActions variant="canvas" onOpenShortcuts={() => setShortcutsOpen(true)} onOpenPlugins={onOpenPlugins} />
                     <span className="h-6 w-px" style={{ background: theme.toolbar.border }} />
+                    <Tooltip title={t("canvas.autoLink")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<Link2 className="size-4" />}
+                            onClick={onAutoLink}
+                            aria-label={t("canvas.autoLink")}
+                        >
+                            {t("canvas.autoLink")}
+                        </Button>
+                    </Tooltip>
                     <Button
                         type="text"
                         className="!h-10 !rounded-xl !px-3 !font-medium"
