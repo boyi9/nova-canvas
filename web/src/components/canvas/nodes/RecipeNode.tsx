@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
+import { WorkflowResultView } from "./workflow-result-badge";
 
 type RecipeNodeProps = {
     node: CanvasNodeData;
@@ -68,6 +69,7 @@ export function RecipeNodeRenderer({ node, theme, isEditingContent, onContentCha
                     <span className="text-xs" style={{ color: theme.node.muted }}>暂无参数</span>
                 )}
             </div>
+            <WorkflowResultView result={metadata.workflowResult} />
         </div>
     );
 }

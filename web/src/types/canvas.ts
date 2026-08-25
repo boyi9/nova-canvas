@@ -88,6 +88,7 @@ export type CanvasNodeMetadata = {
     recipeName?: string;
     params?: Record<string, string>;
     modalities?: string[];
+    workflowResult?: Record<string, unknown>;
 };
 
 export type CanvasNodeData = {

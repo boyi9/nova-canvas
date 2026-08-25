@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
+import { WorkflowResultView } from "./workflow-result-badge";
 
 type VideoTrackNodeProps = {
     node: CanvasNodeData;
@@ -52,6 +53,7 @@ export function VideoTrackNodeRenderer({ node, theme, isEditingContent, onConten
                     <div className="text-xs" style={{ color: theme.node.muted }}>拖入视频片段</div>
                 )}
             </div>
+            <WorkflowResultView result={metadata.workflowResult} />
         </div>
     );
 }

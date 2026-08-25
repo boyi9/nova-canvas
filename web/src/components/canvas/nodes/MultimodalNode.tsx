@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
+import { WorkflowResultView } from "./workflow-result-badge";
 
 type MultimodalNodeProps = {
     node: CanvasNodeData;
@@ -51,6 +52,7 @@ export function MultimodalNodeRenderer({ node, theme, isEditingContent, onConten
                     </button>
                 ))}
             </div>
+            <WorkflowResultView result={metadata.workflowResult} />
         </div>
     );
 }

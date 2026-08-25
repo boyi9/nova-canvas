@@ -779,6 +779,13 @@ function NovaCanvasPage() {
         try {
             const graph = canvasToWorkflowGraph(nodesRef.current, connectionsRef.current);
             const resp = await runWorkflow(graph);
+            setNodes((prev) =>
+                prev.map((node) => {
+                    const result = resp.results?.[node.id];
+                    if (!result || result.error || !result.output) return node;
+                    return { ...node, metadata: { ...node.metadata, workflowResult: result.output } };
+                }),
+            );
             setWorkflowRun({ open: true, loading: false, results: resp.results, error: null });
         } catch (err) {
             setWorkflowRun({ open: true, loading: false, results: null, error: (err as Error)?.message || t("canvas.runWorkflowError") });

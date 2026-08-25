@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { CanvasNodeData, CanvasNodeMetadata } from "@/types/canvas";
+import { WorkflowResultView } from "./workflow-result-badge";
 
 type ProductNodeProps = {
     node: CanvasNodeData;
@@ -79,6 +80,7 @@ export function ProductNodeRenderer({ node, theme, isEditingContent, onContentCh
                     </ul>
                 )}
             </div>
+            <WorkflowResultView result={metadata.workflowResult} />
         </div>
     );
 }
