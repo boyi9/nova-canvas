@@ -7,6 +7,7 @@ import { imageAspectOptions, imageQualityOptions } from "@/components/image-sett
 import { videoResolutionOptions, videoSecondOptions, videoSizeOptions } from "@/components/video-settings-panel";
 import type { CanvasAgentSnapshot } from "@/lib/canvas/canvas-agent-ops";
 import { buildRecipeApplyOps } from "@/lib/canvas/recipe-apply-ops";
+import { buildArrangeDetailPageOps } from "@/lib/canvas/arrange-ops";
 import { instantiateRecipeGraph } from "@/lib/canvas/recipe-adapter";
 import { applyRecipe, listRecipes } from "@/services/nova/api";
 import { useCanvasStore } from "@/stores/canvas/use-canvas-store";
@@ -30,6 +31,7 @@ export const SITE_TOOL_NAMES = [
     "assets_add",
     "recipe_list",
     "recipe_apply",
+    "canvas_arrange_detail_page",
 ] as const;
 
 export type SiteToolName = (typeof SITE_TOOL_NAMES)[number];
@@ -54,6 +56,7 @@ export const SITE_TOOL_LABELS: Record<SiteToolName, string> = {
     get assets_add() { return siteText("assetAdd"); },
     get recipe_list() { return siteText("recipeList"); },
     get recipe_apply() { return siteText("recipeApply"); },
+    get canvas_arrange_detail_page() { return siteText("arrangeDetailPage"); },
 };
 
 type SiteToolInput = Record<string, unknown>;
@@ -85,6 +88,8 @@ export async function runSiteTool(name: SiteToolName, input: SiteToolInput, navi
             return listRecipesTool(input);
         case "recipe_apply":
             return applyRecipeTool(input, context);
+        case "canvas_arrange_detail_page":
+            return arrangeDetailPageTool(input, context);
         default:
             throw new Error(siteText("unknownTool", { name }));
     }
@@ -353,4 +358,14 @@ async function applyRecipeTool(input: SiteToolInput, context: SiteToolContext) {
     if (!canvasContext) throw new Error(siteText("canvasLoading"));
     canvasContext.applyOps(ops);
     return { ok: true, applied: nodes.length, connections: connections.length };
+}
+
+async function arrangeDetailPageTool(_input: SiteToolInput, context: SiteToolContext) {
+    const snapshot = context.canvasSnapshot;
+    if (!snapshot || snapshot.nodes.length === 0) throw new Error(siteText("emptyCanvas"));
+    const ops = buildArrangeDetailPageOps(snapshot.nodes, snapshot.connections);
+    const canvasContext = useAgentStore.getState().canvasContext;
+    if (!canvasContext) throw new Error(siteText("canvasLoading"));
+    canvasContext.applyOps(ops);
+    return { ok: true, arranged: snapshot.nodes.length, connected: ops.filter((op) => op.type === "connect_nodes").length };
 }
