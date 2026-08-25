@@ -1,8 +1,9 @@
 import type { Recipe } from "@/lib/canvas/recipe-adapter";
+import type { WorkflowGraph, WorkflowRunResponse } from "@/lib/canvas/workflow-run";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
 
-export type { Recipe };
+export type { Recipe, WorkflowGraph, WorkflowRunResponse };
 
 interface ApiError {
   code: number;
@@ -139,6 +140,14 @@ export async function applyRecipe(id: string, values: Record<string, unknown> = 
     return request<{ graph: Recipe["graph"] }>(`/recipes/${id}/apply`, {
         method: "POST",
         body: JSON.stringify({ values }),
+    });
+}
+
+// Workflow execution
+export async function runWorkflow(graph: WorkflowGraph, variables: Record<string, unknown> = {}) {
+    return request<WorkflowRunResponse>("/workflows/run", {
+        method: "POST",
+        body: JSON.stringify({ nodes: graph.nodes, edges: graph.edges, variables }),
     });
 }
 

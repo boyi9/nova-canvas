@@ -18,12 +18,14 @@ import { useAssetStore } from "@/stores/use-asset-store";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { cropDataUrl, splitDataUrl, upscaleDataUrl } from "@/lib/canvas/canvas-image-data";
 import { fitNodeSize, nodeSizeFromRatio } from "@/lib/canvas/canvas-node-size";
-import { App, Button, Modal } from "antd";
+import { App, Button, List, Modal, Spin } from "antd";
 import { NODE_DEFAULT_SIZE, getNodeSpec } from "@/constant/canvas";
 import { ActiveConnectionPath, ConnectionPath } from "@/components/canvas/canvas-connections";
 import { analyzeAutoLinks } from "@/lib/canvas/auto-link";
 import { exportJianYingDraft } from "@/lib/canvas/video-draft-compiler";
 import { scanCanvasCompliance, type CanvasComplianceReport } from "@/lib/canvas/canvas-compliance";
+import { canvasToWorkflowGraph, type WorkflowResult } from "@/lib/canvas/workflow-run";
+import { runWorkflow } from "@/services/nova/api";
 import { RecipeBrowser, type CanvasSnapshot } from "@/components/canvas/recipe-browser";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
@@ -236,6 +238,12 @@ function NovaCanvasPage() {
     const [infoNodeId, setInfoNodeId] = useState<string | null>(null);
     const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
     const [recipeOpen, setRecipeOpen] = useState(false);
+    const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
+        open: false,
+        loading: false,
+        results: null,
+        error: null,
+    });
     const [cropNodeId, setCropNodeId] = useState<string | null>(null);
     const [maskEditNodeId, setMaskEditNodeId] = useState<string | null>(null);
     const [splitNodeId, setSplitNodeId] = useState<string | null>(null);
@@ -765,6 +773,17 @@ function NovaCanvasPage() {
             connections: connectionsRef.current,
         };
     }, [currentProject, t]);
+
+    const handleRunWorkflow = useCallback(async () => {
+        setWorkflowRun({ open: true, loading: true, results: null, error: null });
+        try {
+            const graph = canvasToWorkflowGraph(nodesRef.current, connectionsRef.current);
+            const resp = await runWorkflow(graph);
+            setWorkflowRun({ open: true, loading: false, results: resp.results, error: null });
+        } catch (err) {
+            setWorkflowRun({ open: true, loading: false, results: null, error: (err as Error)?.message || t("canvas.runWorkflowError") });
+        }
+    }, [t]);
 
     const deselectCanvas = useCallback(() => {
         cancelPendingConnectionCreate();
@@ -2882,6 +2901,7 @@ function NovaCanvasPage() {
                     onExportJianYing={handleExportJianYing}
                     onCheckCompliance={handleCheckCompliance}
                     onOpenRecipes={() => setRecipeOpen(true)}
+                    onRunWorkflow={handleRunWorkflow}
                     onImportImage={() => handleUploadRequest()}
                     onOpenPlugins={() => setPluginManagerOpen(true)}
                     onUndo={undoCanvas}
@@ -2898,6 +2918,47 @@ function NovaCanvasPage() {
                     onApplyGraph={handleApplyRecipeGraph}
                     getSnapshot={getCanvasSnapshot}
                 />
+
+                <Modal
+                    open={workflowRun.open}
+                    onCancel={() => setWorkflowRun((state) => ({ ...state, open: false }))}
+                    footer={null}
+                    title={t("canvas.runWorkflow")}
+                    width={640}
+                    destroyOnClose
+                >
+                    {workflowRun.loading ? (
+                        <div className="grid place-items-center py-10">
+                            <Spin />
+                        </div>
+                    ) : workflowRun.error ? (
+                        <div className="py-6 text-sm text-red-500">{workflowRun.error}</div>
+                    ) : (
+                        <List
+                            dataSource={nodesRef.current}
+                            renderItem={(node) => {
+                                const result = workflowRun.results?.[node.id];
+                                return (
+                                    <List.Item>
+                                        <div className="w-full">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="truncate font-medium">{node.title || node.type}</span>
+                                                <span className="shrink-0 text-xs opacity-50">{node.type}</span>
+                                            </div>
+                                            {result?.error ? (
+                                                <div className="mt-1 text-xs text-red-500">{result.error}</div>
+                                            ) : (
+                                                <pre className="mt-1 max-h-40 overflow-auto rounded bg-black/5 p-2 text-xs dark:bg-white/10">
+                                                    {JSON.stringify(result?.output ?? {}, null, 2)}
+                                                </pre>
+                                            )}
+                                        </div>
+                                    </List.Item>
+                                );
+                            }}
+                        />
+                    )}
+                </Modal>
 
                 <NovaCanvas
                     containerRef={containerRef}
