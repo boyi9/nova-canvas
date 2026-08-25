@@ -257,6 +257,14 @@ export default {
         shot: "Shot",
         generate: "Generate",
     },
+    promptLib: {
+        title: "Prompt library",
+        cached: "Offline cache ready",
+        loading: "Loading",
+        count: "items",
+        searchPlaceholder: "Search prompts / tags",
+        empty: "No matching prompts",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

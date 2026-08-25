@@ -257,6 +257,14 @@ export default {
         shot: "镜头",
         generate: "生成",
     },
+    promptLib: {
+        title: "提示词库",
+        cached: "离线缓存已就绪",
+        loading: "加载中",
+        count: "条",
+        searchPlaceholder: "搜索提示词 / 标签",
+        empty: "没有匹配的提示词",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

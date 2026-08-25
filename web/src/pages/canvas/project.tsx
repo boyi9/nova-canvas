@@ -35,6 +35,7 @@ import { VideoGenerator } from "@/components/video-generator";
 import { HitFission } from "@/components/hit-fission";
 import { EcommerceFullFlow } from "@/components/ecommerce-full-flow";
 import { ScenarioStudio } from "@/components/scenario-studio";
+import { PromptLibrary } from "@/components/prompt-library";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -253,6 +254,7 @@ function NovaCanvasPage() {
     const [fissionOpen, setFissionOpen] = useState(false);
     const [ecommerceFlowOpen, setEcommerceFlowOpen] = useState(false);
     const [scenarioOpen, setScenarioOpen] = useState(false);
+    const [promptLibOpen, setPromptLibOpen] = useState(false);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2940,6 +2942,7 @@ function NovaCanvasPage() {
                     onOpenVideo={() => setVideoOpen(true)}
                     onOpenFission={() => setFissionOpen(true)}
                     onOpenScenario={() => setScenarioOpen(true)}
+                    onOpenPromptLibrary={() => setPromptLibOpen(true)}
                     onOpenEcommerceFlow={() => setEcommerceFlowOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
@@ -3009,6 +3012,11 @@ function NovaCanvasPage() {
                 <ScenarioStudio
                     open={scenarioOpen}
                     onClose={() => setScenarioOpen(false)}
+                />
+
+                <PromptLibrary
+                    open={promptLibOpen}
+                    onClose={() => setPromptLibOpen(false)}
                 />
 
                 <Modal
