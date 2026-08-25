@@ -8,12 +8,21 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/dop251/goja"
 	"github.com/google/uuid"
 )
+
+// forbiddenScriptTokens are denied in user scripts because they escape the
+// sandbox (node builtins, network, filesystem, dynamic code generation).
+var forbiddenScriptTokens = []string{
+	"require(", "import(", "process.", "child_process",
+	"module.exports", "fetch(", "XMLHttpRequest",
+	"__dirname", "__filename", "eval(",
+}
 
 var (
 	ErrTimeout       = errors.New("script execution timeout")
@@ -96,6 +105,9 @@ func NewGojaSandbox() *GojaSandbox {
 }
 
 func (s *GojaSandbox) Execute(ctx context.Context, config ScriptConfig, onProgress ProgressCallback) (*ExecutionResult, error) {
+	if err := ValidateScriptConfig(config); err != nil {
+		return nil, err
+	}
 	switch config.Language {
 	case "javascript", "js":
 		return s.ExecuteJS(ctx, config.Source, config.Limits, onProgress)
@@ -109,6 +121,10 @@ func (s *GojaSandbox) Execute(ctx context.Context, config ScriptConfig, onProgre
 }
 
 func (s *GojaSandbox) ExecuteJS(ctx context.Context, source string, limits ResourceLimits, onProgress ProgressCallback) (*ExecutionResult, error) {
+	if err := ValidateScriptSource(source); err != nil {
+		return nil, err
+	}
+
 	taskID := uuid.New().String()
 	startedAt := time.Now()
 
@@ -134,15 +150,23 @@ func (s *GojaSandbox) ExecuteJS(ctx context.Context, source string, limits Resou
 
 		select {
 		case <-done:
+			result.FinishedAt = time.Now()
+			result.DurationMs = result.FinishedAt.Sub(result.StartedAt).Milliseconds()
 			if execErr != nil {
-				result.Status = "failed"
+				if errors.Is(execErr, ErrTimeout) {
+					result.Status = "timeout"
+				} else {
+					result.Status = "failed"
+				}
 				result.Error = execErr.Error()
-				result.FinishedAt = time.Now()
-				result.DurationMs = result.FinishedAt.Sub(result.StartedAt).Milliseconds()
 				return result, execErr
 			}
 			result.Status = "success"
 		case <-ctx.Done():
+			// Hard deadline: force an interrupt so a busy loop cannot peg a CPU
+			// core forever, then wait for the runner goroutine to unwind.
+			vm.Interrupt(ErrTimeout)
+			<-done
 			result.Status = "timeout"
 			result.Error = ErrTimeout.Error()
 			result.FinishedAt = time.Now()
@@ -163,9 +187,46 @@ func (s *GojaSandbox) ExecuteJS(ctx context.Context, source string, limits Resou
 	return result, nil
 }
 
+// ValidateScriptSource rejects scripts that attempt to escape the sandbox via
+// node builtins, dynamic code generation, or network/filesystem access.
+func ValidateScriptSource(source string) error {
+	for _, tok := range forbiddenScriptTokens {
+		if strings.Contains(source, tok) {
+			return fmt.Errorf("%w: forbidden token %q in script", ErrPermissionDenied, tok)
+		}
+	}
+	return nil
+}
+
+// ValidateScriptConfig enforces the permission policy. High-risk permissions
+// (exec, network, write-fs) are never granted by this sandbox, and JS sources
+// are scanned for forbidden tokens.
+func ValidateScriptConfig(config ScriptConfig) error {
+	for _, p := range config.Permissions {
+		switch p {
+		case PermExec, PermNetwork, PermWriteFS:
+			return fmt.Errorf("%w: permission %q is not allowed", ErrPermissionDenied, p)
+		}
+	}
+	if config.Language == "javascript" || config.Language == "js" {
+		if err := ValidateScriptSource(config.Source); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *GojaSandbox) runJS(vm *goja.Runtime, source string, limits ResourceLimits, onProgress ProgressCallback, taskID string, result *ExecutionResult) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Arm a cooperative interrupt so a runaway loop (e.g. `while(true){}`) is
+	// terminated at the next interrupt point instead of spinning a core forever.
+	if limits.MaxExecutionTime > 0 {
+		time.AfterFunc(limits.MaxExecutionTime, func() {
+			vm.Interrupt(ErrTimeout)
+		})
+	}
 
 	console := vm.NewObject()
 	_ = console.Set("log", func(call goja.FunctionCall) goja.Value {
@@ -202,7 +263,12 @@ func (s *GojaSandbox) runJS(vm *goja.Runtime, source string, limits ResourceLimi
 	vm.Set("progress", progressFn)
 
 	val, err := vm.RunString(source)
+	vm.ClearInterrupt()
 	if err != nil {
+		if ie, ok := err.(*goja.InterruptedError); ok {
+			_ = ie
+			return ErrTimeout
+		}
 		return fmt.Errorf("%w: %v", ErrScriptError, err)
 	}
 

@@ -58,8 +58,10 @@ func TestGojaSandbox_ExecuteJS_Timeout(t *testing.T) {
 	ctx := context.Background()
 
 	source := `
+		var i = 0;
 		while (true) {
-			// nova loop
+			i++;
+			if (i % 1000 === 0) { progress(0, "spin"); }
 		}
 	`
 
@@ -107,6 +109,31 @@ func TestGojaSandbox_ExecuteJS_ConsoleLog(t *testing.T) {
 	assert.Equal(t, "success", result.Status)
 	assert.Contains(t, logs, "[LOG] hello")
 	assert.Contains(t, logs, "[LOG] world 123")
+}
+
+func TestValidateScriptSource_RejectsForbiddenTokens(t *testing.T) {
+	assert.Error(t, ValidateScriptSource("const fs = require('fs');"))
+	assert.Error(t, ValidateScriptSource("process.exit(1)"))
+	assert.Error(t, ValidateScriptSource("fetch('http://evil')"))
+	assert.NoError(t, ValidateScriptSource("const x = 1 + 2;"))
+}
+
+func TestValidateScriptConfig_DeniesHighRiskPermissions(t *testing.T) {
+	assert.Error(t, ValidateScriptConfig(ScriptConfig{
+		Language:    "javascript",
+		Source:      "1+1",
+		Permissions: []Permission{PermNetwork},
+	}))
+	assert.Error(t, ValidateScriptConfig(ScriptConfig{
+		Language:    "javascript",
+		Source:      "1+1",
+		Permissions: []Permission{PermExec},
+	}))
+	assert.NoError(t, ValidateScriptConfig(ScriptConfig{
+		Language: "javascript",
+		Source:   "1+1",
+		Permissions: []Permission{PermReadFS},
+	}))
 }
 
 func TestGojaSandbox_ExecuteJS_ReturnsObject(t *testing.T) {
