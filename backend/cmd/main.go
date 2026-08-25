@@ -93,6 +93,7 @@ func main() {
 			auth.GET("/scripts/:id", h.GetScript)
 			auth.POST("/scripts/:id/run", h.RunScript)
 			auth.POST("/scripts/run", h.RunScriptInline)
+			auth.POST("/ai/video", h.GenerateVideoComposition)
 			auth.POST("/workflows/run", h.RunWorkflow)
 			auth.POST("/recipes", h.SaveRecipe)
 			auth.GET("/recipes", h.ListRecipes)

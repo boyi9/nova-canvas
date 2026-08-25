@@ -227,6 +227,15 @@ export default {
         saved: "Saved scripts",
         error: "Script execution error",
     },
+    video: {
+        title: "Short video generation",
+        shots: "Storyboard shots",
+        shotsPlaceholder: "One shot per line",
+        voiceover: "Voiceover script",
+        music: "Background music",
+        generate: "Generate",
+        shotLabel: "{{count}} shots, {{duration}}s total",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

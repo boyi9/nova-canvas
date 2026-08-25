@@ -227,6 +227,15 @@ export default {
         saved: "已保存脚本",
         error: "脚本执行出错",
     },
+    video: {
+        title: "短视频生成",
+        shots: "分镜脚本",
+        shotsPlaceholder: "每行一个镜头",
+        voiceover: "配音文案",
+        music: "配乐",
+        generate: "生成",
+        shotLabel: "共 {{count}} 个镜头，时长 {{duration}}s",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

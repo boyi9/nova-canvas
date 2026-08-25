@@ -33,6 +33,7 @@ export function CanvasTopBar({
     onArrangeDetailPage,
     onOpenProviderChat,
     onOpenBatchImage,
+    onOpenVideo,
     onOpenScripts,
     onUndo,
     onRedo,
@@ -64,6 +65,7 @@ export function CanvasTopBar({
     onArrangeDetailPage: () => void;
     onOpenProviderChat: () => void;
     onOpenBatchImage: () => void;
+    onOpenVideo: () => void;
     onOpenScripts: () => void;
     onUndo: () => void;
     onRedo: () => void;
@@ -243,6 +245,18 @@ export function CanvasTopBar({
                             aria-label={t("scripts.title")}
                         >
                             {t("scripts.title")}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={t("video.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<Film className="size-4" />}
+                            onClick={onOpenVideo}
+                            aria-label={t("video.title")}
+                        >
+                            {t("video.title")}
                         </Button>
                     </Tooltip>
                     <Button

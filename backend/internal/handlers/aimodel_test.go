@@ -102,3 +102,26 @@ func TestRunScriptInlineJS(t *testing.T) {
 	assert.Equal(t, "success", body["status"])
 	assert.Contains(t, body["output"].(string), "doubled")
 }
+
+func TestGenerateVideoCompositionMock(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	router := gin.New()
+	router.POST("/ai/video", h.GenerateVideoComposition)
+
+	payload := `{"prompt":"夏日饮品广告","shots":["特写杯身","人物畅饮","品牌logo"],"duration":15,"voiceover":"清爽一夏"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/ai/video", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var body map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	assert.Equal(t, "success", body["status"])
+	assert.Equal(t, float64(15), body["duration"])
+	shots, ok := body["shots"].([]interface{})
+	assert.True(t, ok)
+	assert.Len(t, shots, 3)
+	first := shots[0].(map[string]interface{})
+	assert.Contains(t, first["image_url"].(string), "data:image/svg+xml;base64,")
+}

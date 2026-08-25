@@ -255,3 +255,34 @@ export async function runScriptInline(config: ScriptConfig) {
     body: JSON.stringify(config),
   });
 }
+
+export interface VideoShot {
+  index: number;
+  prompt: string;
+  image_url: string;
+  duration: number;
+}
+
+export interface VideoCompositionResult {
+  id: string;
+  status: string;
+  url: string;
+  duration: number;
+  voiceover: string;
+  music: string;
+  shots: VideoShot[];
+}
+
+export async function generateVideoComposition(params: {
+  prompt?: string;
+  duration?: number;
+  shots?: string[];
+  style?: string;
+  voiceover?: string;
+  music?: string;
+}) {
+  return request<VideoCompositionResult>("/ai/video", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}

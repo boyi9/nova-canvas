@@ -31,6 +31,7 @@ import { RecipeBrowser, type CanvasSnapshot } from "@/components/canvas/recipe-b
 import { AIProviderChat } from "@/components/ai-provider-chat";
 import { BatchHeroImage, type ProductOption } from "@/components/batch-hero-image";
 import { ScriptRunner } from "@/components/script-runner";
+import { VideoGenerator } from "@/components/video-generator";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -245,6 +246,7 @@ function NovaCanvasPage() {
     const [providerChatOpen, setProviderChatOpen] = useState(false);
     const [batchImageOpen, setBatchImageOpen] = useState(false);
     const [scriptsOpen, setScriptsOpen] = useState(false);
+    const [videoOpen, setVideoOpen] = useState(false);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2929,6 +2931,7 @@ function NovaCanvasPage() {
                     onOpenProviderChat={() => setProviderChatOpen(true)}
                     onOpenBatchImage={() => setBatchImageOpen(true)}
                     onOpenScripts={() => setScriptsOpen(true)}
+                    onOpenVideo={() => setVideoOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
                     onImportImage={() => handleUploadRequest()}
@@ -2968,6 +2971,11 @@ function NovaCanvasPage() {
                 <ScriptRunner
                     open={scriptsOpen}
                     onClose={() => setScriptsOpen(false)}
+                />
+
+                <VideoGenerator
+                    open={videoOpen}
+                    onClose={() => setVideoOpen(false)}
                 />
 
                 <Modal
