@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useMediaQuery } from "@/lib/responsive";
-import { BookMarked, BookOpen, Bot, Clapperboard, Download, Film, Home, Images, Library, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, ShoppingBag, Sparkles, Split, Terminal, Trash2, Undo2, Upload } from "lucide-react";
+import { BookMarked, BookOpen, Bot, Clapperboard, Crown, Download, Film, Home, Images, Library, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, ShoppingBag, Sparkles, Split, Terminal, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -39,6 +39,8 @@ export function CanvasTopBar({
     onOpenScenario,
     onOpenPromptLibrary,
     onOpenCanvasCompliance,
+    onOpenOnboarding,
+    onOpenMembership,
     onOpenEcommerceFlow,
     onOpenScripts,
     onUndo,
@@ -76,6 +78,8 @@ export function CanvasTopBar({
     onOpenScenario: () => void;
     onOpenPromptLibrary: () => void;
     onOpenCanvasCompliance: () => void;
+    onOpenOnboarding: () => void;
+    onOpenMembership: () => void;
     onOpenEcommerceFlow: () => void;
     onOpenScripts: () => void;
     onUndo: () => void;
@@ -341,6 +345,30 @@ export function CanvasTopBar({
                     >
                         <BarLabel>Agent</BarLabel>
                     </Button>
+                    <Tooltip title={t("onboarding.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<BookOpen className="size-4" />}
+                            onClick={onOpenOnboarding}
+                            aria-label={t("onboarding.title")}
+                        >
+                            <BarLabel>{t("onboarding.title")}</BarLabel>
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={t("membership.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.activeBg, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<Crown className="size-4" />}
+                            onClick={onOpenMembership}
+                            aria-label={t("membership.title")}
+                        >
+                            <BarLabel>{t("membership.title")}</BarLabel>
+                        </Button>
+                    </Tooltip>
                 </div>
             </div>
             <Modal title={t("canvas.shortcuts")} open={shortcutsOpen} onCancel={() => setShortcutsOpen(false)} footer={null} centered>

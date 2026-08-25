@@ -37,6 +37,8 @@ import { EcommerceFullFlow } from "@/components/ecommerce-full-flow";
 import { ScenarioStudio } from "@/components/scenario-studio";
 import { PromptLibrary } from "@/components/prompt-library";
 import { CanvasComplianceModal } from "@/components/canvas-compliance-modal";
+import { OnboardingModal, MembershipModal } from "@/components/membership-onboarding";
+import { hasSeenOnboarding } from "@/lib/onboarding";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -257,6 +259,14 @@ function NovaCanvasPage() {
     const [scenarioOpen, setScenarioOpen] = useState(false);
     const [promptLibOpen, setPromptLibOpen] = useState(false);
     const [canvasComplianceOpen, setCanvasComplianceOpen] = useState(false);
+    const [onboardingOpen, setOnboardingOpen] = useState(false);
+    const [membershipOpen, setMembershipOpen] = useState(false);
+
+    useEffect(() => {
+        if (!hasSeenOnboarding()) {
+            setOnboardingOpen(true);
+        }
+    }, []);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2946,6 +2956,8 @@ function NovaCanvasPage() {
                     onOpenScenario={() => setScenarioOpen(true)}
                     onOpenPromptLibrary={() => setPromptLibOpen(true)}
                     onOpenCanvasCompliance={() => setCanvasComplianceOpen(true)}
+                    onOpenOnboarding={() => setOnboardingOpen(true)}
+                    onOpenMembership={() => setMembershipOpen(true)}
                     onOpenEcommerceFlow={() => setEcommerceFlowOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
@@ -3037,6 +3049,16 @@ function NovaCanvasPage() {
                             )
                             .filter((t) => t.trim().length > 0)
                     }
+                />
+
+                <OnboardingModal
+                    open={onboardingOpen}
+                    onClose={() => setOnboardingOpen(false)}
+                />
+
+                <MembershipModal
+                    open={membershipOpen}
+                    onClose={() => setMembershipOpen(false)}
                 />
 
                 <Modal

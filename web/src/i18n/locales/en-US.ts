@@ -272,6 +272,50 @@ export default {
         clean: "All compliant ✅",
         empty: "No text on canvas to check",
     },
+    onboarding: {
+        title: "Get started",
+        next: "Next",
+        skip: "Skip",
+        start: "Start creating",
+        step: {
+            canvas: { title: "Infinite canvas", desc: "Drag nodes, connect them, and compose your e-commerce workflow freely." },
+            provider: { title: "Multi-model chat", desc: "Switch AI models in Provider Chat to generate copy and scripts." },
+            batch: { title: "Batch hero images", desc: "Generate multiple product images at once, with instant local mock." },
+            fission: { title: "Hit fission", desc: "Drop one selling point and auto-fission it into short-video ideas." },
+            agent: { title: "AI assistant", desc: "The Agent runs layout, recipe apply and other complex tasks for you." },
+            library: { title: "Prompt library", desc: "An offline-cached prompt library you can search and reuse anytime." },
+        },
+        template: {
+            ecommerce: { title: "E-commerce detail", desc: "Build a product detail page structure" },
+            shortvideo: { title: "Short video", desc: "Generate a storyboard short-video script" },
+            ad: { title: "Ad storyboard", desc: "Brand ad storyboard script" },
+        },
+    },
+    membership: {
+        title: "Upgrade",
+        cta: "Upgrade now",
+        plan: {
+            free: { name: "Free", price: "$0 / mo" },
+            pro: { name: "Pro", price: "$15 / mo" },
+            team: { name: "Team", price: "$45 / mo" },
+        },
+        planfree: {
+            f1: "Basic canvas & nodes",
+            f2: "20 AI generations / day",
+            f3: "Local mock offline trial",
+        },
+        planpro: {
+            f1: "Unlimited AI generations",
+            f2: "Batch image / video generation",
+            f3: "Cloud-synced prompt library",
+            f4: "Priority support",
+        },
+        planteam: {
+            f1: "Everything in Pro",
+            f2: "Team collaboration & shared canvas",
+            f3: "Enterprise compliance & roles",
+        },
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

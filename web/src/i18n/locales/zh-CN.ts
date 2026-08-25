@@ -272,6 +272,50 @@ export default {
         clean: "全部合规 ✅",
         empty: "画布中没有可检查的文本",
     },
+    onboarding: {
+        title: "新手引导",
+        next: "下一步",
+        skip: "跳过",
+        start: "开始使用",
+        step: {
+            canvas: { title: "无限画布", desc: "拖拽节点、连线，自由编排你的电商内容工作流。" },
+            provider: { title: "多模型对话", desc: "在 Provider Chat 中切换不同 AI 模型生成文案与脚本。" },
+            batch: { title: "批量头图", desc: "一次生成多张商品头图，支持本地 Mock 秒回。" },
+            fission: { title: "爆款裂变", desc: "输入一个卖点，自动裂变为多个短视频选题。" },
+            agent: { title: "AI 助手", desc: "Agent 自动执行布局、配方应用等复杂任务。" },
+            library: { title: "提示词库", desc: "离线缓存的提示词库，随时搜索复用。" },
+        },
+        template: {
+            ecommerce: { title: "电商详情页", desc: "从零搭建商品详情页结构" },
+            shortvideo: { title: "短视频脚本", desc: "生成分镜短视频脚本" },
+            ad: { title: "广告分镜", desc: "品牌广告分镜脚本" },
+        },
+    },
+    membership: {
+        title: "升级会员",
+        cta: "立即升级",
+        plan: {
+            free: { name: "免费版", price: "¥0 / 月" },
+            pro: { name: "专业版", price: "¥99 / 月" },
+            team: { name: "团队版", price: "¥299 / 月" },
+        },
+        planfree: {
+            f1: "基础画布与节点",
+            f2: "每日 20 次 AI 生成",
+            f3: "本地 Mock 离线试用",
+        },
+        planpro: {
+            f1: "无限 AI 生成",
+            f2: "批量头图 / 视频生成",
+            f3: "提示词库云同步",
+            f4: "优先客服支持",
+        },
+        planteam: {
+            f1: "包含专业版全部能力",
+            f2: "团队协作与共享画布",
+            f3: "企业级合规与权限",
+        },
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",
