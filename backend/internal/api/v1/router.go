@@ -7,36 +7,36 @@ import (
 	"nova-canvas-backend/internal/service"
 )
 
-// RegisterRoutes 注册所有 v1 路由
+// RegisterRoutes registers all v1 routes
 func RegisterRoutes(
 	router *gin.Engine,
 	genSvc service.GenerationService,
 	authMiddleware gin.HandlerFunc,
 ) {
-	// 健康检查（无需认证）
+	// Health check (no auth required)
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "healthy"})
 	})
 
-	// API v1 分组
+	// API v1 group
 	v1Group := router.Group("/api/v1")
-	v1Group.Use(authMiddleware) // 统一 JWT 认证
+	v1Group.Use(authMiddleware)
 	{
-		// 生成任务相关
+		// Generation routes
 		genHandler := NewGenerationHandler(nil, genSvc)
 		genHandler.RegisterRoutes(v1Group)
 
-		// 画布节点相关（后续补充）
+		// Canvas node routes (TODO)
 		// nodeHandler := NewNodeHandler(nodeSvc)
 		// nodeHandler.RegisterRoutes(v1Group)
 
-		// 用户相关（后续补充）
+		// User routes (handled in main.go)
 		// userHandler := NewUserHandler(userSvc)
 		// userHandler.RegisterRoutes(v1Group)
 	}
 }
 
-// SetupMiddleware 设置全局中间件
+// SetupMiddleware sets up global middleware
 func SetupMiddleware(router *gin.Engine) {
 	router.Use(gin.Recovery())
 	router.Use(middleware.RequestID())
