@@ -241,6 +241,13 @@ export default {
         referencePlaceholder: "输入爆款素材 / 参考文案",
         generate: "生成变体",
     },
+    flow: {
+        title: "电商全流程",
+        useCanvasProduct: "画布中的商品节点",
+        run: "运行全流程",
+        step: { arrange: "编排详情页结构", images: "批量生成主图", workflow: "运行工作流" },
+        imagesDone: "张已生成",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

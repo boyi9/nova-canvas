@@ -241,6 +241,13 @@ export default {
         referencePlaceholder: "Enter the reference / viral copy",
         generate: "Generate variants",
     },
+    flow: {
+        title: "E-commerce full flow",
+        useCanvasProduct: "Product node on canvas",
+        run: "Run full flow",
+        step: { arrange: "Arrange detail-page structure", images: "Batch-generate hero images", workflow: "Run workflow" },
+        imagesDone: "images generated",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

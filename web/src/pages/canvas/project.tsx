@@ -33,6 +33,7 @@ import { BatchHeroImage, type ProductOption } from "@/components/batch-hero-imag
 import { ScriptRunner } from "@/components/script-runner";
 import { VideoGenerator } from "@/components/video-generator";
 import { HitFission } from "@/components/hit-fission";
+import { EcommerceFullFlow } from "@/components/ecommerce-full-flow";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -249,6 +250,7 @@ function NovaCanvasPage() {
     const [scriptsOpen, setScriptsOpen] = useState(false);
     const [videoOpen, setVideoOpen] = useState(false);
     const [fissionOpen, setFissionOpen] = useState(false);
+    const [ecommerceFlowOpen, setEcommerceFlowOpen] = useState(false);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2935,6 +2937,7 @@ function NovaCanvasPage() {
                     onOpenScripts={() => setScriptsOpen(true)}
                     onOpenVideo={() => setVideoOpen(true)}
                     onOpenFission={() => setFissionOpen(true)}
+                    onOpenEcommerceFlow={() => setEcommerceFlowOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
                     onImportImage={() => handleUploadRequest()}
@@ -2984,6 +2987,20 @@ function NovaCanvasPage() {
                 <HitFission
                     open={fissionOpen}
                     onClose={() => setFissionOpen(false)}
+                />
+
+                <EcommerceFullFlow
+                    open={ecommerceFlowOpen}
+                    onClose={() => setEcommerceFlowOpen(false)}
+                    productNodes={nodesRef.current
+                        .filter((node) => node.type === "product")
+                        .map((node) => ({
+                            id: node.id,
+                            title: node.title,
+                            prompt: String(node.metadata?.prompt || node.metadata?.productName || node.title || ""),
+                        }))}
+                    onArrangeDetailPage={handleArrangeDetailPage}
+                    onRunWorkflow={handleRunWorkflow}
                 />
 
                 <Modal
