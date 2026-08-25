@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useMediaQuery } from "@/lib/responsive";
 import { BookMarked, BookOpen, Bot, Clapperboard, Download, Film, Home, Images, Library, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, ShoppingBag, Sparkles, Split, Terminal, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
@@ -101,8 +102,10 @@ export function CanvasTopBar({
         return () => document.removeEventListener("pointerdown", close, true);
     }, [isTitleEditing, onFinishTitleEditing]);
 
+    const isCompact = useMediaQuery("(max-width: 1023px)");
+
     return (
-        <>
+        <CompactContext.Provider value={isCompact}>
             <div className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex h-16 items-center justify-between pl-1 pr-4">
                 <div className="pointer-events-auto flex min-w-0 items-center gap-2">
                     <Tooltip title={sidePanelOpen ? t("canvas.collapsePanel") : t("canvas.expandPanel")}>
@@ -172,7 +175,7 @@ export function CanvasTopBar({
                     <CompactAgentStatus status={compactAgentStatus} onClick={onToggleAgent} />
                 </div>
 
-                <div className="pointer-events-auto flex items-center gap-1.5">
+                <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto">
                     <UserStatusActions variant="canvas" onOpenShortcuts={() => setShortcutsOpen(true)} onOpenPlugins={onOpenPlugins} />
                     <span className="h-6 w-px" style={{ background: theme.toolbar.border }} />
                     <Tooltip title={t("canvas.autoLink")}>
@@ -184,7 +187,7 @@ export function CanvasTopBar({
                             onClick={onAutoLink}
                             aria-label={t("canvas.autoLink")}
                         >
-                            {t("canvas.autoLink")}
+                            <BarLabel>{t("canvas.autoLink")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Button
@@ -194,9 +197,9 @@ export function CanvasTopBar({
                         icon={<BookMarked className="size-4" />}
                         onClick={onOpenRecipes}
                         aria-label={t("canvas.recipe")}
-                    >
-                        {t("canvas.recipe")}
-                    </Button>
+                        >
+                            <BarLabel>{t("canvas.recipe")}</BarLabel>
+                        </Button>
                     <Tooltip title={t("canvas.runWorkflow")}>
                         <Button
                             type="text"
@@ -206,7 +209,7 @@ export function CanvasTopBar({
                             onClick={onRunWorkflow}
                             aria-label={t("canvas.runWorkflow")}
                         >
-                            {t("canvas.runWorkflow")}
+                            <BarLabel>{t("canvas.runWorkflow")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("canvas.detailLayout")}>
@@ -218,7 +221,7 @@ export function CanvasTopBar({
                             onClick={onArrangeDetailPage}
                             aria-label={t("canvas.detailLayout")}
                         >
-                            {t("canvas.detailLayout")}
+                            <BarLabel>{t("canvas.detailLayout")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("aiChat.title")}>
@@ -230,7 +233,7 @@ export function CanvasTopBar({
                             onClick={onOpenProviderChat}
                             aria-label={t("aiChat.title")}
                         >
-                            {t("aiChat.title")}
+                            <BarLabel>{t("aiChat.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("batchImage.title")}>
@@ -242,7 +245,7 @@ export function CanvasTopBar({
                             onClick={onOpenBatchImage}
                             aria-label={t("batchImage.title")}
                         >
-                            {t("batchImage.title")}
+                            <BarLabel>{t("batchImage.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("scripts.title")}>
@@ -254,7 +257,7 @@ export function CanvasTopBar({
                             onClick={onOpenScripts}
                             aria-label={t("scripts.title")}
                         >
-                            {t("scripts.title")}
+                            <BarLabel>{t("scripts.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("video.title")}>
@@ -266,7 +269,7 @@ export function CanvasTopBar({
                             onClick={onOpenVideo}
                             aria-label={t("video.title")}
                         >
-                            {t("video.title")}
+                            <BarLabel>{t("video.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("fission.title")}>
@@ -278,7 +281,7 @@ export function CanvasTopBar({
                             onClick={onOpenFission}
                             aria-label={t("fission.title")}
                         >
-                            {t("fission.title")}
+                            <BarLabel>{t("fission.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("scenario.title")}>
@@ -290,7 +293,7 @@ export function CanvasTopBar({
                             onClick={onOpenScenario}
                             aria-label={t("scenario.title")}
                         >
-                            {t("scenario.title")}
+                            <BarLabel>{t("scenario.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("promptLib.title")}>
@@ -302,7 +305,7 @@ export function CanvasTopBar({
                             onClick={onOpenPromptLibrary}
                             aria-label={t("promptLib.title")}
                         >
-                            {t("promptLib.title")}
+                            <BarLabel>{t("promptLib.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("canvasCompliance.title")}>
@@ -314,7 +317,7 @@ export function CanvasTopBar({
                             onClick={onOpenCanvasCompliance}
                             aria-label={t("canvasCompliance.title")}
                         >
-                            {t("canvasCompliance.title")}
+                            <BarLabel>{t("canvasCompliance.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Tooltip title={t("flow.title")}>
@@ -326,7 +329,7 @@ export function CanvasTopBar({
                             onClick={onOpenEcommerceFlow}
                             aria-label={t("flow.title")}
                         >
-                            {t("flow.title")}
+                            <BarLabel>{t("flow.title")}</BarLabel>
                         </Button>
                     </Tooltip>
                     <Button
@@ -336,7 +339,7 @@ export function CanvasTopBar({
                         icon={<Bot className="size-4" />}
                         onClick={onToggleAgent}
                     >
-                        Agent
+                        <BarLabel>Agent</BarLabel>
                     </Button>
                 </div>
             </div>
@@ -357,8 +360,16 @@ export function CanvasTopBar({
                     <Shortcut keys={[t("canvas.shortcut.dropMedia")]} value={t("canvas.shortcut.upload")} />
                 </div>
             </Modal>
-        </>
+        </CompactContext.Provider>
     );
+}
+
+const CompactContext = createContext(false);
+
+function BarLabel({ children }: { children: ReactNode }) {
+    const compact = useContext(CompactContext);
+    if (compact) return null;
+    return <span>{children}</span>;
 }
 
 function MenuLabel({ text, shortcut }: { text: string; shortcut: string }) {
