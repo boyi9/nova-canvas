@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BookMarked, BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, Sparkles, Terminal, Trash2, Undo2, Upload } from "lucide-react";
+import { BookMarked, BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, Sparkles, Split, Terminal, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -34,6 +34,7 @@ export function CanvasTopBar({
     onOpenProviderChat,
     onOpenBatchImage,
     onOpenVideo,
+    onOpenFission,
     onOpenScripts,
     onUndo,
     onRedo,
@@ -66,6 +67,7 @@ export function CanvasTopBar({
     onOpenProviderChat: () => void;
     onOpenBatchImage: () => void;
     onOpenVideo: () => void;
+    onOpenFission: () => void;
     onOpenScripts: () => void;
     onUndo: () => void;
     onRedo: () => void;
@@ -257,6 +259,18 @@ export function CanvasTopBar({
                             aria-label={t("video.title")}
                         >
                             {t("video.title")}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={t("fission.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<Split className="size-4" />}
+                            onClick={onOpenFission}
+                            aria-label={t("fission.title")}
+                        >
+                            {t("fission.title")}
                         </Button>
                     </Tooltip>
                     <Button

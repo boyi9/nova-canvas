@@ -32,6 +32,7 @@ import { AIProviderChat } from "@/components/ai-provider-chat";
 import { BatchHeroImage, type ProductOption } from "@/components/batch-hero-image";
 import { ScriptRunner } from "@/components/script-runner";
 import { VideoGenerator } from "@/components/video-generator";
+import { HitFission } from "@/components/hit-fission";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -247,6 +248,7 @@ function NovaCanvasPage() {
     const [batchImageOpen, setBatchImageOpen] = useState(false);
     const [scriptsOpen, setScriptsOpen] = useState(false);
     const [videoOpen, setVideoOpen] = useState(false);
+    const [fissionOpen, setFissionOpen] = useState(false);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2932,6 +2934,7 @@ function NovaCanvasPage() {
                     onOpenBatchImage={() => setBatchImageOpen(true)}
                     onOpenScripts={() => setScriptsOpen(true)}
                     onOpenVideo={() => setVideoOpen(true)}
+                    onOpenFission={() => setFissionOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
                     onImportImage={() => handleUploadRequest()}
@@ -2976,6 +2979,11 @@ function NovaCanvasPage() {
                 <VideoGenerator
                     open={videoOpen}
                     onClose={() => setVideoOpen(false)}
+                />
+
+                <HitFission
+                    open={fissionOpen}
+                    onClose={() => setFissionOpen(false)}
                 />
 
                 <Modal

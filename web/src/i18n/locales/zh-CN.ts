@@ -236,6 +236,11 @@ export default {
         generate: "生成",
         shotLabel: "共 {{count}} 个镜头，时长 {{duration}}s",
     },
+    fission: {
+        title: "爆款裂变",
+        referencePlaceholder: "输入爆款素材 / 参考文案",
+        generate: "生成变体",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

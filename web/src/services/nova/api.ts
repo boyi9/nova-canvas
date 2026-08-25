@@ -286,3 +286,26 @@ export async function generateVideoComposition(params: {
     body: JSON.stringify(params),
   });
 }
+
+export interface FissionVariant {
+  index: number;
+  hook: string;
+  rhythm: string;
+  shot: string;
+  copy: string;
+}
+
+export interface FissionResult {
+  id: string;
+  status: string;
+  reference: string;
+  count: number;
+  variants: FissionVariant[];
+}
+
+export async function generateFission(params: { reference: string; count?: number }) {
+  return request<FissionResult>("/ai/fission", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}

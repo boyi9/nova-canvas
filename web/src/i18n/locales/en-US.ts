@@ -236,6 +236,11 @@ export default {
         generate: "Generate",
         shotLabel: "{{count}} shots, {{duration}}s total",
     },
+    fission: {
+        title: "Hit fission",
+        referencePlaceholder: "Enter the reference / viral copy",
+        generate: "Generate variants",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",
