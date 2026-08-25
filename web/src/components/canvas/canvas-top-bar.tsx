@@ -32,6 +32,7 @@ export function CanvasTopBar({
     onRunWorkflow,
     onArrangeDetailPage,
     onOpenProviderChat,
+    onOpenBatchImage,
     onUndo,
     onRedo,
     agentOpen,
@@ -61,6 +62,7 @@ export function CanvasTopBar({
     onRunWorkflow: () => void;
     onArrangeDetailPage: () => void;
     onOpenProviderChat: () => void;
+    onOpenBatchImage: () => void;
     onUndo: () => void;
     onRedo: () => void;
     agentOpen: boolean;
@@ -215,6 +217,18 @@ export function CanvasTopBar({
                             aria-label={t("aiChat.title")}
                         >
                             {t("aiChat.title")}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip title={t("batchImage.title")}>
+                        <Button
+                            type="text"
+                            className="!h-10 !rounded-xl !px-3 !font-medium"
+                            style={{ background: theme.toolbar.panel, color: theme.node.text, boxShadow: "0 10px 30px rgba(28,25,23,.10)" }}
+                            icon={<Images className="size-4" />}
+                            onClick={onOpenBatchImage}
+                            aria-label={t("batchImage.title")}
+                        >
+                            {t("batchImage.title")}
                         </Button>
                     </Tooltip>
                     <Button

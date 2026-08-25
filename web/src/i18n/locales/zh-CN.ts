@@ -211,6 +211,14 @@ export default {
         send: "发送",
         error: "出错了，请稍后重试",
     },
+    batchImage: {
+        title: "批量主图生成",
+        customPrompt: "自定义提示词",
+        promptPlaceholder: "输入商品卖点 / 主题",
+        style: { white: "白底主图", scene: "场景图", minimal: "极简风", promo: "促销风" },
+        generate: "生成",
+        generating: "正在生成主图变体…",
+    },
     canvas: {
         defaultTitle: "无限画布 {{count}}",
         library: "画布库",

@@ -184,3 +184,17 @@ export async function chatWithProvider(provider: string, messages: ChatMessage[]
     body: JSON.stringify({ provider, messages }),
   });
 }
+
+export interface BatchImageResult {
+  id: string;
+  url: string;
+  prompt: string;
+  model: string;
+}
+
+export async function batchGenerateImages(params: { prompt: string; count?: number; style?: string }) {
+  return request<{ images: BatchImageResult[] }>("/ai/batch-image", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}

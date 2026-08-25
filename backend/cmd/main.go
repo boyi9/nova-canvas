@@ -87,6 +87,7 @@ func main() {
 			auth.POST("/agent/chat", h.ChatCompletion)
 			auth.GET("/ai/providers", h.ListProviders)
 			auth.POST("/ai/chat", h.ChatWithProvider)
+			auth.POST("/ai/batch-image", h.BatchGenerateImages)
 			auth.POST("/workflows/run", h.RunWorkflow)
 			auth.POST("/recipes", h.SaveRecipe)
 			auth.GET("/recipes", h.ListRecipes)

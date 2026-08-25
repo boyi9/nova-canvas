@@ -211,6 +211,14 @@ export default {
         send: "Send",
         error: "Something went wrong. Please try again.",
     },
+    batchImage: {
+        title: "Batch hero image",
+        customPrompt: "Custom prompt",
+        promptPlaceholder: "Enter product selling points / theme",
+        style: { white: "White background", scene: "Lifestyle scene", minimal: "Minimal", promo: "Promotional" },
+        generate: "Generate",
+        generating: "Generating hero image variants…",
+    },
     canvas: {
         defaultTitle: "Nova Canvas {{count}}",
         library: "Canvas library",

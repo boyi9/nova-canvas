@@ -29,6 +29,7 @@ import { layoutEcommerceDetailPage } from "@/lib/canvas/detail-page-layout";
 import { runWorkflow } from "@/services/nova/api";
 import { RecipeBrowser, type CanvasSnapshot } from "@/components/canvas/recipe-browser";
 import { AIProviderChat } from "@/components/ai-provider-chat";
+import { BatchHeroImage, type ProductOption } from "@/components/batch-hero-image";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -241,6 +242,7 @@ function NovaCanvasPage() {
     const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
     const [recipeOpen, setRecipeOpen] = useState(false);
     const [providerChatOpen, setProviderChatOpen] = useState(false);
+    const [batchImageOpen, setBatchImageOpen] = useState(false);
     const [workflowRun, setWorkflowRun] = useState<{ open: boolean; loading: boolean; results: Record<string, WorkflowResult> | null; error: string | null }>({
         open: false,
         loading: false,
@@ -2923,6 +2925,7 @@ function NovaCanvasPage() {
                     onCheckCompliance={handleCheckCompliance}
                     onOpenRecipes={() => setRecipeOpen(true)}
                     onOpenProviderChat={() => setProviderChatOpen(true)}
+                    onOpenBatchImage={() => setBatchImageOpen(true)}
                     onRunWorkflow={handleRunWorkflow}
                     onArrangeDetailPage={handleArrangeDetailPage}
                     onImportImage={() => handleUploadRequest()}
@@ -2945,6 +2948,18 @@ function NovaCanvasPage() {
                 <AIProviderChat
                     open={providerChatOpen}
                     onClose={() => setProviderChatOpen(false)}
+                />
+
+                <BatchHeroImage
+                    open={batchImageOpen}
+                    onClose={() => setBatchImageOpen(false)}
+                    productNodes={nodesRef.current
+                        .filter((node) => node.type === "product")
+                        .map((node) => ({
+                            id: node.id,
+                            title: node.title,
+                            prompt: String(node.metadata?.prompt || node.metadata?.productName || node.title || ""),
+                        }))}
                 />
 
                 <Modal
