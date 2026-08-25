@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Plus, Redo2, Trash2, Undo2, Upload } from "lucide-react";
+import { BookOpen, Bot, Download, Film, Home, Images, Link2, Menu, PanelLeftClose, PanelLeftOpen, Plus, Redo2, ShieldCheck, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -27,6 +27,7 @@ export function CanvasTopBar({
     onImportImage,
     onOpenPlugins,
     onExportJianYing,
+    onCheckCompliance,
     onUndo,
     onRedo,
     agentOpen,
@@ -51,6 +52,7 @@ export function CanvasTopBar({
     onImportImage: () => void;
     onOpenPlugins: () => void;
     onExportJianYing: () => void;
+    onCheckCompliance: () => void;
     onUndo: () => void;
     onRedo: () => void;
     agentOpen: boolean;
@@ -104,6 +106,7 @@ export function CanvasTopBar({
                                 { key: "import", icon: <Upload className="size-4" />, label: t("canvas.importAsset"), onClick: onImportImage },
                                 { key: "export", icon: <Download className="size-4" />, label: t("canvas.exportCurrent"), onClick: onExportProject },
                                 { key: "exportJianYing", icon: <Film className="size-4" />, label: t("canvas.exportJianYing"), onClick: onExportJianYing },
+                                { key: "compliance", icon: <ShieldCheck className="size-4" />, label: t("canvas.compliance"), onClick: onCheckCompliance },
                                 { type: "divider" },
                                 { key: "undo", disabled: !canUndo, icon: <Undo2 className="size-4" />, label: <MenuLabel text={t("canvas.undo")} shortcut="⌘ Z" />, onClick: onUndo },
                                 { key: "redo", disabled: !canRedo, icon: <Redo2 className="size-4" />, label: <MenuLabel text={t("canvas.redo")} shortcut="⌘ ⇧ Z / ⌘ Y" />, onClick: onRedo },

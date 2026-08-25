@@ -23,6 +23,7 @@ import { NODE_DEFAULT_SIZE, getNodeSpec } from "@/constant/canvas";
 import { ActiveConnectionPath, ConnectionPath } from "@/components/canvas/canvas-connections";
 import { analyzeAutoLinks } from "@/lib/canvas/auto-link";
 import { exportJianYingDraft } from "@/lib/canvas/video-draft-compiler";
+import { scanCanvasCompliance, type CanvasComplianceReport } from "@/lib/canvas/canvas-compliance";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -223,6 +224,7 @@ function NovaCanvasPage() {
     const [backgroundMode, setBackgroundMode] = useState<CanvasBackgroundMode>("lines");
     const [showImageInfo, setShowImageInfo] = useState(false);
     const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+    const [complianceReport, setComplianceReport] = useState<CanvasComplianceReport | null>(null);
     const [assetPickerOpen, setAssetPickerOpen] = useState(false);
     const [projectLoaded, setProjectLoaded] = useState(false);
     const [toolbarNodeId, setToolbarNodeId] = useState<string | null>(null);
@@ -1001,6 +1003,12 @@ function NovaCanvasPage() {
             hide();
         }
     }, [message, projectId, t]);
+
+    const handleCheckCompliance = useCallback(() => {
+        const report = scanCanvasCompliance(nodesRef.current);
+        setComplianceReport(report);
+        if (!report.totalViolations) message.success(t("canvas.complianceClean"));
+    }, [t]);
 
     const handleCanvasMouseDown = useCallback(
         (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -2857,6 +2865,7 @@ function NovaCanvasPage() {
                     onDeleteProject={deleteCurrentProject}
                     onExportProject={exportCurrentProject}
                     onExportJianYing={handleExportJianYing}
+                    onCheckCompliance={handleCheckCompliance}
                     onImportImage={() => handleUploadRequest()}
                     onOpenPlugins={() => setPluginManagerOpen(true)}
                     onUndo={undoCanvas}
@@ -3114,6 +3123,43 @@ function NovaCanvasPage() {
                     }
                 >
                     <p className="text-sm opacity-60">{t("canvas.projectPage.clearDescription")}</p>
+                </Modal>
+
+                <Modal
+                    title={t("canvas.compliance")}
+                    open={complianceReport !== null}
+                    centered
+                    footer={<Button type="primary" onClick={() => setComplianceReport(null)}>{t("canvas.complianceClose")}</Button>}
+                    onCancel={() => setComplianceReport(null)}
+                    width={640}
+                >
+                    {complianceReport ? (
+                        complianceReport.totalViolations ? (
+                            <div className="space-y-4">
+                                <p className="text-sm font-medium text-amber-600">{t("canvas.complianceSummary", { count: complianceReport.totalViolations, score: complianceReport.score })}</p>
+                                <div className="max-h-[60vh] space-y-3 overflow-auto pr-1">
+                                    {complianceReport.nodes.map((node) => (
+                                        <div key={node.nodeId} className="rounded-lg border p-3" style={{ borderColor: "rgba(120,113,108,.28)" }}>
+                                            <div className="mb-2 text-sm font-semibold">
+                                                {node.title || node.nodeId} <span className="opacity-50">· {node.type}</span>
+                                            </div>
+                                            <ul className="space-y-1.5 text-xs">
+                                                {node.violations.map((violation, index) => (
+                                                    <li key={`${violation.field}-${violation.keyword}-${index}`} className="leading-relaxed">
+                                                        <span className="mr-1 rounded bg-amber-100 px-1.5 py-0.5 text-amber-700">{violation.keyword}</span>
+                                                        <span className="opacity-60">[{violation.category}]</span> {violation.suggestion}
+                                                        <span className="opacity-40"> · {t("canvas.complianceField")}: {violation.field}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-sm opacity-60">{t("canvas.complianceClean")}</p>
+                        )
+                    ) : null}
                 </Modal>
 
                 <AssetPickerModal open={assetPickerOpen} onInsert={handleAssetInsert} onClose={() => setAssetPickerOpen(false)} />
