@@ -24,6 +24,7 @@ import { ActiveConnectionPath, ConnectionPath } from "@/components/canvas/canvas
 import { analyzeAutoLinks } from "@/lib/canvas/auto-link";
 import { exportJianYingDraft } from "@/lib/canvas/video-draft-compiler";
 import { scanCanvasCompliance, type CanvasComplianceReport } from "@/lib/canvas/canvas-compliance";
+import { RecipeBrowser, type CanvasSnapshot } from "@/components/canvas/recipe-browser";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
 import { CanvasConfigNodePanel } from "@/components/canvas/canvas-config-node-panel";
 import { CanvasNodeContextMenu } from "@/components/canvas/canvas-context-menu";
@@ -234,6 +235,7 @@ function NovaCanvasPage() {
     const [editRequestNonce, setEditRequestNonce] = useState(0);
     const [infoNodeId, setInfoNodeId] = useState<string | null>(null);
     const [pluginManagerOpen, setPluginManagerOpen] = useState(false);
+    const [recipeOpen, setRecipeOpen] = useState(false);
     const [cropNodeId, setCropNodeId] = useState<string | null>(null);
     const [maskEditNodeId, setMaskEditNodeId] = useState<string | null>(null);
     const [splitNodeId, setSplitNodeId] = useState<string | null>(null);
@@ -750,6 +752,19 @@ function NovaCanvasPage() {
         setConnections((prev) => [...prev, ...proposed]);
         message.success(t("canvas.autoLinkDone", { count: proposed.length }));
     }, [t]);
+
+    const handleApplyRecipeGraph = useCallback((newNodes: CanvasNodeData[], newConnections: CanvasConnection[]) => {
+        setNodes((prev) => [...prev, ...newNodes]);
+        setConnections((prev) => [...prev, ...newConnections]);
+    }, []);
+
+    const getCanvasSnapshot = useCallback((): CanvasSnapshot => {
+        return {
+            title: currentProject?.title || t("canvas.title"),
+            nodes: nodesRef.current,
+            connections: connectionsRef.current,
+        };
+    }, [currentProject, t]);
 
     const deselectCanvas = useCallback(() => {
         cancelPendingConnectionCreate();
@@ -2866,6 +2881,7 @@ function NovaCanvasPage() {
                     onExportProject={exportCurrentProject}
                     onExportJianYing={handleExportJianYing}
                     onCheckCompliance={handleCheckCompliance}
+                    onOpenRecipes={() => setRecipeOpen(true)}
                     onImportImage={() => handleUploadRequest()}
                     onOpenPlugins={() => setPluginManagerOpen(true)}
                     onUndo={undoCanvas}
@@ -2874,6 +2890,13 @@ function NovaCanvasPage() {
                     compactAgentStatus={{ connected: localAgentConnected, enabled: localAgentEnabled, activity: localAgentActivity }}
                     onToggleAgent={toggleAgentPanel}
                     onAutoLink={handleAutoLink}
+                />
+
+                <RecipeBrowser
+                    open={recipeOpen}
+                    onClose={() => setRecipeOpen(false)}
+                    onApplyGraph={handleApplyRecipeGraph}
+                    getSnapshot={getCanvasSnapshot}
                 />
 
                 <NovaCanvas

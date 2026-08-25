@@ -1,4 +1,8 @@
+import type { Recipe } from "@/lib/canvas/recipe-adapter";
+
 const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
+
+export type { Recipe };
 
 interface ApiError {
   code: number;
@@ -117,6 +121,25 @@ export async function checkCompliance(text: string) {
     "/compliance/check",
     { method: "POST", body: JSON.stringify({ text }) }
   );
+}
+
+// Recipes
+export async function listRecipes() {
+    return request<{ recipes: Recipe[] }>("/recipes");
+}
+
+export async function saveRecipe(recipe: Recipe) {
+    return request<Recipe>("/recipes", {
+        method: "POST",
+        body: JSON.stringify(recipe),
+    });
+}
+
+export async function applyRecipe(id: string, values: Record<string, unknown> = {}) {
+    return request<{ graph: Recipe["graph"] }>(`/recipes/${id}/apply`, {
+        method: "POST",
+        body: JSON.stringify({ values }),
+    });
 }
 
 // Chat (Agent)
