@@ -157,7 +157,6 @@ export function NovaTextNode({ node, onUpdate, selected, viewport }: NovaTextNod
 
   return (
     <div
-      ref={editorRef}
       style={nodeStyle}
       onClick={() => setIsEditing(true)}
       onDoubleClick={(e) => {
