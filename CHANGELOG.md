@@ -1,8 +1,14 @@
 # CHANGELOG
 
-## Unreleased
+## v0.16.0 - 2026-08-28
 
 + [新增] 提示词来源新增 Freestylefly GPT Image 2 内置来源。
++ [新增] iframe 沙箱插件系统：第三方不可信插件在隔离 iframe 中运行，按能力（canvas/ai/storage 等）最小权限申请宿主能力，并支持实时事件回传。
++ [新增] 插件管理器第三方页新增「沙箱（iframe）」安装开关与实时事件面板。
++ [新增] 沙箱插件信封（JSON 信封：受信任 manifest + 不可信 source）安装方式，避免主上下文 eval 不可信代码。
++ [新增] 沙箱插件持久化与重载：启动按 iframe 重新激活，卸载/禁用正确销毁沙箱。
++ [新增] 三端提示同步脚本（Continue / OpenCode / GitHub），由 AGENTS.md 派生。
++ [新增] 跨平台 Agent 验证脚本与 GitHub Actions 矩阵（ubuntu / macos / windows）。
 
 ## v0.15.1 - 2026-08-07
 
