@@ -3,6 +3,8 @@
 > 本文件是 **OpenCode 与 VS Code Continue 双端共用的唯一权威约定源**。
 > OpenCode 会自动读取本文件；Continue 通过 `.continue/rules/nova-canvas-conventions.mdc`
 > 自动注入等效摘要。两工具接力开发时，以此为准，避免上下文漂移。
+> 提示同步：`scripts/sync-prompts.{ps1,sh}` 由本文件与 `canvas-agent/agent-instructions.md`
+> 生成 Continue 与 OpenCode 两端提示；修改请改这两份源文件后重跑同步脚本。
 
 ## 0. 项目定位
 - **Nova Canvas / 启画 · AI-001（Sprint 2）**：本地离线优先的多模态 AI 能力层。
