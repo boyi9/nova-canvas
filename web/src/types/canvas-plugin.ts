@@ -142,6 +142,9 @@ export type CanvasPlugin = {
     description?: string;
     minAppVersion?: string;
     css?: string; // Injected when enabled and removed when uninstalled or disabled.
+    // iframe 沙箱插件：声明所需宿主能力（见 iframe-sandbox PLUGIN_CAPABILITIES）与自定义 CSP 片段。
+    capabilities?: string[];
+    csp?: string;
     nodes: CanvasNodeDefinition[];
     setup?: (app: CanvasPluginApp) => void | (() => void);
 };
