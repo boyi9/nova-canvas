@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import { localForageStorage } from "@/lib/localforage-storage";
+import type { CanvasPlugin } from "@/types/canvas-plugin";
 
 export type InstalledPlugin = {
     id: string;
@@ -13,6 +14,9 @@ export type InstalledPlugin = {
     enabled: boolean;
     local?: boolean; // Local plugin discovered in web/public/plugins; disabled by default and refetched from its URL when enabled.
     official?: boolean; // Installed from the official registry and grouped accordingly in the manager.
+    // 沙箱（iframe）插件标记：source 不信任，启动时通过 iframe 沙箱重新激活，绝不 eval 到主上下文。
+    sandbox?: boolean;
+    manifest?: CanvasPlugin; // 沙箱插件的受信任形态描述符（capabilities/css 等），用于重载后重建 iframe。
     installedAt: string;
 };
 

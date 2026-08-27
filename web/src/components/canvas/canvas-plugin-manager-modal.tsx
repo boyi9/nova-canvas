@@ -118,7 +118,10 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
                         icon={<RefreshCw className="size-4" />}
                         loading={busyId === record.id}
                         title={t(upgradable ? "canvas.plugins.upgradeAvailable" : "canvas.plugins.updateFromSource")}
-                        onClick={() => runOnPlugin(record, async () => void (await updatePlugin(record)), t("canvas.plugins.updated"))}
+                        onClick={() => runOnPlugin(record, async () => {
+                            if (record.sandbox) await loadIframePluginFromUrl(record.url, { bustCache: true });
+                            else await updatePlugin(record);
+                        }, t("canvas.plugins.updated"))}
                     />
                     <Popconfirm title={t("canvas.plugins.uninstallTitle")} okText={t("canvas.plugins.uninstall")} cancelText={t("canvas.editors.cancel")} onConfirm={() => uninstallPlugin(record.id)}>
                         <Button type="text" size="small" danger icon={<Trash2 className="size-4" />} title={t("canvas.plugins.uninstall")} />

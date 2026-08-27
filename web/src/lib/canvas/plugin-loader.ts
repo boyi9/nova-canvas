@@ -1,5 +1,6 @@
 import { registerNodeDefinitions, unregisterPluginNodes } from "@/lib/canvas/node-registry";
 import { getPluginRuntime } from "@/lib/canvas/plugin-runtime";
+import { activateIframePlugin, deactivateIframePlugin } from "@/lib/canvas/plugin-iframe-loader";
 import { usePluginStore, type InstalledPlugin } from "@/stores/canvas/use-plugin-store";
 import type { CanvasPlugin } from "@/types/canvas-plugin";
 import i18n from "@/i18n";
@@ -74,6 +75,12 @@ export async function updatePlugin(record: InstalledPlugin) {
 
 export async function setPluginEnabled(record: InstalledPlugin, enabled: boolean) {
     usePluginStore.getState().setEnabled(record.id, enabled);
+    // 沙箱插件走 iframe 沙箱启停，不 eval 不可信 source。
+    if (record.sandbox && record.manifest) {
+        if (!enabled) deactivateIframePlugin(record.id);
+        else activateIframePlugin(record.manifest, record.source, record.manifest.css);
+        return;
+    }
     if (!enabled) {
         deactivatePlugin(record.id);
         return;
@@ -85,7 +92,9 @@ export async function setPluginEnabled(record: InstalledPlugin, enabled: boolean
 }
 
 export function uninstallPlugin(id: string) {
-    deactivatePlugin(id);
+    const record = usePluginStore.getState().plugins.find((item) => item.id === id);
+    if (record?.sandbox) deactivateIframePlugin(id);
+    else deactivatePlugin(id);
     usePluginStore.getState().remove(id);
 }
 
@@ -101,6 +110,11 @@ export async function ensurePluginsLoaded() {
     await Promise.all(
         records.map(async (record) => {
             try {
+                // 沙箱（iframe）插件：绝不 eval 不可信 source，直接重建隔离 iframe 并恢复宿主能力桥接。
+                if (record.sandbox && record.manifest) {
+                    activateIframePlugin(record.manifest, record.source, record.manifest.css);
+                    return;
+                }
                 // Local plugins use the latest output; other plugins use their cached source.
                 const source = record.local ? await fetchPluginSource(withCacheBust(record.url)) : record.source;
                 activatePlugin(await evaluatePluginSource(source));

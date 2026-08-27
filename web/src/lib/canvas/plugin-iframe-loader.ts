@@ -9,6 +9,9 @@ import { registerNodeDefinitions, unregisterPluginNodes } from './node-registry'
 import { usePluginStore, type InstalledPlugin } from '@/stores/canvas/use-plugin-store';
 import type { CanvasPlugin, CanvasPluginApp } from '@/types/canvas-plugin';
 
+// 注意：不要在此模块导入 @/lib/canvas/plugin-loader，以免形成循环依赖。
+// 沙箱插件的重载/启停在 plugin-loader 中通过本模块导出的 activateIframePlugin/deactivateIframePlugin 完成。
+
 interface IframePluginInstance {
     id: string;
     iframe: HTMLIFrameElement;
@@ -301,6 +304,8 @@ export async function installIframePlugin(
         source,
         enabled: true,
         official: opts?.official,
+        sandbox: true,
+        manifest: plugin,
     });
     return activateIframePlugin(plugin, source, plugin.css);
 }
