@@ -191,7 +191,12 @@ export function activateIframePlugin(plugin: CanvasPlugin, source: string, css?:
         csp: plugin.csp,
     };
 
-    const html = createPluginIframeHTML({ ...manifest, source, css });
+    const nonce = Math.random().toString(36).slice(2);
+    const csp = buildCSP(manifest).replace(
+        /script-src[^;]*/,
+        `script-src 'nonce-${nonce}' 'wasm-unsafe-eval'`,
+    );
+    const html = createPluginIframeHTML({ ...manifest, source, css }, nonce);
     const sandbox = createIframeSandbox({
         config: {
             pluginId: plugin.id,
@@ -202,12 +207,16 @@ export function activateIframePlugin(plugin: CanvasPlugin, source: string, css?:
                 capabilities: manifest.capabilities,
                 csp: manifest.csp,
             },
-            csp: buildCSP(manifest),
+            csp,
             srcDoc: html,
         },
         onRequest: (msg) => handlePluginRequest(plugin.id, msg.method, msg.payload),
         onMessage: (method, payload) => forwardPluginEvent(plugin.id, method, payload),
-        onReady: () => forwardPluginEvent(plugin.id, 'iframe:ready'),
+        onReady: () => {
+            forwardPluginEvent(plugin.id, 'iframe:ready');
+            // 告知沙箱插件画布已就绪，触发依赖 canvas:ready 的插件逻辑。
+            sandbox.emit('canvas:ready');
+        },
     });
 
     const disposers: Array<() => void> = [];
