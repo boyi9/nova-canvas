@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { canvasThemes } from "@/lib/canvas-theme";
 import { installPluginFromUrl, setPluginEnabled, uninstallPlugin, updatePlugin } from "@/lib/canvas/plugin-loader";
+import { loadIframePluginFromUrl } from "@/lib/canvas/plugin-iframe-loader";
 import { fetchOfficialPlugins, hasUpgrade, type OfficialPluginEntry } from "@/lib/canvas/plugin-registry";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { usePluginStore, type InstalledPlugin } from "@/stores/canvas/use-plugin-store";
@@ -16,6 +17,7 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
     const plugins = usePluginStore((state) => state.plugins);
     const [url, setUrl] = useState("");
     const [installing, setInstalling] = useState(false);
+    const [sandbox, setSandbox] = useState(false);
     const [busyId, setBusyId] = useState<string | null>(null);
 
     const [official, setOfficial] = useState<OfficialPluginEntry[]>([]);
@@ -48,8 +50,14 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
         if (!target) return;
         setInstalling(true);
         try {
-            const plugin = await installPluginFromUrl(target);
-            message.success(t("canvas.plugins.installedPlugin", { name: plugin.name }));
+            if (sandbox) {
+                // Untrusted source runs inside an iframe sandbox; URL must return a JSON envelope.
+                const plugin = await loadIframePluginFromUrl(target);
+                message.success(t("canvas.plugins.installedPlugin", { name: plugin.id }));
+            } else {
+                const plugin = await installPluginFromUrl(target);
+                message.success(t("canvas.plugins.installedPlugin", { name: plugin.name }));
+            }
             setUrl("");
         } catch (error) {
             message.error(t("canvas.plugins.installFailed", { error: error instanceof Error ? error.message : String(error) }));
@@ -197,6 +205,10 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
 
     const thirdPartyTab = (
         <div className="space-y-3">
+            <div className="flex items-center gap-2 text-xs" style={{ color: theme.node.muted }}>
+                <Switch size="small" checked={sandbox} onChange={setSandbox} />
+                <span title={t("canvas.plugins.sandboxHint")}>{t("canvas.plugins.sandbox")}</span>
+            </div>
             <div className="flex gap-2">
                 <Input placeholder={t("canvas.plugins.urlPlaceholder")} value={url} onChange={(event) => setUrl(event.target.value)} onPressEnter={handleInstallUrl} allowClear />
                 <Button type="primary" loading={installing} onClick={handleInstallUrl} icon={<Puzzle className="size-4" />}>

@@ -8,6 +8,7 @@ import { buildGenerationConfig } from "@/lib/canvas/canvas-generation-helpers";
 import { buildNodeContext } from "@/lib/canvas/plugin-node-context";
 import { getNodeDefinition } from "@/lib/canvas/node-registry";
 import { ensurePluginsLoaded } from "@/lib/canvas/plugin-loader";
+import { setIframeHostBridge, type IframeHostBridge } from "@/lib/canvas/plugin-iframe-loader";
 import { canvasThemes } from "@/lib/canvas-theme";
 import type { CanvasNodeToolbarItem, CanvasPluginAi, CanvasPluginHost } from "@/types/canvas-plugin";
 import type { ReferenceImage } from "@/types/image";
@@ -136,6 +137,11 @@ export function usePluginHost(params: PluginHostParams) {
         },
         [pluginHost, t, theme],
     );
+
+    // Expose the host canvas/AI capabilities to sandboxed (iframe) plugins.
+    useEffect(() => {
+        setIframeHostBridge(pluginHost as unknown as IframeHostBridge);
+    }, [pluginHost]);
 
     // Load installed remote plugins on startup.
     useEffect(() => {

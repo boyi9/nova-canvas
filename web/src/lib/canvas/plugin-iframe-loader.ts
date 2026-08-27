@@ -256,14 +256,27 @@ export async function installIframePlugin(
 }
 
 export async function loadIframePluginFromUrl(
-    plugin: CanvasPlugin,
     url: string,
     opts?: { official?: boolean; bustCache?: boolean },
 ): Promise<IframePluginInstance> {
-    const response = await fetch(opts?.bustCache ? withCacheBust(url) : url);
+    const separator = url.includes("?") ? "&" : "?";
+    const target = opts?.bustCache ? `${url}${separator}t=${Date.now()}` : url;
+    const response = await fetch(target);
     if (!response.ok) throw new Error(`Plugin download failed: ${response.status}`);
-    const source = await response.text();
-    return installIframePlugin(plugin, source, { official: opts?.official, url });
+    const text = await response.text();
+    // Sandboxed plugins ship a JSON envelope: a trusted-shaped manifest plus untrusted source.
+    // The source runs inside the iframe sandbox; node definitions come from the manifest.
+    let manifest: CanvasPlugin;
+    let source: string;
+    try {
+        const env = JSON.parse(text) as { plugin: CanvasPlugin; source: string };
+        manifest = env.plugin;
+        source = env.source;
+    } catch {
+        throw new Error("Sandboxed plugin URL must return a JSON envelope: {\"plugin\": {...}, \"source\": \"...\"}");
+    }
+    if (!manifest?.id) throw new Error("Envelope missing plugin.id");
+    return installIframePlugin(manifest, source, { official: opts?.official, url });
 }
 
 export function uninstallIframePlugin(id: string): void {
