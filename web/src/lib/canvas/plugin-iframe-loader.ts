@@ -84,8 +84,11 @@ async function checkCapability(pluginId: string, capability: string): Promise<bo
     if (cache.has(capability)) return cache.get(capability)!;
     let granted = isCapabilityGranted(pluginId, capability);
     if (!granted) granted = await requestCapability(pluginId, capability);
-    cache.set(capability, granted);
-    capabilityCache.set(pluginId, cache);
+    // 只缓存已授权结果；拒绝不缓存，允许用户后续重新授权。
+    if (granted) {
+        cache.set(capability, true);
+        capabilityCache.set(pluginId, cache);
+    }
     return granted;
 }
 
@@ -203,7 +206,7 @@ export function activateIframePlugin(plugin: CanvasPlugin, source: string, css?:
     const cleanup = plugin.setup?.(app);
     if (typeof cleanup === 'function') disposers.push(cleanup);
 
-    registerNodeDefinitions(plugin.nodes, plugin.id);
+    registerNodeDefinitions(plugin.nodes ?? [], plugin.id);
 
     const instance: IframePluginInstance = { id: plugin.id, iframe: sandbox.iframe, sandbox, manifest, plugin, disposers };
     instances.set(plugin.id, instance);
