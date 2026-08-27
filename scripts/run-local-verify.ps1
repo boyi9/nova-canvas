@@ -29,6 +29,9 @@ if (-not (Test-Path $Script)) {
     exit 1
 }
 
+# Normalize path separators for bash/WSL
+$normalized = $Script -replace '\\', '/'
+
 # Run with retry logic
 $attempt = 1
 $success = $false
@@ -39,13 +42,16 @@ while ($attempt -le $AutoRetry) {
     # Run the bash script (requires WSL or Git Bash)
     $exitCode = 0
     try {
-        # Try running via WSL first
+        # Try running via WSL first (convert C:\...\x.sh -> /mnt/c/.../x.sh)
         if (Get-Command wsl -ErrorAction SilentlyContinue) {
-            & wsl bash $Script
+            $drive = $null
+            if ($normalized -match '^([A-Za-z]):') { $drive = $Matches[1].ToLower() }
+            if ($drive) { $wslPath = "/mnt/$drive" + $normalized.Substring(2) } else { $wslPath = $normalized }
+            & wsl bash $wslPath
             $exitCode = $LASTEXITCODE
         }
         elseif (Get-Command bash -ErrorAction SilentlyContinue) {
-            & bash $Script
+            & bash $normalized
             $exitCode = $LASTEXITCODE
         }
         else {

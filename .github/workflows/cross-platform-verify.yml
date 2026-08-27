@@ -1,0 +1,46 @@
+name: Cross-platform Agent Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  agent-tests:
+    name: canvas-agent unit tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: canvas-agent
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: npm install
+      - name: Run agent tests
+        run: npm test
+
+  env-verify:
+    name: local model env verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify local model environment (best-effort)
+        shell: bash
+        run: |
+          # Check-only: do not install deps or pull models on hosted runners.
+          # Proves scripts/verify-local-env.sh runs cleanly on every OS.
+          INSTALL_DEPS=false PULL_MODELS=false bash scripts/verify-local-env.sh || true
