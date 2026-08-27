@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { App, Button, Input, Modal, Popconfirm, Switch, Tabs } from "antd";
 import { AlertTriangle, Download, Puzzle, RefreshCw, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { canvasThemes } from "@/lib/canvas-theme";
 import { installPluginFromUrl, setPluginEnabled, uninstallPlugin, updatePlugin } from "@/lib/canvas/plugin-loader";
-import { loadIframePluginFromUrl } from "@/lib/canvas/plugin-iframe-loader";
+import { loadIframePluginFromUrl, subscribeAllPluginEvents, type PluginEvent } from "@/lib/canvas/plugin-iframe-loader";
 import { fetchOfficialPlugins, hasUpgrade, type OfficialPluginEntry } from "@/lib/canvas/plugin-registry";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { usePluginStore, type InstalledPlugin } from "@/stores/canvas/use-plugin-store";
@@ -19,6 +19,9 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
     const [installing, setInstalling] = useState(false);
     const [sandbox, setSandbox] = useState(false);
     const [busyId, setBusyId] = useState<string | null>(null);
+    // 实时显示沙箱插件通过 app.emit 回传的事件。
+    const [events, setEvents] = useState<Array<{ key: number; pluginId: string; event: PluginEvent; at: number }>>([]);
+    const eventIdRef = useRef(0);
 
     const [official, setOfficial] = useState<OfficialPluginEntry[]>([]);
     const [loadingOfficial, setLoadingOfficial] = useState(false);
@@ -44,6 +47,18 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
     useEffect(() => {
         if (open && official.length === 0 && !loadingOfficial && !officialError) void loadOfficial();
     }, [open, official.length, loadingOfficial, officialError, loadOfficial]);
+
+    // 订阅沙箱插件事件回传，展示在第三方插件页的实时事件面板。
+    useEffect(() => {
+        if (!open) return;
+        const unsub = subscribeAllPluginEvents((pluginId, ev) => {
+            setEvents((prev) => {
+                const next = [...prev, { key: eventIdRef.current++, pluginId, event: ev, at: Date.now() }];
+                return next.length > 30 ? next.slice(next.length - 30) : next;
+            });
+        });
+        return unsub;
+    }, [open]);
 
     const handleInstallUrl = async () => {
         const target = url.trim();
@@ -203,6 +218,22 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
 
     const localTab = <div className="thin-scrollbar max-h-[52vh] space-y-2 overflow-auto">{localPlugins.map((record) => row(record.id, <Puzzle className="size-4" />, record.name, record.version, record.description || record.url, installedControls(record)))}</div>;
 
+    const formatPayload = (payload?: unknown): string => {
+        if (payload == null) return "";
+        if (typeof payload === "string") return " — " + payload;
+        if (typeof payload === "object") {
+            const obj = payload as Record<string, unknown>;
+            if (typeof obj.summary === "string") return " — " + obj.summary;
+            try {
+                const s = JSON.stringify(payload);
+                return " — " + (s.length > 120 ? s.slice(0, 120) + "…" : s);
+            } catch {
+                return "";
+            }
+        }
+        return " — " + String(payload);
+    };
+
     const thirdPartyTab = (
         <div className="space-y-3">
             <div className="flex items-center gap-2 text-xs" style={{ color: theme.node.muted }}>
@@ -216,6 +247,32 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
                 </Button>
             </div>
             <div className="thin-scrollbar max-h-[42vh] space-y-2 overflow-auto">{thirdPartyPlugins.length === 0 ? emptyHint(t("canvas.plugins.noThirdParty")) : thirdPartyPlugins.map((record) => row(record.id, <Puzzle className="size-4" />, record.name, record.version, record.description || record.url, installedControls(record)))}</div>
+            <div className="space-y-1.5 rounded-lg border px-3 py-2" style={{ borderColor: theme.node.stroke, background: theme.node.fill }}>
+                <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium" style={{ color: theme.node.text }}>{t("canvas.plugins.events")}</span>
+                    {events.length > 0 && (
+                        <Button type="text" size="small" onClick={() => setEvents([])}>
+                            {t("canvas.plugins.eventsClear")}
+                        </Button>
+                    )}
+                </div>
+                <div className="thin-scrollbar max-h-[16vh] space-y-1 overflow-auto">
+                    {events.length === 0 ? (
+                        emptyHint(t("canvas.plugins.eventsEmpty"))
+                    ) : (
+                        events
+                            .slice()
+                            .reverse()
+                            .map((e) => (
+                                <div key={e.key} className="rounded-md border px-2 py-1 text-xs" style={{ borderColor: theme.node.stroke, color: theme.node.muted }}>
+                                    <span className="font-medium" style={{ color: theme.node.text }}>{recordById.get(e.pluginId)?.name ?? e.pluginId}</span>
+                                    <span> · {e.event.type}</span>
+                                    <span>{formatPayload(e.event.payload)}</span>
+                                </div>
+                            ))
+                    )}
+                </div>
+            </div>
         </div>
     );
 

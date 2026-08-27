@@ -192,6 +192,8 @@ export function activateIframePlugin(plugin: CanvasPlugin, source: string, css?:
             srcDoc: html,
         },
         onRequest: (msg) => handlePluginRequest(plugin.id, msg.method, msg.payload),
+        onMessage: (method, payload) => forwardPluginEvent(plugin.id, method, payload),
+        onReady: () => forwardPluginEvent(plugin.id, 'iframe:ready'),
     });
 
     const disposers: Array<() => void> = [];
@@ -231,8 +233,53 @@ export function isIframePluginLoaded(pluginId: string): boolean {
     return instances.has(pluginId);
 }
 
-function withCacheBust(url: string): string {
-    return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+// 沙箱插件 -> 宿主 事件回传：插件通过 app.emit / window.__pluginRpc.emit 主动上报事件，
+// 宿主在此统一转发给订阅者（如插件管理器的实时事件面板）。
+export interface PluginEvent {
+    type: string;
+    payload?: unknown;
+}
+
+type PluginEventHandler = (event: PluginEvent) => void;
+const pluginEventSubs = new Map<string, Set<PluginEventHandler>>();
+const pluginEventAllSubs = new Set<(pluginId: string, event: PluginEvent) => void>();
+
+export function subscribePluginEvents(pluginId: string, handler: PluginEventHandler): () => void {
+    const subs = pluginEventSubs.get(pluginId) ?? new Set<PluginEventHandler>();
+    subs.add(handler);
+    pluginEventSubs.set(pluginId, subs);
+    return () => {
+        const s = pluginEventSubs.get(pluginId);
+        if (s) {
+            s.delete(handler);
+            if (s.size === 0) pluginEventSubs.delete(pluginId);
+        }
+    };
+}
+
+export function subscribeAllPluginEvents(handler: (pluginId: string, event: PluginEvent) => void): () => void {
+    pluginEventAllSubs.add(handler);
+    return () => {
+        pluginEventAllSubs.delete(handler);
+    };
+}
+
+function forwardPluginEvent(pluginId: string, type: string, payload?: unknown): void {
+    const event: PluginEvent = { type, payload };
+    pluginEventSubs.get(pluginId)?.forEach((h) => {
+        try {
+            h(event);
+        } catch (e) {
+            console.error('[sandbox] plugin event subscriber error', e);
+        }
+    });
+    pluginEventAllSubs.forEach((h) => {
+        try {
+            h(pluginId, event);
+        } catch (e) {
+            console.error('[sandbox] plugin event subscriber error', e);
+        }
+    });
 }
 
 /**

@@ -179,14 +179,17 @@ export function createIframeSandbox(options: IframeSandboxOptions): {
                 pending.reject(new Error(msg.error || 'Unknown error'));
             }
         } else if (msg.type === 'event') {
-            if (msg.method === 'iframe:ready') {
+            const data = (msg.payload ?? {}) as { event?: string; payload?: unknown };
+            const eventName = data.event;
+            const eventPayload = data.payload;
+            if (eventName === 'iframe:ready') {
                 ready = true;
                 onReady?.();
-            } else if (msg.method && onMessage) {
-                onMessage(msg.method, msg.payload);
+            } else if (eventName && onMessage) {
+                onMessage(eventName, eventPayload);
             }
-            const handlers = eventHandlers.get(msg.method);
-            if (handlers) handlers.forEach((h) => h(msg.payload));
+            const handlers = eventHandlers.get(eventName);
+            if (handlers) handlers.forEach((h) => h(eventPayload));
         } else if (msg.type === 'request') {
             // 插件请求宿主能力，交由调用方桥接
             void handlePluginRequest({ id: msg.id!, method: msg.method!, payload: msg.payload });

@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { setPluginPermission } from "@/lib/canvas/iframe-sandbox";
+import { createIframeSandbox } from "@/lib/canvas/iframe-sandbox-host";
 import * as nodeRegistry from "@/lib/canvas/node-registry";
 import { usePluginStore } from "@/stores/canvas/use-plugin-store";
 import {
@@ -9,10 +10,11 @@ import {
     getIframePlugin,
     loadIframePluginFromUrl,
     setIframeHostBridge,
+    subscribeAllPluginEvents,
     type IframeHostBridge,
 } from "@/lib/canvas/plugin-iframe-loader";
 
-// The real sandbox needs a real iframe + postMessage; mock it so we can drive onRequest directly.
+// The real sandbox needs a real iframe + postMessage; mock it so we can drive onRequest/onMessage directly.
 const fakeSandbox = {
     iframe: {} as HTMLIFrameElement,
     call: vi.fn(),
@@ -22,11 +24,19 @@ const fakeSandbox = {
     isReady: () => true,
 };
 let capturedOnRequest: ((msg: { id: string; method: string; payload?: unknown }) => Promise<unknown>) | null = null;
+let capturedOnMessage: ((method: string, payload: unknown) => void) | null = null;
+let capturedOnReady: (() => void) | null = null;
 
 vi.mock("@/lib/canvas/iframe-sandbox-host", () => ({
-    createIframeSandbox: vi.fn((opts: { onRequest?: (msg: { id: string; method: string; payload?: unknown }) => Promise<unknown> }) => {
+    createIframeSandbox: vi.fn((opts: {
+        onRequest?: (msg: { id: string; method: string; payload?: unknown }) => Promise<unknown>;
+        onMessage?: (method: string, payload: unknown) => void;
+        onReady?: () => void;
+    }) => {
         capturedOnRequest = opts.onRequest ?? null;
-        return fakeSandbox as unknown as ReturnType<typeof import("@/lib/canvas/iframe-sandbox-host").createIframeSandbox>;
+        capturedOnMessage = opts.onMessage ?? null;
+        capturedOnReady = opts.onReady ?? null;
+        return fakeSandbox as unknown as ReturnType<typeof createIframeSandbox>;
     }),
     createPluginIframeHTML: vi.fn(() => ""),
 }));
@@ -68,6 +78,8 @@ beforeEach(() => {
     vi.stubGlobal("fetch", mockFetch());
     window.confirm = vi.fn(() => false) as unknown as typeof window.confirm;
     capturedOnRequest = null;
+    capturedOnMessage = null;
+    capturedOnReady = null;
     setIframeHostBridge(emptyBridge);
     vi.spyOn(nodeRegistry, "registerNodeDefinitions").mockImplementation(() => {});
     vi.spyOn(nodeRegistry, "unregisterPluginNodes").mockImplementation(() => {});
@@ -120,5 +132,18 @@ describe("iframe sandbox plugin loader", () => {
         deactivateIframePlugin("sandbox-sample");
         expect(getIframePlugin("sandbox-sample")).toBeUndefined();
         expect(nodeRegistry.unregisterPluginNodes).toHaveBeenCalledWith("sandbox-sample");
+    });
+
+    it("forwards iframe -> host events (incl. iframe:ready) to subscribers", async () => {
+        const received: Array<{ pluginId: string; type: string }> = [];
+        const unsub = subscribeAllPluginEvents((pluginId, ev) => received.push({ pluginId, type: ev.type }));
+        await loadIframePluginFromUrl("http://localhost/plugins/sandbox-sample.json");
+        expect(capturedOnMessage).toBeTypeOf("function");
+        expect(capturedOnReady).toBeTypeOf("function");
+        capturedOnReady!();
+        capturedOnMessage!("sample:done", { ok: true, summary: "done" });
+        expect(received).toContainEqual({ pluginId: "sandbox-sample", type: "iframe:ready" });
+        expect(received).toContainEqual({ pluginId: "sandbox-sample", type: "sample:done" });
+        unsub();
     });
 });
