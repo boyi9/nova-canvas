@@ -5,7 +5,8 @@ import { useTranslation } from "react-i18next";
 
 import { canvasThemes } from "@/lib/canvas-theme";
 import { installPluginFromUrl, setPluginEnabled, uninstallPlugin, updatePlugin } from "@/lib/canvas/plugin-loader";
-import { loadIframePluginFromUrl, subscribeAllPluginEvents, type PluginEvent } from "@/lib/canvas/plugin-iframe-loader";
+import { loadIframePluginFromUrl, subscribeAllPluginEvents, getIframePlugin, type PluginEvent } from "@/lib/canvas/plugin-iframe-loader";
+import { useSandboxPanelStore } from "@/stores/canvas/use-sandbox-panel-store";
 import { fetchOfficialPlugins, hasUpgrade, type OfficialPluginEntry } from "@/lib/canvas/plugin-registry";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { usePluginStore, type InstalledPlugin } from "@/stores/canvas/use-plugin-store";
@@ -279,10 +280,49 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
         </div>
     );
 
+    const panels = useSandboxPanelStore((s) => s.panels);
+    const panelTab = (
+        <div className="thin-scrollbar max-h-[52vh] space-y-2 overflow-auto">
+            {Object.keys(panels).length === 0 ? (
+                emptyHint(t("canvas.plugins.panelEmpty"))
+            ) : (
+                Object.entries(panels).map(([pluginId, view]) => {
+                    const name = recordById.get(pluginId)?.name ?? pluginId;
+                    return (
+                        <div key={pluginId} className="rounded-lg border px-3 py-2" style={{ borderColor: theme.node.stroke, background: theme.node.fill }}>
+                            <div className="text-sm font-medium" style={{ color: theme.node.text }}>{view.title || name}</div>
+                            {view.description ? <div className="mt-0.5 text-xs" style={{ color: theme.node.muted }}>{view.description}</div> : null}
+                            {view.image ? (
+                                <img src={view.image} alt={view.title || name} className="mt-2 max-h-44 rounded-lg border" style={{ borderColor: theme.node.stroke }} />
+                            ) : null}
+                            {view.actions && view.actions.length > 0 ? (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {view.actions.map((a) => (
+                                        <Button
+                                            key={a.id}
+                                            size="small"
+                                            type={a.kind === "primary" ? "primary" : "default"}
+                                            onClick={() => {
+                                                void getIframePlugin(pluginId)?.sandbox.call("onPanelAction", { actionId: a.id });
+                                            }}
+                                        >
+                                            {a.label}
+                                        </Button>
+                                    ))}
+                                </div>
+                            ) : null}
+                        </div>
+                    );
+                })
+            )}
+        </div>
+    );
+
     const tabs = [
         { key: "official", label: t("canvas.plugins.official"), children: officialTab },
         ...(localPlugins.length > 0 ? [{ key: "local", label: t("canvas.plugins.local"), children: localTab }] : []),
         { key: "third", label: t("canvas.plugins.thirdParty"), children: thirdPartyTab },
+        { key: "panel", label: t("canvas.plugins.panel"), children: panelTab },
     ];
 
     return (

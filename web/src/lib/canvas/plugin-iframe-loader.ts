@@ -7,7 +7,8 @@ import {
 } from './iframe-sandbox';
 import { registerNodeDefinitions, unregisterPluginNodes } from './node-registry';
 import { usePluginStore, type InstalledPlugin } from '@/stores/canvas/use-plugin-store';
-import type { CanvasPlugin, CanvasPluginApp } from '@/types/canvas-plugin';
+import { useSandboxPanelStore } from '@/stores/canvas/use-sandbox-panel-store';
+import type { CanvasPlugin, CanvasPluginApp, SandboxPanelView } from '@/types/canvas-plugin';
 
 // 注意：不要在此模块导入 @/lib/canvas/plugin-loader，以免形成循环依赖。
 // 沙箱插件的重载/启停在 plugin-loader 中通过本模块导出的 activateIframePlugin/deactivateIframePlugin 完成。
@@ -73,6 +74,7 @@ function methodCapability(method: string): string | null {
     if (['getNode', 'getNodes', 'getConnections', 'getUpstream', 'getDownstream'].includes(method)) return 'canvas:read';
     if (['updateNode', 'updateMetadata', 'applyOps'].includes(method)) return 'canvas:write';
     if (method.startsWith('ai.')) return 'ai:generate';
+    if (method === 'renderPanel' || method === 'clearPanel') return 'ui:render';
     return null;
 }
 
@@ -117,6 +119,15 @@ async function handlePluginRequest(pluginId: string, method: string, payload: un
         case 'pluginStorage.remove': {
             const key = (payload as { key: string }).key;
             localStorage.removeItem(storageKey(pluginId, key));
+            return null;
+        }
+        // 沙箱插件推送/清除声明式面板（宿主 UI 渲染，不需要 hostBridge）。
+        case 'renderPanel': {
+            useSandboxPanelStore.getState().setPanel(pluginId, (payload as SandboxPanelView) ?? {});
+            return null;
+        }
+        case 'clearPanel': {
+            useSandboxPanelStore.getState().clearPanel(pluginId);
             return null;
         }
         default:
@@ -226,6 +237,7 @@ export function deactivateIframePlugin(pluginId: string): void {
     instances.delete(pluginId);
     capabilityCache.delete(pluginId);
     unregisterPluginNodes(pluginId);
+    useSandboxPanelStore.getState().clearPanel(pluginId);
 }
 
 export function getIframePlugin(pluginId: string): IframePluginInstance | undefined {

@@ -91,7 +91,11 @@ const PLUGIN_RUNTIME_SOURCE = `
             style.textContent = css;
             document.head.appendChild(style);
             return () => style.remove();
-        }
+        },
+        // 沙箱插件向宿主 UI 推送声明式面板，宿主负责实际渲染。
+        renderPanel: (view) => window.__pluginRpc.call('renderPanel', view),
+        clearPanel: () => window.__pluginRpc.call('clearPanel', {}),
+        register: (method, handler) => window.__pluginRpc.register(method, handler),
     };
 
     // 暴露给插件的全局对象
@@ -99,6 +103,9 @@ const PLUGIN_RUNTIME_SOURCE = `
     window.__PluginRuntime.call = window.__pluginRpc.call;
     window.__PluginRuntime.on = window.__pluginRpc.on;
     window.__PluginRuntime.emit = window.__pluginRpc.emit;
+    window.__PluginRuntime.renderPanel = runtime.renderPanel;
+    window.__PluginRuntime.clearPanel = runtime.clearPanel;
+    window.__PluginRuntime.register = runtime.register;
 
     // 通知宿主 iframe 就绪
     send('event', { event: 'iframe:ready' }, null);

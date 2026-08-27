@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { setPluginPermission } from "@/lib/canvas/iframe-sandbox";
+import { setPluginPermission, isCapabilityGranted } from "@/lib/canvas/iframe-sandbox";
 import { createIframeSandbox } from "@/lib/canvas/iframe-sandbox-host";
+import { useSandboxPanelStore } from "@/stores/canvas/use-sandbox-panel-store";
 import * as nodeRegistry from "@/lib/canvas/node-registry";
 import { usePluginStore } from "@/stores/canvas/use-plugin-store";
 import {
@@ -11,6 +12,7 @@ import {
     loadIframePluginFromUrl,
     setIframeHostBridge,
     subscribeAllPluginEvents,
+    getIframePlugin,
     type IframeHostBridge,
 } from "@/lib/canvas/plugin-iframe-loader";
 
@@ -47,7 +49,7 @@ const envelope = {
         name: "Sandbox Sample",
         version: "0.1.0",
         description: "demo",
-        capabilities: ["canvas:read", "ai:generate"],
+        capabilities: ["canvas:read", "ai:generate", "ui:render"],
     },
     source: "console.log('hi from sandbox');",
 };
@@ -145,5 +147,22 @@ describe("iframe sandbox plugin loader", () => {
         expect(received).toContainEqual({ pluginId: "sandbox-sample", type: "iframe:ready" });
         expect(received).toContainEqual({ pluginId: "sandbox-sample", type: "sample:done" });
         unsub();
+    });
+
+    it("renders a declarative panel via the ui:render capability and clears it", async () => {
+        await loadIframePluginFromUrl("http://localhost/plugins/sandbox-sample.json");
+        useSandboxPanelStore.getState().clearAll();
+        await capturedOnRequest!({ id: "9", method: "renderPanel", payload: { title: "hi", status: "done" } });
+        expect(useSandboxPanelStore.getState().panels["sandbox-sample"]?.title).toBe("hi");
+        await capturedOnRequest!({ id: "10", method: "clearPanel", payload: {} });
+        expect(useSandboxPanelStore.getState().panels["sandbox-sample"]).toBeUndefined();
+    });
+
+    it("denies renderPanel when ui:render is not declared", async () => {
+        // 用一份未声明 ui:render 的信封验证权限拒绝。
+        const strictEnvelope = JSON.stringify({ plugin: { id: "no-ui", name: "no-ui", version: "0.1.0", capabilities: ["canvas:read"] }, source: "console.log(1)" });
+        vi.mocked(fetch).mockResolvedValueOnce({ ok: true, status: 200, text: async () => strictEnvelope } as unknown as Response);
+        await loadIframePluginFromUrl("http://localhost/no-ui.json");
+        await expect(capturedOnRequest!({ id: "11", method: "renderPanel", payload: { title: "x" } })).rejects.toThrow(/Permission denied/);
     });
 });

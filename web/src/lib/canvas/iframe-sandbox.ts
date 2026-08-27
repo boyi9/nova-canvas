@@ -33,6 +33,7 @@ export const PLUGIN_CAPABILITIES: PluginCapability[] = [
     { name: 'clipboard:read', description: '读取剪贴板', risk: 'medium', defaultGranted: false },
     { name: 'clipboard:write', description: '写入剪贴板', risk: 'low', defaultGranted: true },
     { name: 'notifications', description: '发送桌面通知', risk: 'low', defaultGranted: false },
+    { name: 'ui:render', description: '在宿主 UI 中渲染插件面板', risk: 'low', defaultGranted: true },
 ];
 
 export interface PluginManifest {

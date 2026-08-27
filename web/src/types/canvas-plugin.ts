@@ -125,6 +125,17 @@ export type CanvasNodeDefinition = {
     onDoubleClick?: (ctx: CanvasNodeContext) => boolean; // Return true when handled.
 };
 
+// 沙箱插件通过宿主渲染的声明式面板视图（可序列化，不携带任何函数/组件）。
+// 插件推送数据，宿主按此模型渲染 UI，从而在不把 React 组件塞进 JSON 信封的前提下实现"插件渲染 UI"。
+export type SandboxPanelAction = { id: string; label: string; kind?: "primary" | "default" | "danger" };
+export type SandboxPanelView = {
+    title?: string;
+    description?: string;
+    image?: string; // data URL 或 http(s) 图片地址
+    status?: "idle" | "loading" | "done" | "error";
+    actions?: SandboxPanelAction[];
+};
+
 // Application capabilities available while a plugin starts.
 export type CanvasPluginApp = {
     version: string;
@@ -132,6 +143,11 @@ export type CanvasPluginApp = {
     on: (event: string, handler: (payload: unknown) => void) => () => void;
     // Injects plugin styles and returns a cleanup function; the same key replaces previous styles.
     injectCSS: (css: string, key?: string) => () => void;
+    // 沙箱插件：向宿主 UI 推送/清除声明式面板（宿主渲染，避免序列化 React 组件）。
+    renderPanel?: (view: SandboxPanelView) => void;
+    clearPanel?: () => void;
+    // 注册宿主 -> 插件 的 RPC 处理方法（如面板按钮回调 onPanelAction）。
+    register?: (method: string, handler: (payload: unknown) => unknown | Promise<unknown>) => void;
 };
 
 // Default plugin package export.
