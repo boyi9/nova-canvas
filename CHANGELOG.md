@@ -9,6 +9,12 @@
 ### 文档
 - [文档] 新增《第三方沙箱插件开发指南》（`docs/sandbox-plugin-guide.md`）：信封格式、运行时全局对象（`window.__PluginRuntime` / `hostBridge` / `__pluginRpc`）、声明式面板、能力表与安全模型，配套 `web/public/plugins/sandbox-sample.json` 示例。
 
+### 功能
+- [新增] 自定义生图脚本能力（Sprint 2 计划项）：插件管理器新增「生图脚本」标签页，支持粘贴/从 URL 加载 JS 源码、声明所需能力（canvas/ai/storage），在隔离 iframe 沙箱中运行，经 `hostBridge` 调用宿主 AI 与画布能力，结果通过 `applyOps` 回写画布。
+- [新增] 脚本运行时入口 `runIframeScript` / `runIframeScriptFromUrl`：复用既有沙箱与 `hostBridge`，脚本无需 nodes/setup，仅需声明能力。
+- [新增] 三个官方示例脚本（`web/public/plugins/scripts/`）：批量主图生成、参考图编辑（图生图）、多模型对比。
+- [测试] Playwright 新增脚本模式端到端用例：安装脚本 → 授权 `canvas:write` → 运行 → `applyOps` 回写画布。
+
 ## v0.16.0 - 2026-08-28
 
 + [新增] 提示词来源新增 Freestylefly GPT Image 2 内置来源。

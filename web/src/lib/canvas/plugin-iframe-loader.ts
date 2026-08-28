@@ -360,4 +360,50 @@ export function uninstallIframePlugin(id: string): void {
     usePluginStore.getState().remove(id);
 }
 
+/**
+ * 运行一段「生图脚本」：用户提供的 JS 源码在沙箱 iframe 内执行（不进主上下文），
+ * 通过 hostBridge 调用宿主 AI / 画布能力，结果可经 applyOps 回写画布。
+ * 与完整插件不同，脚本不需要 nodes / setup，仅需声明所需能力。
+ */
+export interface IframeScriptSpec {
+    id: string;
+    name: string;
+    source: string;
+    version?: string;
+    description?: string;
+    capabilities?: string[];
+    url?: string;
+    css?: string;
+}
+
+const DEFAULT_SCRIPT_CAPABILITIES = ["canvas:read", "canvas:write", "ai:generate", "ui:render"];
+
+export async function runIframeScript(spec: IframeScriptSpec): Promise<IframePluginInstance> {
+    if (!spec.source?.trim()) throw new Error("Script source is empty");
+    const plugin: CanvasPlugin = {
+        id: spec.id,
+        name: spec.name || spec.id,
+        version: spec.version || "0.0.0",
+        description: spec.description,
+        capabilities: spec.capabilities && spec.capabilities.length > 0 ? spec.capabilities : DEFAULT_SCRIPT_CAPABILITIES,
+        css: spec.css,
+        nodes: [],
+    };
+    return installIframePlugin(plugin, spec.source, { url: spec.url });
+}
+
+/**
+ * 从 URL 加载原始 JS 文本并作为脚本运行（与插件信封不同，这里直接是源码）。
+ */
+export async function runIframeScriptFromUrl(url: string, opts?: { name?: string; capabilities?: string[] }): Promise<IframePluginInstance> {
+    const target = url.trim();
+    if (!target) throw new Error("Script URL is empty");
+    const response = await fetch(target);
+    if (!response.ok) throw new Error(`Script download failed: ${response.status}`);
+    const source = await response.text();
+    const name = opts?.name || target.split("/").pop()?.replace(/\.js$/, "") || "script";
+    const id = `script:${name}`;
+    return runIframeScript({ id, name, source, capabilities: opts?.capabilities, url: target });
+}
+
 export type { InstalledPlugin };

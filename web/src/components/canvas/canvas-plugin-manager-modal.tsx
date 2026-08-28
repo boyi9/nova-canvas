@@ -1,15 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { App, Button, Input, Modal, Popconfirm, Switch, Tabs } from "antd";
+import { App, Button, Checkbox, Input, Modal, Popconfirm, Switch, Tabs } from "antd";
 import { AlertTriangle, Download, Puzzle, RefreshCw, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { canvasThemes } from "@/lib/canvas-theme";
 import { installPluginFromUrl, setPluginEnabled, uninstallPlugin, updatePlugin } from "@/lib/canvas/plugin-loader";
-import { loadIframePluginFromUrl, subscribeAllPluginEvents, getIframePlugin, type PluginEvent } from "@/lib/canvas/plugin-iframe-loader";
+import { loadIframePluginFromUrl, subscribeAllPluginEvents, getIframePlugin, runIframeScript, type PluginEvent } from "@/lib/canvas/plugin-iframe-loader";
 import { useSandboxPanelStore } from "@/stores/canvas/use-sandbox-panel-store";
 import { fetchOfficialPlugins, hasUpgrade, type OfficialPluginEntry } from "@/lib/canvas/plugin-registry";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { usePluginStore, type InstalledPlugin } from "@/stores/canvas/use-plugin-store";
+
+// 生图脚本可调用的能力选项（声明式勾选，安装时写入 manifest.capabilities）。
+const SCRIPT_CAPABILITY_OPTIONS = [
+    { label: "canvas:read", value: "canvas:read" },
+    { label: "canvas:write", value: "canvas:write" },
+    { label: "ai:generate", value: "ai:generate" },
+    { label: "ui:render", value: "ui:render" },
+    { label: "storage:read", value: "storage:read" },
+    { label: "storage:write", value: "storage:write" },
+];
 
 export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     const { t } = useTranslation();
@@ -27,6 +37,51 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
     const [official, setOfficial] = useState<OfficialPluginEntry[]>([]);
     const [loadingOfficial, setLoadingOfficial] = useState(false);
     const [officialError, setOfficialError] = useState<string | null>(null);
+
+    // 生图脚本（沙箱）状态：源码 / URL / 名称 / 申请能力 / 运行中。
+    const [scriptName, setScriptName] = useState("");
+    const [scriptSource, setScriptSource] = useState("");
+    const [scriptUrl, setScriptUrl] = useState("");
+    const [scriptCaps, setScriptCaps] = useState<string[]>(["canvas:read", "canvas:write", "ai:generate", "ui:render"]);
+    const [scriptRunning, setScriptRunning] = useState(false);
+
+    const scriptExamples = [
+        { label: `${t("canvas.plugins.scriptExample")}：批量主图生成`, url: "/plugins/scripts/batch-main-image.js" },
+        { label: `${t("canvas.plugins.scriptExample")}：参考图编辑`, url: "/plugins/scripts/reference-edit.js" },
+        { label: `${t("canvas.plugins.scriptExample")}：多模型对比`, url: "/plugins/scripts/multi-model-compare.js" },
+    ];
+
+    const loadExample = async (url: string) => {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const text = await res.text();
+            setScriptSource(text);
+            setScriptName(url.split("/").pop()?.replace(/\.js$/, "") || "script");
+            message.success(t("canvas.plugins.scriptLoadUrl"));
+        } catch (error) {
+            message.error(t("canvas.plugins.installFailed", { error: error instanceof Error ? error.message : String(error) }));
+        }
+    };
+
+    const handleRunScript = async () => {
+        const source = scriptSource.trim();
+        if (!source) {
+            message.warning(t("canvas.plugins.scriptNoSource"));
+            return;
+        }
+        const name = scriptName.trim() || "script";
+        const id = `script:${name.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+        setScriptRunning(true);
+        try {
+            await runIframeScript({ id, name, source, capabilities: scriptCaps, url: scriptUrl.trim() || undefined });
+            message.success(t("canvas.plugins.scriptLoaded", { name }));
+        } catch (error) {
+            message.error(t("canvas.plugins.installFailed", { error: error instanceof Error ? error.message : String(error) }));
+        } finally {
+            setScriptRunning(false);
+        }
+    };
 
     const recordById = useMemo(() => new Map(plugins.map((item) => [item.id, item])), [plugins]);
     const localPlugins = useMemo(() => plugins.filter((item) => item.local), [plugins]);
@@ -280,6 +335,43 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
         </div>
     );
 
+    const scriptTab = (
+        <div className="space-y-3">
+            <div className="text-xs" style={{ color: theme.node.muted }}>{t("canvas.plugins.scriptDescription")}</div>
+            <div className="flex gap-2">
+                <Input placeholder={t("canvas.plugins.scriptUrl")} value={scriptUrl} onChange={(event) => setScriptUrl(event.target.value)} allowClear />
+                <Button disabled={!scriptUrl.trim()} onClick={() => void loadExample(scriptUrl.trim())} icon={<Download className="size-4" />}>
+                    {t("canvas.plugins.scriptLoadUrl")}
+                </Button>
+            </div>
+            <Input placeholder={t("canvas.plugins.scriptName")} value={scriptName} onChange={(event) => setScriptName(event.target.value)} />
+            <Input.TextArea
+                placeholder={t("canvas.plugins.scriptSourcePlaceholder")}
+                value={scriptSource}
+                onChange={(event) => setScriptSource(event.target.value)}
+                autoSize={{ minRows: 8, maxRows: 16 }}
+                style={{ fontFamily: "monospace" }}
+            />
+            <div>
+                <div className="mb-1 text-xs" style={{ color: theme.node.muted }}>{t("canvas.plugins.scriptCapabilities")}</div>
+                <Checkbox.Group value={scriptCaps} onChange={(value) => setScriptCaps(value as string[])} options={SCRIPT_CAPABILITY_OPTIONS} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {scriptExamples.map((example) => (
+                    <Button key={example.url} size="small" onClick={() => void loadExample(example.url)}>
+                        {example.label}
+                    </Button>
+                ))}
+            </div>
+            <Button type="primary" block loading={scriptRunning} onClick={handleRunScript} icon={<Puzzle className="size-4" />}>
+                {t("canvas.plugins.scriptRun")}
+            </Button>
+            <div className="rounded-lg border px-3 py-2 text-xs" style={{ borderColor: theme.node.stroke, background: theme.node.fill, color: theme.node.muted }}>
+                {t("canvas.plugins.scriptHint")}
+            </div>
+        </div>
+    );
+
     const panels = useSandboxPanelStore((s) => s.panels);
     const panelTab = (
         <div className="thin-scrollbar max-h-[52vh] space-y-2 overflow-auto">
@@ -322,6 +414,7 @@ export function CanvasPluginManagerModal({ open, onClose }: { open: boolean; onC
         { key: "official", label: t("canvas.plugins.official"), children: officialTab },
         ...(localPlugins.length > 0 ? [{ key: "local", label: t("canvas.plugins.local"), children: localTab }] : []),
         { key: "third", label: t("canvas.plugins.thirdParty"), children: thirdPartyTab },
+        { key: "script", label: t("canvas.plugins.script"), children: scriptTab },
         { key: "panel", label: t("canvas.plugins.panel"), children: panelTab },
     ];
 
