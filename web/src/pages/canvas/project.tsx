@@ -64,6 +64,7 @@ import { useAgentBridge } from "@/pages/canvas/hooks/use-agent-bridge";
 import { usePluginHost } from "@/pages/canvas/hooks/use-plugin-host";
 import { buildNodeMentionReferences, type CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
 import { exportCanvasProjects } from "@/lib/canvas/canvas-export";
+import { exportCanvasSvg } from "@/lib/canvas/canvas-svg-export";
 import { applyNodeConfigPatch, audioMetadata, buildAudioGenerationMetadata, buildImageGenerationMetadata, createCanvasNode, imageMetadata, videoMetadata } from "@/lib/canvas/canvas-node-factory";
 import { buildFissionNodes } from "@/lib/canvas/fission-nodes";
 import { findContainingGroupId, findGroupDropTarget, getConnectionTargetAnchor, normalizeConnection, snapNodesIntoGroup } from "@/lib/canvas/canvas-node-geometry";
@@ -1091,6 +1092,21 @@ function NovaCanvasPage() {
         try {
             await exportJianYingDraft(nodesRef.current, connectionsRef.current, project?.title || t("canvas.title"));
             message.success(t("canvas.exportJianYingDone"));
+        } catch (error) {
+            console.error(error);
+            message.error(t("canvas.sidePanel.exportFailed"));
+        } finally {
+            hide();
+        }
+    }, [message, projectId, t]);
+
+    const handleExportSvg = useCallback(async () => {
+        if (!nodesRef.current.length) return message.error(t("canvas.noNodes"));
+        const project = useCanvasStore.getState().projects.find((item) => item.id === projectId);
+        const hide = message.loading(t("canvas.projectPage.exporting"), 0);
+        try {
+            await exportCanvasSvg(nodesRef.current, project?.title || t("canvas.title"));
+            message.success(t("canvas.exportSvgDone"));
         } catch (error) {
             console.error(error);
             message.error(t("canvas.sidePanel.exportFailed"));
@@ -2959,6 +2975,7 @@ function NovaCanvasPage() {
                     onCreateProject={createAndOpenProject}
                     onDeleteProject={deleteCurrentProject}
                     onExportProject={exportCurrentProject}
+                    onExportSvg={handleExportSvg}
                     onExportJianYing={handleExportJianYing}
                     onCheckCompliance={handleCheckCompliance}
                     onOpenRecipes={() => setRecipeOpen(true)}

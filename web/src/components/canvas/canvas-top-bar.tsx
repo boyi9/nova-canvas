@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useMediaQuery } from "@/lib/responsive";
-import { BookMarked, BookOpen, Bot, Clapperboard, Crown, Download, Film, Home, Images, Library, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, ShoppingBag, Sparkles, Split, Terminal, Trash2, Undo2, Upload } from "lucide-react";
+import { BookMarked, BookOpen, Bot, Clapperboard, Crown, Download, FileImage, Film, Home, Images, Library, Link2, Menu, PanelLeftClose, PanelLeftOpen, Play, Plus, Redo2, Rows3, ShieldCheck, ShoppingBag, Sparkles, Split, Terminal, Trash2, Undo2, Upload } from "lucide-react";
 import { Button, Dropdown, Modal, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 
@@ -25,6 +25,7 @@ export function CanvasTopBar({
     onCreateProject,
     onDeleteProject,
     onExportProject,
+    onExportSvg,
     onImportImage,
     onOpenPlugins,
     onExportJianYing,
@@ -64,6 +65,7 @@ export function CanvasTopBar({
     onCreateProject: () => void;
     onDeleteProject: () => void;
     onExportProject: () => void;
+    onExportSvg: () => void;
     onImportImage: () => void;
     onOpenPlugins: () => void;
     onExportJianYing: () => void;
@@ -137,6 +139,7 @@ export function CanvasTopBar({
                                 { key: "import", icon: <Upload className="size-4" />, label: t("canvas.importAsset"), onClick: onImportImage },
                                 { key: "export", icon: <Download className="size-4" />, label: t("canvas.exportCurrent"), onClick: onExportProject },
                                 { key: "exportJianYing", icon: <Film className="size-4" />, label: t("canvas.exportJianYing"), onClick: onExportJianYing },
+                                { key: "exportSvg", icon: <FileImage className="size-4" />, label: t("canvas.exportSvg"), onClick: onExportSvg },
                                 { key: "compliance", icon: <ShieldCheck className="size-4" />, label: t("canvas.compliance"), onClick: onCheckCompliance },
                                 { key: "recipes", icon: <BookMarked className="size-4" />, label: t("canvas.recipe"), onClick: onOpenRecipes },
                                 { key: "runWorkflow", icon: <Play className="size-4" />, label: t("canvas.runWorkflow"), onClick: onRunWorkflow },

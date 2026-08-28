@@ -18,6 +18,9 @@
 ### 功能
 - [增强] 爆款裂变（HitFission）补全「画布写回」：生成变体后新增「全部生成到画布」，将每条裂变文案以网格布局批量创建为文本节点（`buildFissionNodes`，含 i18n `fission.applyToCanvas` / `fission.applied`），实现从「灵感」到「画布资产」的闭环。
 
+### 功能
+- [新增] 源文件交付（P0 验收）：画布顶栏新增「导出 SVG 源文件」，把画布节点批量导出为可编辑矢量源文件（`buildCanvasSvg` 纯函数 + `exportCanvasSvg` 下载，文本自动折行、图片以 `<image>` 内嵌、按类型着色与标签）。
+
 ## v0.16.0 - 2026-08-28
 
 + [新增] 提示词来源新增 Freestylefly GPT Image 2 内置来源。
