@@ -7,6 +7,7 @@ import { NOVA_CONFIG, type SceneId } from "@/config/nova-config";
 import { SceneSelector } from "@/components/nova/scene-selector";
 import { SceneWorkbench, type GenResult } from "@/components/nova/scene-workbench";
 import { batchGenerateImages, chatCompletion, generateAdScript } from "@/services/nova/api";
+import { buildGenResult } from "@/lib/nova/generate-result";
 
 export function NovaHomePage() {
   const [activeScene, setActiveScene] = useState<SceneId>("ecommerce");
@@ -32,16 +33,13 @@ export function NovaHomePage() {
     try {
       if (scene === "ecommerce") {
         const res = await batchGenerateImages({ prompt, count: 4, style: "white" });
-        setResult({ kind: "images", images: (res.images || []).map((image) => ({ id: image.id, url: image.url, prompt: image.prompt })) });
+        setResult(buildGenResult("ecommerce", res.images));
       } else if (scene === "advertising") {
         const res = await generateAdScript({ brief: prompt });
-        const text = (res.scenes || [])
-          .map((shot) => `镜头 ${shot.shot}（${shot.duration}s）\n画面：${shot.visual}\n配音：${shot.voiceover}`)
-          .join("\n\n");
-        setResult({ kind: "text", text: text || res.brief });
+        setResult(buildGenResult("advertising", res));
       } else {
         const res = await chatCompletion([{ role: "user", content: prompt }], scene);
-        setResult({ kind: "text", text: res.reply });
+        setResult(buildGenResult(scene, res));
       }
       message.success("生成完成");
     } catch (error) {

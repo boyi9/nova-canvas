@@ -1,6 +1,6 @@
 // Nova启画 - 场景工作台组件（增强版）
 import { useState } from "react";
-import { Button, Card, Input, Space, Tabs, Upload, message, Modal } from "antd";
+import { Alert, Button, Card, Input, Space, Tabs, Upload, message, Modal } from "antd";
 import { Wand2, Download, RefreshCw, Sparkles, Image, Film } from "lucide-react";
 import { NOVA_CONFIG, type SceneId } from "@/config/nova-config";
 import { checkAdCompliance } from "@/compliance/ad-law-checker";
@@ -8,10 +8,8 @@ import { TemplatePicker } from "./template-picker";
 import { StyleTransferPicker } from "./style-transfer-picker";
 import { NovaAgentPanel } from "./nova-agent-panel";
 
-export type GenImageResult = { id: string; url: string; prompt: string };
-export type GenResult =
-    | { kind: "images"; images: GenImageResult[] }
-    | { kind: "text"; text: string };
+import type { GenImageResult, GenResult } from "@/lib/nova/generate-result";
+export type { GenImageResult, GenResult } from "@/lib/nova/generate-result";
 
 interface SceneWorkbenchProps {
   scene: SceneId;
@@ -161,16 +159,23 @@ export function SceneWorkbench({ scene, onGenerate, generating = false, result =
             </Card>
           )}
 
-          {result?.kind === "images" && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {result.images.map((image) => (
-                <img key={image.id} src={image.url} alt={image.prompt} className="aspect-square w-full rounded-lg border border-stone-200 object-cover dark:border-stone-700" />
-              ))}
-            </div>
-          )}
+          {result?.kind === "images" &&
+            (result.images.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {result.images.map((image) => (
+                  <img key={image.id} src={image.url} alt={image.prompt} className="aspect-square w-full rounded-lg border border-stone-200 object-cover dark:border-stone-700" />
+                ))}
+              </div>
+            ) : (
+              <Alert type="info" showIcon message="本次未返回图片，请重试或调整模板/描述" />
+            ))}
           {result?.kind === "text" && (
             <Card size="small" className="!bg-stone-50 dark:!bg-stone-800">
-              <pre className="m-0 max-h-72 overflow-auto whitespace-pre-wrap text-xs text-stone-700 dark:text-stone-300">{result.text}</pre>
+              {result.text ? (
+                <pre className="m-0 max-h-72 overflow-auto whitespace-pre-wrap text-xs text-stone-700 dark:text-stone-300">{result.text}</pre>
+              ) : (
+                <Alert type="info" showIcon message="本次未生成文案，请重试" />
+              )}
             </Card>
           )}
         </div>

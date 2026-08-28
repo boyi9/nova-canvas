@@ -28,6 +28,7 @@
 ### 功能
 - [修复] 风格迁移核心接口补全（P1）：`templates/style-transfer.ts#transferImageStyle/transferVideoStyle` 原返回假 URL，现调用既有后端异步端点 `/generate/style-transfer` 并轮询 `/generate/status/{taskId}` 取回结果（含单测 `style-transfer.test.ts` 3 用例）。
 - [修复] 风格迁移 UI 接入：`components/nova/style-transfer-picker.tsx` 原仅 `console.log`，现支持「粘贴公网图片/视频 URL → 选择风格/强度/保真度 → 调用 transferImageStyle → 实时展示迁移结果（图片/视频 + 打开/下载链接）」，并带 loading 与错误提示；`scene-workbench.tsx` 已改用该自包含组件。注：因 `uploadImage` 仅落本地 IndexedDB 并返回 `blob:` URL（后端不可抓取），暂仅支持公网可达 URL，本地上传需在后端媒体托管就绪后补充。
+- [重构] 首页「一键生成」结果映射抽离为纯函数 `lib/nova/generate-result.ts#buildGenResult`（含 5 单测），统一电商/广告/短剧三类返回结构；`scene-workbench.tsx` 结果区新增空态提示（后端返回空图片/空文案时不再呈现破碎空白卡片）。
 
 ## v0.16.0 - 2026-08-28
 
