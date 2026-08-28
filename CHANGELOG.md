@@ -8,6 +8,7 @@
 
 ### 文档
 - [文档] 新增《第三方沙箱插件开发指南》（`docs/sandbox-plugin-guide.md`）：信封格式、运行时全局对象（`window.__PluginRuntime` / `hostBridge` / `__pluginRpc`）、声明式面板、能力表与安全模型，配套 `web/public/plugins/sandbox-sample.json` 示例。
+- [文档] 新增《Sprint 2 完成度核查清单》（`docs/Sprint2-Status.md`）：逐项比对计划与实际实现（含代码证据与提交号），列明剩余后端耦合缺口与优先级，作为前端交付基线。
 
 ### 功能
 - [新增] 自定义生图脚本能力（Sprint 2 计划项）：插件管理器新增「生图脚本」标签页，支持粘贴/从 URL 加载 JS 源码、声明所需能力（canvas/ai/storage），在隔离 iframe 沙箱中运行，经 `hostBridge` 调用宿主 AI 与画布能力，结果通过 `applyOps` 回写画布。
