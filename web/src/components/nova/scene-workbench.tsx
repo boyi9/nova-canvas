@@ -137,7 +137,7 @@ export function SceneWorkbench({ scene, onGenerate, generating = false, result =
               {
                 key: "style",
                 label: "风格迁移",
-                children: <StyleTransferPicker onSelect={(config) => console.log("Style selected:", config)} />,
+                children: <StyleTransferPicker />,
               },
             ]}
           />

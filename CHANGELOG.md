@@ -26,7 +26,8 @@
 - [修复] 补全 Nova 首页「一键生成」桩（原本仅 console.log + “开发中”）：`handleGenerate` 现按场景调用真实接口——电商→`batchGenerateImages`、广告→`generateAdScript`、短剧→`chatCompletion`，并在工作台内展示生成结果（图片网格 / 分镜文案），含 loading 与错误提示。
 
 ### 功能
-- [修复] 风格迁移核心接口补全（P1）：`templates/style-transfer.ts#transferImageStyle/transferVideoStyle` 原返回假 URL，现调用既有后端异步端点 `/generate/style-transfer` 并轮询 `/generate/status/{taskId}` 取回结果（含单测 `style-transfer.test.ts` 3 用例）。UI（`StyleTransferPicker`）接入图片源与结果展示为后续项。
+- [修复] 风格迁移核心接口补全（P1）：`templates/style-transfer.ts#transferImageStyle/transferVideoStyle` 原返回假 URL，现调用既有后端异步端点 `/generate/style-transfer` 并轮询 `/generate/status/{taskId}` 取回结果（含单测 `style-transfer.test.ts` 3 用例）。
+- [修复] 风格迁移 UI 接入：`components/nova/style-transfer-picker.tsx` 原仅 `console.log`，现支持「粘贴公网图片/视频 URL → 选择风格/强度/保真度 → 调用 transferImageStyle → 实时展示迁移结果（图片/视频 + 打开/下载链接）」，并带 loading 与错误提示；`scene-workbench.tsx` 已改用该自包含组件。注：因 `uploadImage` 仅落本地 IndexedDB 并返回 `blob:` URL（后端不可抓取），暂仅支持公网可达 URL，本地上传需在后端媒体托管就绪后补充。
 
 ## v0.16.0 - 2026-08-28
 
