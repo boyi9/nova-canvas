@@ -195,7 +195,7 @@ export function createIframeSandbox(options: IframeSandboxOptions): {
         return new Promise((resolve, reject) => {
             const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
             const msg = { type: 'request', id, method, payload };
-            pendingRequests.set(id, { resolve, reject });
+            pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject });
             iframe.contentWindow?.postMessage(msg, '*');
             // 超时保护，避免插件无响应时 Promise 永久挂起
             setTimeout(() => {
@@ -234,8 +234,10 @@ export function createIframeSandbox(options: IframeSandboxOptions): {
             } else if (eventName && onMessage) {
                 onMessage(eventName, eventPayload);
             }
-            const handlers = eventHandlers.get(eventName);
-            if (handlers) handlers.forEach((h) => h(eventPayload));
+            if (eventName) {
+                const handlers = eventHandlers.get(eventName);
+                if (handlers) handlers.forEach((h) => h(eventPayload));
+            }
         } else if (msg.type === 'request') {
             // 插件请求宿主能力，交由调用方桥接
             void handlePluginRequest({ id: msg.id!, method: msg.method!, payload: msg.payload });

@@ -296,7 +296,7 @@ export function compileJianYingDraft(nodes: CanvasNodeData[], connections: Canva
             .map((connection) => nodes.find((node) => node.id === connection.toNodeId))
             .filter((node): node is CanvasNodeData => Boolean(node));
 
-    const layOutMedia = (media: CanvasNodeData[], kind: "video" | "audio"): Record<string, unknown>[] => {
+    const layOutMedia = (media: CanvasNodeData[], kind: "video" | "audio" | "text"): Record<string, unknown>[] => {
         const sorted = [...media].sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x);
         let cursor = 0;
         return sorted.map((node) => {

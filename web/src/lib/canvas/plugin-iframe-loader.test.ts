@@ -12,7 +12,6 @@ import {
     loadIframePluginFromUrl,
     setIframeHostBridge,
     subscribeAllPluginEvents,
-    getIframePlugin,
     type IframeHostBridge,
 } from "@/lib/canvas/plugin-iframe-loader";
 
@@ -71,8 +70,8 @@ const emptyBridge: IframeHostBridge = {
         generateImage: vi.fn(async () => ({ images: ["data:img"] })),
         generateVideo: vi.fn(async () => ({ url: "x" })),
         generateText: vi.fn(async () => ({ text: "t" })),
-        listModels: vi.fn(() => []),
-        defaultModel: vi.fn(() => "m"),
+        listModels: vi.fn(async () => []),
+        defaultModel: vi.fn(async () => "m"),
     },
 };
 

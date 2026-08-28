@@ -50,6 +50,10 @@ export type CanvasNodeMetadata = {
     status?: CanvasNodeStatus;
     errorDetails?: string;
     fontSize?: number;
+    fontColor?: string;
+    isBold?: boolean;
+    isItalic?: boolean;
+    isUnderline?: boolean;
     generationMode?: CanvasGenerationMode;
     generationType?: CanvasImageGenerationType;
     model?: string;

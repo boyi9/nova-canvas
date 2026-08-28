@@ -3,8 +3,8 @@ import { Download, Upload } from "lucide-react";
 import { Button, Input, List, Modal, Spin, message } from "antd";
 import { useTranslation } from "react-i18next";
 
-import { applyRecipe, listRecipes, saveRecipe, type Recipe, type RecipeVariable } from "@/services/nova/api";
-import { canvasToRecipeGraph, extractVariables, instantiateRecipeGraph } from "@/lib/canvas/recipe-adapter";
+import { applyRecipe, listRecipes, saveRecipe, type Recipe } from "@/services/nova/api";
+import { canvasToRecipeGraph, extractVariables, instantiateRecipeGraph, type RecipeVariable } from "@/lib/canvas/recipe-adapter";
 import type { CanvasConnection, CanvasNodeData } from "@/types/canvas";
 
 export interface CanvasSnapshot {

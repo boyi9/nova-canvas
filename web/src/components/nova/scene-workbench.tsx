@@ -1,7 +1,7 @@
 // Nova启画 - 场景工作台组件（增强版）
 import { useState } from "react";
 import { Button, Card, Input, Space, Tabs, Upload, message, Modal } from "antd";
-import { UploadOutlined, Wand2, Download, RefreshCw, Sparkles, Image, Film, Style } from "lucide-react";
+import { Wand2, Download, RefreshCw, Sparkles, Image, Film } from "lucide-react";
 import { NOVA_CONFIG, type SceneId } from "@/config/nova-config";
 import { checkAdCompliance } from "@/compliance/ad-law-checker";
 import { TemplatePicker } from "./template-picker";

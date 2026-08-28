@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { Modal, Button } from "antd";
 
 import { createProject } from "@/services/nova/api";
+import { membershipPlans } from "@/lib/membership";
 import { onboardingSteps, starterTemplates, markOnboardingSeen, type StarterTemplate } from "@/lib/onboarding";
 
 interface Props {

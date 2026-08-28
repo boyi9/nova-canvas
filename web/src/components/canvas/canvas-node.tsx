@@ -14,7 +14,7 @@ import { StoryboardNodeRenderer } from "./nodes/StoryboardNode";
 import { VideoTrackNodeRenderer } from "./nodes/VideoTrackNode";
 import { RecipeNodeRenderer } from "./nodes/RecipeNode";
 import { MultimodalNodeRenderer } from "./nodes/MultimodalNode";
-import { CanvasNodeType, type CanvasNodeData, type CanvasNodeImage, type CanvasNodeMetadata, type Position } from "@/types/canvas";
+import { CanvasNodeType, type CanvasNodeData, type CanvasNodeImage, type CanvasNodeMetadata, type CanvasNodeTypeId, type Position } from "@/types/canvas";
 import type { CanvasNodeContext, CanvasPluginHost } from "@/types/canvas-plugin";
 import type { CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
 import { useTranslation } from "react-i18next";
@@ -23,7 +23,7 @@ type ResizeCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 const selectionBlue = "#2f80ff";
 
 // Node types whose content is inline-editable (double-click / edit request).
-const EDITABLE_NODE_TYPES = new Set<CanvasNodeType>([
+const EDITABLE_NODE_TYPES = new Set<CanvasNodeTypeId>([
     CanvasNodeType.Text,
     CanvasNodeType.NovaText,
     CanvasNodeType.Product,

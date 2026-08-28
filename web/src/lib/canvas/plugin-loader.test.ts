@@ -5,7 +5,7 @@ import * as iframeLoader from "@/lib/canvas/plugin-iframe-loader";
 import * as pluginLoader from "@/lib/canvas/plugin-loader";
 import { usePluginStore } from "@/stores/canvas/use-plugin-store";
 
-type InstalledPlugin = pluginLoader.InstalledPlugin;
+type InstalledPlugin = import("@/stores/canvas/use-plugin-store").InstalledPlugin;
 
 // 避免真实 iframe 副作用；createIframeSandbox 返回占位沙箱。
 vi.mock("@/lib/canvas/iframe-sandbox-host", () => ({
@@ -28,7 +28,8 @@ const sandboxRecord = (id: string, enabled: boolean): InstalledPlugin => ({
     source: "console.log('untrusted');",
     enabled,
     sandbox: true,
-    manifest: { id, name: id, version: "1.0.0", capabilities: ["canvas:read"] },
+    manifest: { id, name: id, version: "1.0.0", capabilities: ["canvas:read"], nodes: [] },
+    installedAt: new Date().toISOString(),
 });
 
 beforeEach(() => {

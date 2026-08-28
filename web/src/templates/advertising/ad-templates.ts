@@ -5,7 +5,7 @@ export interface AdvertisingTemplate {
   name: string;
   category: 'tvc' | 'brand' | 'social' | 'holiday';
   duration: number; // 秒
-  aspectRatio: '16:9' | '9:16' | '1:1' | '4:3';
+  aspectRatio: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
   style: string;
   description: string;
   prompt: string;
