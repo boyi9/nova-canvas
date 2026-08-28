@@ -5,11 +5,14 @@ import { Button, Card, message } from "antd";
 import { Plus, Sparkles } from "lucide-react";
 import { NOVA_CONFIG, type SceneId } from "@/config/nova-config";
 import { SceneSelector } from "@/components/nova/scene-selector";
-import { SceneWorkbench } from "@/components/nova/scene-workbench";
+import { SceneWorkbench, type GenResult } from "@/components/nova/scene-workbench";
+import { batchGenerateImages, chatCompletion, generateAdScript } from "@/services/nova/api";
 
 export function NovaHomePage() {
   const [activeScene, setActiveScene] = useState<SceneId>("ecommerce");
   const navigate = useNavigate();
+  const [generating, setGenerating] = useState(false);
+  const [result, setResult] = useState<GenResult | null>(null);
 
   const handleCreateProject = (sceneId: SceneId) => {
     // 创建新项目并跳转到画布
@@ -18,10 +21,34 @@ export function NovaHomePage() {
     message.success("正在创建新项目...");
   };
 
-  const handleGenerate = (prompt: string, options: any) => {
-    console.log("Generating:", { prompt, options });
-    // TODO: 调用AI生成API
-    message.info("AI生成功能开发中...");
+  const handleGenerate = async (prompt: string, options: any) => {
+    const scene = (options?.scene as SceneId) || activeScene;
+    if (!prompt.trim()) {
+      message.warning("请先选择模板并填写产品名称");
+      return;
+    }
+    setGenerating(true);
+    setResult(null);
+    try {
+      if (scene === "ecommerce") {
+        const res = await batchGenerateImages({ prompt, count: 4, style: "white" });
+        setResult({ kind: "images", images: (res.images || []).map((image) => ({ id: image.id, url: image.url, prompt: image.prompt })) });
+      } else if (scene === "advertising") {
+        const res = await generateAdScript({ brief: prompt });
+        const text = (res.scenes || [])
+          .map((shot) => `镜头 ${shot.shot}（${shot.duration}s）\n画面：${shot.visual}\n配音：${shot.voiceover}`)
+          .join("\n\n");
+        setResult({ kind: "text", text: text || res.brief });
+      } else {
+        const res = await chatCompletion([{ role: "user", content: prompt }], scene);
+        setResult({ kind: "text", text: res.reply });
+      }
+      message.success("生成完成");
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "生成失败，请重试");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
@@ -71,7 +98,7 @@ export function NovaHomePage() {
         </Card>
 
         {/* Workbench */}
-        <SceneWorkbench scene={activeScene} onGenerate={handleGenerate} />
+        <SceneWorkbench scene={activeScene} onGenerate={handleGenerate} generating={generating} result={result} />
 
         {/* Features */}
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">

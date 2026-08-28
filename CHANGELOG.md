@@ -21,6 +21,9 @@
 ### 功能
 - [新增] 源文件交付（P0 验收）：画布顶栏新增「导出 SVG 源文件」，把画布节点批量导出为可编辑矢量源文件（`buildCanvasSvg` 纯函数 + `exportCanvasSvg` 下载，文本自动折行、图片以 `<image>` 内嵌、按类型着色与标签）。
 
+### 功能
+- [修复] 补全 Nova 首页「一键生成」桩（原本仅 console.log + “开发中”）：`handleGenerate` 现按场景调用真实接口——电商→`batchGenerateImages`、广告→`generateAdScript`、短剧→`chatCompletion`，并在工作台内展示生成结果（图片网格 / 分镜文案），含 loading 与错误提示。
+
 ## v0.16.0 - 2026-08-28
 
 + [新增] 提示词来源新增 Freestylefly GPT Image 2 内置来源。

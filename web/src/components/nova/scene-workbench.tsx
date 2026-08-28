@@ -8,12 +8,19 @@ import { TemplatePicker } from "./template-picker";
 import { StyleTransferPicker } from "./style-transfer-picker";
 import { NovaAgentPanel } from "./nova-agent-panel";
 
+export type GenImageResult = { id: string; url: string; prompt: string };
+export type GenResult =
+    | { kind: "images"; images: GenImageResult[] }
+    | { kind: "text"; text: string };
+
 interface SceneWorkbenchProps {
   scene: SceneId;
   onGenerate: (prompt: string, options: any) => void;
+  generating?: boolean;
+  result?: GenResult | null;
 }
 
-export function SceneWorkbench({ scene, onGenerate }: SceneWorkbenchProps) {
+export function SceneWorkbench({ scene, onGenerate, generating = false, result = null }: SceneWorkbenchProps) {
   const [productName, setProductName] = useState("");
   const [additionalContext, setAdditionalContext] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
@@ -78,14 +85,14 @@ export function SceneWorkbench({ scene, onGenerate }: SceneWorkbenchProps) {
                 AI助手
               </Button>
               <Button icon={<Download />}>导出</Button>
-              <Button
-                type="primary"
-                icon={<Wand2 />}
-                onClick={handleGenerate}
-                loading={isGenerating}
-              >
-                AI生成
-              </Button>
+                <Button
+                  type="primary"
+                  icon={<Wand2 />}
+                  onClick={handleGenerate}
+                  loading={isGenerating || generating}
+                >
+                  AI生成
+                </Button>
             </Space>
           </div>
 
@@ -151,6 +158,19 @@ export function SceneWorkbench({ scene, onGenerate }: SceneWorkbenchProps) {
                   .replace(/, [^,]*$/, "")}
                 {additionalContext && `, ${additionalContext}`}
               </p>
+            </Card>
+          )}
+
+          {result?.kind === "images" && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {result.images.map((image) => (
+                <img key={image.id} src={image.url} alt={image.prompt} className="aspect-square w-full rounded-lg border border-stone-200 object-cover dark:border-stone-700" />
+              ))}
+            </div>
+          )}
+          {result?.kind === "text" && (
+            <Card size="small" className="!bg-stone-50 dark:!bg-stone-800">
+              <pre className="m-0 max-h-72 overflow-auto whitespace-pre-wrap text-xs text-stone-700 dark:text-stone-300">{result.text}</pre>
             </Card>
           )}
         </div>
