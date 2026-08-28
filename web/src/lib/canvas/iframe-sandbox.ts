@@ -139,12 +139,14 @@ export function buildCSP(manifest?: PluginManifest): string {
 /**
  * iframe 沙箱属性
  */
+// 注意：刻意不开启 allow-same-origin。沙箱 iframe 以不透明源（opaque origin）运行，
+// 即便带 allow-scripts 也无法读取/修改父页面 DOM、cookie 或 localStorage，从根上杜绝沙箱逃逸。
+// 插件与宿主的通信一律走 postMessage（RPC/事件），不依赖同源。allow-popups-to-escape-sandbox
+// 同样移除，避免弹窗逃逸沙箱隔离。
 export const IFRAME_SANDBOX_ATTR = [
     'allow-scripts',
-    'allow-same-origin', // 需要 same-origin 以便 blob URL 工作
     'allow-forms',
     'allow-popups',
-    'allow-popups-to-escape-sandbox',
 ].join(' ');
 
 export interface SandboxConfig {

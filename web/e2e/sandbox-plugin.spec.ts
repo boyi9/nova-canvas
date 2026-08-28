@@ -16,6 +16,13 @@ test('sandbox iframe plugin installs, requests permission, and renders a declara
     expect(e2e.error, e2e.error || '').toBeUndefined();
     expect(e2e.installed).toBe(true);
 
+    // 安全回归：沙箱 iframe 必须以不透明源（opaque origin）运行，否则可逃逸父页面。
+    // 父页无法跨源读取子帧 origin，故在子帧上下文内读取。
+    const sandboxFrame = page.frames().find((f) => f !== page.mainFrame());
+    expect(sandboxFrame, 'sandbox iframe frame should exist').toBeTruthy();
+    const origin = await sandboxFrame!.evaluate(() => window.origin);
+    expect(origin).toBe('null');
+
     expect(e2e.panel).not.toBeNull();
     expect(e2e.panel.title).toContain('示例沙箱插件');
     expect(e2e.panel.status).toBe('done');

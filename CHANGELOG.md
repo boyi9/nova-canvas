@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## Unreleased
+
+### 安全
+- [安全] 沙箱插件 iframe 移除 `allow-same-origin` 与 `allow-popups-to-escape-sandbox`，改以不透明源（opaque origin）运行，从根上杜绝沙箱逃逸父页面；插件与宿主通信统一走 postMessage（RPC/事件），不依赖同源。
+- [测试] Playwright 端到端冒烟测试新增不透明源安全回归断言（断言沙箱 iframe `window.origin === 'null'`）。
+
 ## v0.16.0 - 2026-08-28
 
 + [新增] 提示词来源新增 Freestylefly GPT Image 2 内置来源。
