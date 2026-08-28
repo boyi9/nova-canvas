@@ -1,5 +1,7 @@
 // Nova启画 - 风格迁移模块（图片+视频）
 
+import { getGenerationStatus, styleTransfer } from "@/services/nova/api";
+
 export interface StyleTransferConfig {
   id: string;
   name: string;
@@ -113,7 +115,25 @@ export const VIDEO_STYLE_TEMPLATES: StyleTransferConfig[] = [
 ];
 
 /**
- * 执行图片风格迁移
+ * 轮询生成任务直到终态，返回结果 URL 或错误。
+ */
+async function pollGenerationStatus(
+  taskId: string,
+  timeoutMs = 120000,
+  intervalMs = 2000,
+): Promise<{ success: boolean; resultUrl?: string; error?: string }> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const status = await getGenerationStatus(taskId);
+    if (status.status === "success") return { success: true, resultUrl: status.result_url };
+    if (status.status === "failed") return { success: false, error: status.error || "风格迁移失败" };
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return { success: false, error: "风格迁移超时，请稍后重试" };
+}
+
+/**
+ * 执行图片风格迁移（调用后端异步风格迁移接口并轮询结果）
  */
 export async function transferImageStyle(
   imageUrl: string,
@@ -125,19 +145,8 @@ export async function transferImageStyle(
   }
 ): Promise<{ success: boolean; resultUrl?: string; error?: string }> {
   try {
-    // TODO: 接入实际的风格迁移API（IP-Adapter / ControlNet）
-    console.log("Transferring image style:", {
-      imageUrl,
-      style: styleConfig.style,
-      parameters: styleConfig.parameters,
-      options,
-    });
-
-    // 模拟API调用
-    return {
-      success: true,
-      resultUrl: `/placeholder-style-result-${styleConfig.id}.jpg`,
-    };
+    const { task_id: taskId } = await styleTransfer(imageUrl, styleConfig.style, styleConfig.parameters.strength);
+    return await pollGenerationStatus(taskId);
   } catch (error) {
     return {
       success: false,
@@ -147,7 +156,7 @@ export async function transferImageStyle(
 }
 
 /**
- * 执行视频风格迁移
+ * 执行视频风格迁移（调用后端异步风格迁移接口并轮询结果）
  */
 export async function transferVideoStyle(
   videoUrl: string,
@@ -159,18 +168,8 @@ export async function transferVideoStyle(
   }
 ): Promise<{ success: boolean; resultUrl?: string; error?: string }> {
   try {
-    // TODO: 接入实际的视频风格迁移API
-    console.log("Transferring video style:", {
-      videoUrl,
-      style: styleConfig.style,
-      parameters: styleConfig.parameters,
-      options,
-    });
-
-    return {
-      success: true,
-      resultUrl: `/placeholder-style-result-${styleConfig.id}.mp4`,
-    };
+    const { task_id: taskId } = await styleTransfer(videoUrl, styleConfig.style, styleConfig.parameters.strength);
+    return await pollGenerationStatus(taskId);
   } catch (error) {
     return {
       success: false,

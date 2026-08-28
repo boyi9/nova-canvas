@@ -24,6 +24,7 @@
 | 9 | 提示词库网络缓存 | ✅ | `services/api/prompts.ts`：localforage TTL 缓存、`refreshAllSources`/`refreshDueSources`、签名失效重拉；`stores/use-prompt-source-store.ts` | 含离线兜底 |
 | 10 | Nova 首页「一键生成」 | ✅ 已补桩 | `pages/nova/index.tsx#handleGenerate` 原仅 `console.log`，已接 `batchGenerateImages`/`generateAdScript`/`chatCompletion`（`ae7054f`）；`components/nova/scene-workbench.tsx` 结果展示 | — |
 | 11 | 跨平台 Agent 适配 | ⚠️ 部分 | `components/nova/nova-agent-panel.tsx`、`scene-workbench.tsx#handleAgentMessage` 仍为 `TODO: 处理Agent消息` | 前端面板在，后端流式未接 |
+| — | 风格迁移真实接口（P1） | ✅ 核心逻辑已接 | `templates/style-transfer.ts#transferImageStyle/Video`：原返回假 URL，现已调用 `/generate/style-transfer` 并轮询 `/generate/status/{taskId}`（含单测 `style-transfer.test.ts` 3 用例）；UI（`StyleTransferPicker`）仍需接入「图片源→展示结果」方可端到端 | 后端端点已存在于 SDK 契约 |
 | 12 | 合规 + 性能 | ⚠️ 合规✅/性能未专项 | 合规：`lib/canvas/canvas-compliance.ts`、`components/canvas/canvas-top-bar.tsx#onCheckCompliance` | 性能无专项压测/优化 |
 | 13 | 会员 / 支付 / onboarding | ⚠️ UI 有 / 支付需后端 | `i18n ...membership`、`components/canvas/canvas-top-bar.tsx#onOpenMembership` | 支付链路依赖后端 |
 
@@ -32,7 +33,7 @@
 | 优先级 | 缺口 | 当前代码位置 | 后端依赖 |
 |--------|------|--------------|----------|
 | P0 | 多 OpenAI 接口调度（路由/多密钥） | 前端选择器已就绪 | 后端 `/ai/providers`、按模型路由、密钥管理 |
-| P1 | 风格迁移真实接口 | `templates/style-transfer.ts#transferImageStyle` 返回假 URL；`style-transfer-picker.tsx` 仅 `console.log` | IP-Adapter / ControlNet / img2img 端点 |
+| P1 | 风格迁移 UI 接入 | `StyleTransferPicker` 仅 `console.log`，需补「上传/选择图片源 → 调用 transferImageStyle → 展示结果」 | 图片需可达 URL（依赖媒体托管） |
 | P1 | SceneWorkbench Agent 消息 | `scene-workbench.tsx:61` TODO | Agent 后端 + 流式协议 |
 | P2 | 会员 / 支付 | `membership` UI | 支付网关、订单、权益下发 |
 | P2 | PSD 源文件导出 | 仅 SVG/PPTX/剪映 | 二进制 PSD 编码（ag-psd 或后端渲染） |

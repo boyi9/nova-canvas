@@ -25,6 +25,9 @@
 ### 功能
 - [修复] 补全 Nova 首页「一键生成」桩（原本仅 console.log + “开发中”）：`handleGenerate` 现按场景调用真实接口——电商→`batchGenerateImages`、广告→`generateAdScript`、短剧→`chatCompletion`，并在工作台内展示生成结果（图片网格 / 分镜文案），含 loading 与错误提示。
 
+### 功能
+- [修复] 风格迁移核心接口补全（P1）：`templates/style-transfer.ts#transferImageStyle/transferVideoStyle` 原返回假 URL，现调用既有后端异步端点 `/generate/style-transfer` 并轮询 `/generate/status/{taskId}` 取回结果（含单测 `style-transfer.test.ts` 3 用例）。UI（`StyleTransferPicker`）接入图片源与结果展示为后续项。
+
 ## v0.16.0 - 2026-08-28
 
 + [新增] 提示词来源新增 Freestylefly GPT Image 2 内置来源。
