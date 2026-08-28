@@ -240,6 +240,8 @@ export default {
         title: "Hit fission",
         referencePlaceholder: "Enter the reference / viral copy",
         generate: "Generate variants",
+        applyToCanvas: "Send all to canvas",
+        applied: "Added {{count}} copies to canvas",
     },
     flow: {
         title: "E-commerce full flow",

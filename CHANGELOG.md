@@ -15,6 +15,9 @@
 - [新增] 三个官方示例脚本（`web/public/plugins/scripts/`）：批量主图生成、参考图编辑（图生图）、多模型对比。
 - [测试] Playwright 新增脚本模式端到端用例：安装脚本 → 授权 `canvas:write` → 运行 → `applyOps` 回写画布。
 
+### 功能
+- [增强] 爆款裂变（HitFission）补全「画布写回」：生成变体后新增「全部生成到画布」，将每条裂变文案以网格布局批量创建为文本节点（`buildFissionNodes`，含 i18n `fission.applyToCanvas` / `fission.applied`），实现从「灵感」到「画布资产」的闭环。
+
 ## v0.16.0 - 2026-08-28
 
 + [新增] 提示词来源新增 Freestylefly GPT Image 2 内置来源。

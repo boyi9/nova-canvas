@@ -3,14 +3,15 @@ import { useTranslation } from "react-i18next";
 import { Loader2, Split } from "lucide-react";
 import { Button, Modal, Select } from "antd";
 
-import { generateFission, type FissionResult } from "@/services/nova/api";
+import { generateFission, type FissionResult, type FissionVariant } from "@/services/nova/api";
 
 interface Props {
     open: boolean;
     onClose: () => void;
+    onApplyToCanvas?: (variants: FissionVariant[]) => void;
 }
 
-export function HitFission({ open, onClose }: Props) {
+export function HitFission({ open, onClose, onApplyToCanvas }: Props) {
     const { t } = useTranslation();
     const [reference, setReference] = useState("");
     const [count, setCount] = useState<number>(10);
@@ -71,6 +72,12 @@ export function HitFission({ open, onClose }: Props) {
                             </div>
                         ))}
                     </div>
+                )}
+
+                {result && onApplyToCanvas && (
+                    <Button type="primary" block onClick={() => onApplyToCanvas(result.variants)}>
+                        {t("fission.applyToCanvas")}
+                    </Button>
                 )}
             </div>
         </Modal>

@@ -240,6 +240,8 @@ export default {
         title: "爆款裂变",
         referencePlaceholder: "输入爆款素材 / 参考文案",
         generate: "生成变体",
+        applyToCanvas: "全部生成到画布",
+        applied: "已生成 {{count}} 条文案到画布",
     },
     flow: {
         title: "电商全流程",

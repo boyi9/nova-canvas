@@ -26,7 +26,7 @@ import { exportJianYingDraft } from "@/lib/canvas/video-draft-compiler";
 import { scanCanvasCompliance, type CanvasComplianceReport } from "@/lib/canvas/canvas-compliance";
 import { canvasToWorkflowGraph, type WorkflowResult } from "@/lib/canvas/workflow-run";
 import { layoutEcommerceDetailPage } from "@/lib/canvas/detail-page-layout";
-import { runWorkflow } from "@/services/nova/api";
+import { runWorkflow, type FissionVariant } from "@/services/nova/api";
 import { RecipeBrowser, type CanvasSnapshot } from "@/components/canvas/recipe-browser";
 import { AIProviderChat } from "@/components/ai-provider-chat";
 import { BatchHeroImage, type ProductOption } from "@/components/batch-hero-image";
@@ -65,6 +65,7 @@ import { usePluginHost } from "@/pages/canvas/hooks/use-plugin-host";
 import { buildNodeMentionReferences, type CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
 import { exportCanvasProjects } from "@/lib/canvas/canvas-export";
 import { applyNodeConfigPatch, audioMetadata, buildAudioGenerationMetadata, buildImageGenerationMetadata, createCanvasNode, imageMetadata, videoMetadata } from "@/lib/canvas/canvas-node-factory";
+import { buildFissionNodes } from "@/lib/canvas/fission-nodes";
 import { findContainingGroupId, findGroupDropTarget, getConnectionTargetAnchor, normalizeConnection, snapNodesIntoGroup } from "@/lib/canvas/canvas-node-geometry";
 import {
     audioExtension,
@@ -794,6 +795,19 @@ function NovaCanvasPage() {
         setNodes((prev) => [...prev, ...newNodes]);
         setConnections((prev) => [...prev, ...newConnections]);
     }, []);
+
+    const handleApplyFission = useCallback(
+        (variants: FissionVariant[]) => {
+            if (!variants.length) return;
+            const origin = getCanvasCenter();
+            const newNodes = buildFissionNodes(variants, origin);
+            setNodes((prev) => [...prev, ...newNodes]);
+            setSelectedNodeIds(new Set([newNodes[newNodes.length - 1].id]));
+            message.success(t("fission.applied", { count: newNodes.length }));
+            setFissionOpen(false);
+        },
+        [getCanvasCenter, t],
+    );
 
     const getCanvasSnapshot = useCallback((): CanvasSnapshot => {
         return {
@@ -3008,6 +3022,7 @@ function NovaCanvasPage() {
                 <HitFission
                     open={fissionOpen}
                     onClose={() => setFissionOpen(false)}
+                    onApplyToCanvas={handleApplyFission}
                 />
 
                 <EcommerceFullFlow
