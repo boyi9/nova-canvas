@@ -10,8 +10,60 @@ const webDir = dirname(fileURLToPath(import.meta.url));
 const localVersion = readFileSync(resolve(webDir, "../VERSION"), "utf8").trim() || "dev";
 const localChangelog = readFileSync(resolve(webDir, "../CHANGELOG.md"), "utf8");
 
+/**
+ * CSP 配置插件
+ * - 开发环境：较宽松，允许热更新、localhost
+ * - 生产环境：严格 CSP，由 nginx 通过 Header 设置，此处仅开发环境注入 meta tag
+ */
+function cspPlugin(): Plugin {
+    let config: { command: string };
+
+    const isDev = () => config.command === "serve";
+
+    const getCspHeader = (): string => [
+        "default-src 'self'",
+        // Scripts - 开发环境允许 unsafe-eval (Vite HMR) 和 localhost
+        `script-src 'self' ${isDev() ? "'unsafe-eval' http://localhost:*" : ""}`,
+        // Styles - Tailwind injects inline styles
+        "style-src 'self' 'unsafe-inline'",
+        // Fonts
+        "font-src 'self' data: https://fonts.gstatic.com",
+        // Images - picsum.photos 用于 demo 图片，blob: 用于本地上传预览
+        "img-src 'self' data: blob: https://picsum.photos https://test-videos.co.uk",
+        // Media (video/audio)
+        "media-src 'self' blob: https://test-videos.co.uk",
+        // Connect - API 请求
+        "connect-src 'self' http://localhost:* ws://localhost:*",
+        // Frames - 沙箱 iframe
+        "frame-src 'self' blob:",
+        // Workers
+        "worker-src 'self' blob:",
+        // Base URI
+        "base-uri 'self'",
+        // Form action
+        "form-action 'self'",
+    ].join("; ");
+
+    return {
+        name: "csp-plugin",
+        configResolved(resolvedConfig) {
+            config = resolvedConfig;
+        },
+        configureServer(server) {
+            server.middlewares.use((_req, res, next) => {
+                res.setHeader("Content-Security-Policy", getCspHeader());
+                next();
+            });
+        },
+        transformIndexHtml(html) {
+            if (!isDev()) return html;
+            // 开发环境：注入 CSP meta tag
+            return html.replace("<head>", `<head>\n    <meta http-equiv="Content-Security-Policy" content="${getCspHeader()}">`);
+        },
+    };
+}
+
 // Expose /plugins/index.json with local plugin files from public/plugins.
-// The frontend can discover and list them when enabled; development reads the directory live, while builds emit a static registry.
 function localPluginsManifest(): Plugin {
     const pluginsDir = resolve(webDir, "public/plugins");
     const listLocalPlugins = () => {
@@ -40,7 +92,7 @@ function localPluginsManifest(): Plugin {
 
 export default defineConfig({
     base: process.env.VITE_BASE || "/",
-    plugins: [react(), localPluginsManifest()],
+    plugins: [react(), localPluginsManifest(), cspPlugin()],
     resolve: {
         alias: {
             "@": resolve(webDir, "src"),

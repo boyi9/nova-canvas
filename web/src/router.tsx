@@ -1,6 +1,7 @@
 import { createBrowserRouter, Outlet } from "react-router-dom";
 
 import { AnalyticsTracker } from "@/components/layout/analytics-tracker";
+import { CanvasErrorBoundary, NovaWorkbenchErrorBoundary } from "@/components/common/ErrorBoundary";
 import UserLayout from "@/layouts/user-layout";
 import AssetsPage from "@/pages/assets";
 import CanvasPage from "@/pages/canvas";
@@ -22,15 +23,15 @@ export const router = createBrowserRouter([
             </UserLayout>
         ),
         children: [
-            { path: "/", element: <NovaHomePage /> },
+            { path: "/", element: <NovaWorkbenchErrorBoundary><NovaHomePage /></NovaWorkbenchErrorBoundary> },
             { path: "/home", element: <HomePage /> },
-            { path: "/nova", element: <NovaHomePage /> },
+            { path: "/nova", element: <NovaWorkbenchErrorBoundary><NovaHomePage /></NovaWorkbenchErrorBoundary> },
             { path: "/image", element: <ImagePage /> },
             { path: "/video", element: <VideoPage /> },
             { path: "/assets", element: <AssetsPage /> },
             { path: "/prompts", element: <PromptsPage /> },
             { path: "/canvas", element: <CanvasPage /> },
-            { path: "/canvas/:id", element: <CanvasProjectPage /> },
+            { path: "/canvas/:id", element: <CanvasErrorBoundary><CanvasProjectPage /></CanvasErrorBoundary> },
             { path: "/config", element: <ConfigPage /> },
         ],
     },
