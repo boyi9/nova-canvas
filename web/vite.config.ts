@@ -50,4 +50,12 @@ export default defineConfig({
         __APP_VERSION__: JSON.stringify(localVersion),
         __APP_RELEASES__: JSON.stringify(parseChangelog(localChangelog)),
     },
+    server: {
+        proxy: {
+            "/api/v1": {
+                target: `http://localhost:${process.env.MOCK_PORT || 4174}`,
+                changeOrigin: true,
+            },
+        },
+    },
 });
