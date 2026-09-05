@@ -61,9 +61,9 @@ export function SceneWorkbench({ scene, onGenerate, generating = false, result =
     }
   };
 
-  const handleAgentMessage = (message: string) => {
-    console.log("Agent message:", message);
-    // TODO: 处理Agent消息
+  const handleAgentMessage = (_message: string) => {
+    // Agent messages are handled by NovaAgentPanel internally (chatCompletion).
+    // This callback is reserved for future analytics / parent coordination.
   };
 
   return (
