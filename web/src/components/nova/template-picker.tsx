@@ -59,7 +59,7 @@ export function TemplatePicker({ scene, onTemplateSelect }: TemplatePickerProps)
                 {template.style}
               </Tag>
             </div>
-            <p className="m-0 text-xs text-stone-500 line-clamp-2">
+            <p className="m-0 text-xs text-muted-foreground line-clamp-2">
               {template.description}
             </p>
             <div className="flex flex-wrap gap-1">

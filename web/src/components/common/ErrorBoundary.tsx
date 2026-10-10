@@ -1,6 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { Alert, Button, Card, Modal, Typography } from "antd";
-import { Bug, RefreshCw, Home, Copy } from "lucide-react";
+import { Bug, RefreshCw, Home, Copy, AlertOctagon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface ErrorBoundaryProps {
@@ -14,6 +14,105 @@ interface ErrorBoundaryState {
     hasError: boolean;
     error: Error | null;
     errorInfo: ErrorInfo | null;
+}
+
+// 类组件不能调用 Hook：把需要 t() 的错误 UI 抽成函数组件
+function ErrorBoundaryFallback({ error, errorInfo, showDetails, onRetry }: {
+    error: Error | null;
+    errorInfo: ErrorInfo | null;
+    showDetails: boolean;
+    onRetry: () => void;
+}) {
+    const { t } = useTranslation();
+
+    const handleCopyError = (): void => {
+        if (!error) return;
+        const text = `Error: ${error.message}\nStack: ${error.stack}\nComponent Stack: ${errorInfo?.componentStack}`;
+        navigator.clipboard.writeText(text);
+    };
+
+    const handleGoHome = (): void => {
+        window.location.href = "/";
+    };
+
+    return (
+        <Card
+            style={{ maxWidth: 600, margin: "40px auto", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+            bordered={false}
+        >
+            <div style={{ padding: 32, textAlign: "center" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}><AlertOctagon className="size-12 text-destructive" /></div>
+                <Typography.Title level={3} style={{ marginBottom: 8 }}>
+                    {t("errorBoundary.title", "组件渲染出错了")}
+                </Typography.Title>
+                <Typography.Text type="secondary" style={{ marginBottom: 24 }}>
+                    {t("errorBoundary.subtitle", "别担心，这不是你的错。开发团队已收到错误报告。")}
+                </Typography.Text>
+
+                <div style={{ display: "flex", gap: 12, justifyContent: "center", marginBottom: 24 }}>
+                    <Button
+                        type="primary"
+                        icon={<RefreshCw />}
+                        onClick={onRetry}
+                        size="large"
+                    >
+                        {t("errorBoundary.retry", "重试")}
+                    </Button>
+                    <Button icon={<Home />} onClick={handleGoHome} size="large">
+                        {t("errorBoundary.goHome", "返回首页")}
+                    </Button>
+                </div>
+
+                {showDetails && error && (
+                    <Alert
+                        type="error"
+                        closable
+                        message={t("errorBoundary.errorDetails", "错误详情")}
+                        description={
+                            <div style={{ textAlign: "left", maxHeight: 300, overflow: "auto" }}>
+                                <pre style={{ margin: 0, fontSize: 12, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                    {error.name}: {error.message}
+                                    {error.stack && `\n\n${error.stack}`}
+                                </pre>
+                            </div>
+                        }
+                        showIcon
+                    />
+                )}
+
+                {showDetails && errorInfo?.componentStack && (
+                    <Alert
+                        type="info"
+                        closable
+                        message={t("errorBoundary.componentStack", "组件堆栈")}
+                        description={
+                            <div style={{ textAlign: "left", maxHeight: 200, overflow: "auto" }}>
+                                <pre style={{ margin: 0, fontSize: 11, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                    {errorInfo.componentStack}
+                                </pre>
+                            </div>
+                        }
+                        showIcon
+                    />
+                )}
+
+                <div style={{ marginTop: 16 }}>
+                    <Button
+                        icon={<Copy />}
+                        onClick={handleCopyError}
+                        type="dashed"
+                        size="small"
+                    >
+                        {t("errorBoundary.copyError", "复制错误信息")}
+                    </Button>
+                </div>
+
+                <Typography.Paragraph type="secondary" style={{ marginTop: 16, fontSize: 12 }}>
+                    {t("errorBoundary.reportHint", "错误已自动上报，如问题持续请联系技术支持")}
+                </Typography.Paragraph>
+            </div>
+        </Card>
+    );
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -36,102 +135,20 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         this.setState({ hasError: false, error: null, errorInfo: null });
     };
 
-    private handleCopyError = (): void => {
-        const { error, errorInfo } = this.state;
-        if (!error) return;
-        const text = `Error: ${error.message}\nStack: ${error.stack}\nComponent Stack: ${errorInfo?.componentStack}`;
-        navigator.clipboard.writeText(text);
-    };
-
-    private handleGoHome = (): void => {
-        window.location.href = "/";
-    };
-
     render(): ReactNode {
         const { hasError, error, errorInfo } = this.state;
         const { fallback, children, showDetails = true } = this.props;
-        const { t } = useTranslation();
 
         if (hasError) {
             if (fallback) return fallback;
 
             return (
-                <Card
-                    style={{ maxWidth: 600, margin: "40px auto", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
-                    bordered={false}
-                >
-                    <div style={{ padding: 32, textAlign: "center" }}>
-                        <div style={{ fontSize: 48, marginBottom: 16 }}>😵</div>
-                        <Typography.Title level={3} style={{ marginBottom: 8 }}>
-                            {t("errorBoundary.title", "组件渲染出错了")}
-                        </Typography.Title>
-                        <Typography.Text type="secondary" style={{ marginBottom: 24 }}>
-                            {t("errorBoundary.subtitle", "别担心，这不是你的错。开发团队已收到错误报告。")}
-                        </Typography.Text>
-
-                        <div style={{ display: "flex", gap: 12, justifyContent: "center", marginBottom: 24 }}>
-                            <Button
-                                type="primary"
-                                icon={<RefreshCw />}
-                                onClick={this.handleRetry}
-                                size="large"
-                            >
-                                {t("errorBoundary.retry", "重试")}
-                            </Button>
-                            <Button icon={<Home />} onClick={this.handleGoHome} size="large">
-                                {t("errorBoundary.goHome", "返回首页")}
-                            </Button>
-                        </div>
-
-                        {showDetails && error && (
-                            <Alert
-                                type="error"
-                                closable
-                                message={t("errorBoundary.errorDetails", "错误详情")}
-                                description={
-                                    <div style={{ textAlign: "left", maxHeight: 300, overflow: "auto" }}>
-                                        <pre style={{ margin: 0, fontSize: 12, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                                            {error.name}: {error.message}
-                                            {error.stack && `\n\n${error.stack}`}
-                                        </pre>
-                                    </div>
-                                }
-                                showIcon
-                            />
-                        )}
-
-                        {showDetails && errorInfo?.componentStack && (
-                            <Alert
-                                type="info"
-                                closable
-                                message={t("errorBoundary.componentStack", "组件堆栈")}
-                                description={
-                                    <div style={{ textAlign: "left", maxHeight: 200, overflow: "auto" }}>
-                                        <pre style={{ margin: 0, fontSize: 11, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                                            {errorInfo.componentStack}
-                                        </pre>
-                                    </div>
-                                }
-                                showIcon
-                            />
-                        )}
-
-                        <div style={{ marginTop: 16 }}>
-                            <Button
-                                icon={<Copy />}
-                                onClick={this.handleCopyError}
-                                type="dashed"
-                                size="small"
-                            >
-                                {t("errorBoundary.copyError", "复制错误信息")}
-                            </Button>
-                        </div>
-
-                        <Typography.Paragraph type="secondary" style={{ marginTop: 16, fontSize: 12 }}>
-                            {t("errorBoundary.reportHint", "错误已自动上报，如问题持续请联系技术支持")}
-                        </Typography.Paragraph>
-                    </div>
-                </Card>
+                <ErrorBoundaryFallback
+                    error={error}
+                    errorInfo={errorInfo}
+                    showDetails={showDetails}
+                    onRetry={this.handleRetry}
+                />
             );
         }
 

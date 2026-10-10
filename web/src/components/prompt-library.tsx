@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Library } from "lucide-react";
+import { Library, Zap } from "lucide-react";
 import { Modal, Tag } from "antd";
 
 import { loadPromptLibrary, savePromptLibrary, searchPrompts, seedSamplePrompts, type PromptItem } from "@/lib/prompt-library/cache";
@@ -39,7 +39,7 @@ export function PromptLibrary({ open, onClose }: Props) {
                     <span>
                         {ready ? t("promptLib.cached") : t("promptLib.loading")} · {items.length} {t("promptLib.count")}
                     </span>
-                    <span>⚡ IndexedDB · ≤200ms</span>
+                    <span><Zap className="mr-1 inline size-3" /> IndexedDB · ≤200ms</span>
                 </div>
                 <input
                     value={query}

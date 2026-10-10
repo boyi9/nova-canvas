@@ -1,0 +1,19 @@
+﻿=== Security Scan Report ===
+Date: 2026-08-25 20:00:42
+Duration: 00:00:00.1385542.TotalSeconds}s
+
+Summary:
+- Total issues found: 2
+- High severity: 0
+- Medium severity: 2
+
+Issues:
+- MEDIUM: Dangerous pattern 'innerHTML' in NovaTextNode.tsx
+- MEDIUM: Dangerous pattern 'dangerouslySetInnerHTML' in NovaTextNode.tsx
+
+
+Recommendations:
+1. Review all HIGH severity issues immediately
+2. Address MEDIUM severity issues before production deployment
+3. Consider implementing automated security scanning in CI/CD pipeline
+4. Regularly update dependencies to patch known vulnerabilities

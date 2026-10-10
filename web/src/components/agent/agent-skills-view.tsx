@@ -84,7 +84,8 @@ export function AgentSkillsView({ clientId }: { clientId: string }) {
         setErrorsOpen(false);
         form.resetFields();
     }, [connected, form]);
-    const useSkill = (skill: AgentSkillSummary) => {
+    // 注意：此函数非 Hook，只是局部动作封装（命名避开 use* 前缀以免触发 rules-of-hooks）
+    const selectAndOpenSkill = (skill: AgentSkillSummary) => {
         selectSkill(skill);
         setAgentState({ activeTab: "chat" });
     };
@@ -333,7 +334,7 @@ export function AgentSkillsView({ clientId }: { clientId: string }) {
                                             {t(skill.enabled ? "agent.skillManager.enabled" : "agent.skillManager.disabled")}
                                         </label>
                                         <div className="flex items-center gap-0.5">
-                                            <Button type="text" size="small" disabled={!connected || !skill.enabled || Boolean(busySkill)} icon={selected ? <Check className="size-3.5" /> : <Sparkles className="size-3.5" />} onClick={() => useSkill(skill)}>{t(selected ? "agent.skillManager.selected" : "agent.skillManager.use")}</Button>
+                                            <Button type="text" size="small" disabled={!connected || !skill.enabled || Boolean(busySkill)} icon={selected ? <Check className="size-3.5" /> : <Sparkles className="size-3.5" />} onClick={() => selectAndOpenSkill(skill)}>{t(selected ? "agent.skillManager.selected" : "agent.skillManager.use")}</Button>
                                             {skill.managed ? (
                                                 <>
                                                     <Tooltip title={t("common.edit")}><Button type="text" shape="circle" size="small" aria-label={t("agent.skillManager.editNamed", { name: skill.interface?.displayName || skill.name })} disabled={!connected || Boolean(busySkill) || Boolean(generatingSource)} icon={<FilePenLine className="size-3.5" />} onClick={() => void openEdit(skill)} /></Tooltip>

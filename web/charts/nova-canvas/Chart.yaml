@@ -1,0 +1,46 @@
+apiVersion: v2
+name: nova-canvas
+description: Nova Canvas - AI Content Creation Platform
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+kubernetesVersion: ">=1.20.0"
+annotations:
+  description: Helm chart for Nova Canvas AI content creation platform
+  chart: nova-canvas-1.0.0
+home: https://nova-canvas.com
+maintainers:
+  - email: dev@nova-canvas.com
+    name: Nova Canvas Team
+keywords:
+  - ai
+  - video
+  - canvas
+  - creative
+  - director
+dependencies:
+  - name: common
+    version: 0.1.0
+    repository: ./common
+  - name: redis
+    version: 19
+    condition: redis.enabled
+  - name: postgresql
+    version: 15
+    condition: postgresql.enabled
+  - name: cert-manager
+    version: 1.15.0
+    condition: certmanager.enabled
+  - name: monitoring
+    version: 20.11.0
+    condition: monitoring.enabled
+  - name: nova-canvas-agent
+    version: "file:./agent"
+  - name: nova-canvas-scheduler
+    version: "file:./scheduler"
+digest: ""
+icon: https://nova-canvas.com/icon.png
+appVersion: "1.0.0"
+deprecated: false
+ engines:
+   helm: ">=3.0.0"

@@ -67,14 +67,14 @@ export default function CanvasPage() {
         enterProject(mode === "new" ? createProject(t("canvas.defaultTitle", { count: projects.length + 1 })) : projects[0]?.id || createProject(t("canvas.defaultTitle", { count: projects.length + 1 })));
     }, [createProject, hydrated, mode, projects, t]);
 
-    if (hydrated && (mode === "new" || mode === "recent")) return <main className="flex h-full items-center justify-center bg-background text-sm text-stone-500">{t("canvas.opening")}</main>;
+    if (hydrated && (mode === "new" || mode === "recent")) return <main className="flex h-full items-center justify-center bg-background text-sm text-muted-foreground">{t("canvas.opening")}</main>;
 
     return (
-        <main className="h-full overflow-auto bg-background text-stone-950 dark:text-stone-100">
+        <main className="h-full overflow-auto bg-background text-foreground dark:text-foreground">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
-                <header className="flex flex-wrap items-end justify-between gap-4 border-b border-stone-200 pb-6 dark:border-stone-800">
+                <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6 dark:border-border">
                     <div>
-                        <p className="text-xs text-stone-500">{t("canvas.library")}</p>
+                        <p className="text-xs text-muted-foreground">{t("canvas.library")}</p>
                         <h1 className="mt-3 text-3xl font-semibold">{t("canvas.title")}</h1>
                     </div>
                     <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export default function CanvasPage() {
                 </header>
 
                 {!hydrated ? (
-                    <section className="flex min-h-[360px] items-center justify-center border-y border-stone-200 text-sm text-stone-500 dark:border-stone-800">{t("canvas.loading")}</section>
+                    <section className="flex min-h-[360px] items-center justify-center border-y border-border text-sm text-muted-foreground dark:border-border">{t("canvas.loading")}</section>
                 ) : projects.length ? (
                     <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         {projects.map((project) => (
@@ -111,9 +111,9 @@ export default function CanvasPage() {
                         ))}
                     </div>
                 ) : (
-                    <section className="flex min-h-[360px] flex-col items-center justify-center border-y border-stone-200 text-center dark:border-stone-800">
+                    <section className="flex min-h-[360px] flex-col items-center justify-center border-y border-border text-center dark:border-border">
                         <h2 className="text-xl font-medium">{t("canvas.empty")}</h2>
-                        <p className="mt-3 text-sm text-stone-500">{t("canvas.emptyDescription")}</p>
+                        <p className="mt-3 text-sm text-muted-foreground">{t("canvas.emptyDescription")}</p>
                         <Button type="primary" className="mt-6" icon={<Plus className="size-4" />} onClick={createAndEnter}>
                             {t("canvas.create")}
                         </Button>

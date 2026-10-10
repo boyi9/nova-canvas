@@ -1,7 +1,7 @@
 // Nova启画 Mock API Server
 // 无外部依赖，纯 Node.js http 模块，模拟后端全部已定义端点。
 // 启动方式：node server/mock-api.mjs
-// 默认端口：4174（前端 Vite dev 在 3000，通过 vite.config.ts proxy 转发 /api/v1 → 4174）
+// 默认端口：4174（前端 Vite dev 在 5173，通过 vite.config.ts proxy 转发 /api/v1 → 4174）
 
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
@@ -34,6 +34,9 @@ const recipes = [
 // 异步任务存储
 const tasks = new Map(); // taskId → { type, status, result_url, error, created_at }
 
+// 上传文件存储（内存模拟）
+const uploadedFiles = new Map(); // key → { url, width, height, bytes, mimeType }
+
 // ── 工具函数 ────────────────────────────────────────────────────────────────
 
 function json(res, data, status = 200) {
@@ -52,6 +55,53 @@ function parseBody(req) {
         req.on("end", () => {
             try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
             catch { resolve({}); }
+        });
+    });
+}
+
+function parseMultipartFormData(req) {
+    return new Promise((resolve) => {
+        const chunks = [];
+        req.on("data", (c) => chunks.push(c));
+        req.on("end", () => {
+            const buffer = Buffer.concat(chunks);
+            const contentType = req.headers["content-type"] || "";
+            const boundaryMatch = contentType.match(/boundary=(.+)/);
+            
+            if (!boundaryMatch) {
+                resolve({ fields: {}, file: null });
+                return;
+            }
+
+            const boundary = boundaryMatch[1];
+            const parts = buffer.toString("binary").split(`--${boundary}`);
+            
+            let file = null;
+            const fields = {};
+
+            for (const part of parts) {
+                if (!part.includes("Content-Disposition")) continue;
+                
+                const [header, ...bodyParts] = part.split("\r\n\r\n");
+                const body = bodyParts.join("\r\n\r\n").replace(/\r\n--$/, "");
+                
+                const nameMatch = header.match(/name="([^"]+)"/);
+                const filenameMatch = header.match(/filename="([^"]+)"/);
+                const contentTypeMatch = header.match(/Content-Type:\s*(.+)/i);
+
+                if (filenameMatch && nameMatch) {
+                    file = {
+                        fieldName: nameMatch[1],
+                        filename: filenameMatch[1],
+                        contentType: contentTypeMatch?.[1] || "application/octet-stream",
+                        data: Buffer.from(body, "binary"),
+                    };
+                } else if (nameMatch) {
+                    fields[nameMatch[1]] = body;
+                }
+            }
+
+            resolve({ fields, file });
         });
     });
 }
@@ -78,6 +128,15 @@ function pickImage() {
         "https://picsum.photos/seed/nova4/800/800",
     ];
     return images[Math.floor(Math.random() * images.length)];
+}
+
+// SSE 辅助函数
+function sendSSE(res, data) {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+function sendSSEDone(res) {
+    res.write("data: [DONE]\n\n");
 }
 
 // ── 路由 ────────────────────────────────────────────────────────────────────
@@ -208,6 +267,50 @@ async function handleRequest(req, res) {
             return json(res, { reply });
         }
 
+        // ── Agent Chat SSE Stream ────────────────────────────────────────
+        if (path === "/api/v1/agent/chat/stream" && method === "POST") {
+            const body = await parseBody(req);
+            const lastMsg = (body.messages || []).slice(-1)[0];
+            const prompt = lastMsg?.content || "";
+            
+            let fullReply = `收到您的需求："${prompt}"。作为Nova AI助手，我建议您先选择一个合适的模板，然后调整参数进行生成。`;
+            if (/主图|产品/.test(prompt)) fullReply = "为您推荐电商白底主图风格。建议搭配「简洁背景+产品居中」构图，突出产品质感。是否直接生成？";
+            if (/视频|短片/.test(prompt)) fullReply = "短视频建议15-30秒，前3秒必须抓住注意力。我帮您规划了分镜：开场（产品特写）→使用场景→卖点展示→行动号召。";
+            if (/剧本|短剧/.test(prompt)) fullReply = "短剧剧本建议：第1集设悬念，第2集反转，第3集高潮。角色设定要鲜明，每集控制在1-2分钟。";
+
+            // 设置SSE响应头
+            res.writeHead(200, {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Access-Control-Allow-Origin": "*",
+            });
+
+            // 模拟流式输出
+            const tokens = fullReply.split("");
+            let index = 0;
+            
+            const interval = setInterval(() => {
+                if (index < tokens.length) {
+                    // 每次发送1-3个字符
+                    const chunk = tokens.slice(index, index + 2).join("");
+                    sendSSE(res, { token: chunk });
+                    index += 2;
+                } else {
+                    clearInterval(interval);
+                    sendSSEDone(res);
+                    res.end();
+                }
+            }, 30);
+
+            // 客户端断开时清理
+            req.on("close", () => {
+                clearInterval(interval);
+            });
+
+            return;
+        }
+
         // ── AI 能力 ──────────────────────────────────────────────────────
         if (path === "/api/v1/ai/providers" && method === "GET") {
             return json(res, {
@@ -310,16 +413,34 @@ async function handleRequest(req, res) {
             return json(res, { task_id: randomUUID(), status: "success", exit_code: 0, output: "内联脚本执行完成", error: "", duration_ms: 80 });
         }
 
-        // ── Media Upload（P0 缺口的 mock）─────────────────────────────────
+        // ── Media Upload（支持真实文件上传）────────────────────────────────
         if (path === "/api/v1/media/upload" && method === "POST") {
-            // 模拟：接收文件但不实际存储，返回 mock URL
-            return json(res, {
-                url: `https://picsum.photos/seed/upload${Date.now()}/800/800`,
-                storageKey: `media:${randomUUID()}`,
+            const { file } = await parseMultipartFormData(req);
+            
+            if (!file) {
+                return error(res, 400, "未找到上传文件");
+            }
+
+            // 生成mock URL（实际应用中会上传到对象存储）
+            const storageKey = `media/${randomUUID()}/${file.filename}`;
+            const mockUrl = `https://picsum.photos/seed/${Date.now()}/800/800`;
+            
+            // 存储文件信息
+            uploadedFiles.set(storageKey, {
+                url: mockUrl,
                 width: 800,
                 height: 800,
-                bytes: 102400,
-                mimeType: "image/jpeg",
+                bytes: file.data.length,
+                mimeType: file.contentType,
+            });
+
+            return json(res, {
+                url: mockUrl,
+                storageKey,
+                width: 800,
+                height: 800,
+                bytes: file.data.length,
+                mimeType: file.contentType,
             });
         }
 
@@ -337,5 +458,7 @@ const server = createServer(handleRequest);
 server.listen(PORT, () => {
     console.log(`\n  🚀 Nova Mock API 已启动: http://localhost:${PORT}/api/v1`);
     console.log(`  📋 覆盖端点: auth, projects, templates, generate/*, compliance, recipes, agent/chat, ai/*, scripts, media/upload`);
+    console.log(`  🔄 SSE流式: /api/v1/agent/chat/stream`);
+    console.log(`  📤 文件上传: /api/v1/media/upload (multipart/form-data)`);
     console.log(`  🔑 测试账号: demo@nova.ai / 123456\n`);
 });

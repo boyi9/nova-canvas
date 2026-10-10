@@ -1,0 +1,151 @@
+/* Nova Canvas 响应式设计 */
+@media (max-width: 1024px) {
+  .canvas-node {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  .toolbar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .toolbar .button {
+    margin: 5px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .grid.grid-cols-1 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .space-y-2 > * {
+    margin-bottom: 10px !important;
+  }
+  
+  .rhythm-bar {
+    height: 20px !important;
+  }
+  
+  .shot-node {
+    padding: 10px !important;
+  }
+  
+  .shot-function-label {
+    font-size: 8px !important;
+  }
+  
+  .shot-duration {
+    font-size: 8px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar {
+    padding: 10px;
+  }
+  
+  .toolbar .clapperboard {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .toolbar .node-text {
+    font-size: 12px !important;
+  }
+  
+  .shot-count,
+  .total-duration {
+    font-size: 12px !important;
+  }
+  
+  .rhythm-segment {
+    min-width: 30px !important;
+  }
+  
+  .shot-preview {
+    width: 40px !important;
+    height: 24px !important;
+  }
+  
+  .shot-index {
+    font-size: 10px !important;
+  }
+  
+  .shot-type,
+  .shot-function {
+    font-size: 8px !important;
+  }
+}
+
+@media (orientation: portrait) and (max-height: 500px) {
+  .mobile-overlay {
+    display: flex !important;
+  }
+  
+  .main-content {
+    margin-top: 50px !important;
+  }
+  
+  .bottom-bar {
+    bottom: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* 防止 iOS 遮罩区域 */
+@supports (-webkit-touch-callout: none) {
+  .no-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* 响应式间距 */
+.resp-mb { margin-bottom: calc(var(--spacing) * 2); }
+.resp-mt { margin-top: calc(var(--spacing) * 2); }
+.resp-pb { padding-bottom: calc(var(--spacing) * 2); }
+.resp-pt { padding-top: calc(var(--spacing) * 2); }
+
+/* 移动端专用间距 */
+@media (max-width: 768px) {
+  .resp-mb { margin-bottom: 1rem; }
+  .resp-mt { margin-top: 1rem; }
+  .resp-pb { padding-bottom: 1rem; }
+  .resp-pt { padding-top: 1rem; }
+}
+
+/* 滚动条自适应 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 辅助类 */
+.hidden-mobile { display: none !important; }
+.visible-mobile { display: block !important; }
+
+@media (max-width: 768px) {
+  .hidden-mobile { display: none; }
+  .visible-mobile { display: block; }
+}
+
+@media (min-width: 769px) {
+  .hidden-mobile { display: block; }
+  .visible-mobile { display: none; }
+}

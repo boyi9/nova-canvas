@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
+import { Hand, HandMetal } from "lucide-react";
 
 import { requestEdit, requestGeneration, requestImageQuestion, type AiTextMessage } from "@/services/api/image";
 import { requestVideoGeneration, storeGeneratedVideo } from "@/services/api/video";
@@ -129,7 +130,7 @@ export function usePluginHost(params: PluginHostParams) {
                 id: "node-interaction-toggle",
                 title: t(interactive ? "canvas.plugins.interactiveTitle" : "canvas.plugins.movableTitle"),
                 label: t(interactive ? "canvas.plugins.move" : "canvas.plugins.interact"),
-                icon: interactive ? "✋" : "🖐",
+                icon: interactive ? <Hand className="size-4" /> : <HandMetal className="size-4" />,
                 active: interactive,
                 onClick: () => pluginHost.updateMetadata(node.id, { interactive: !interactive }),
             };

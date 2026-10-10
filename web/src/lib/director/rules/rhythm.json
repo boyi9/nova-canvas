@@ -1,0 +1,20 @@
+{
+  "golden_3_seconds": {
+    "rule": "前3秒必须有钩子：冲突/悬念/反差/痛点直击/福利承诺",
+    "hook_types": ["痛点提问", "结果前置", "价格冲击", "对比反差", "悬念留白"]
+  },
+  "shot_duration": {
+    "normal": "2-4s/镜头",
+    "fast_paced": "1-2s/镜头（信息流/年轻向）",
+    "emotional": "5-8s/镜头（品牌/氛围向）"
+  },
+  "structure_15s": ["hook(0-3s)", "痛点/需求(3-7s)", "产品亮相(7-10s)", "卖点轰炸(10-13s)", "CTA逼单(13-15s)"],
+  "structure_30s": ["hook(0-3s)", "痛点(3-8s)", "产品亮相+卖点1(8-13s)", "卖点2+场景(13-20s)", "证言/对比(20-25s)", "CTA+优惠(25-30s)"],
+  "bgm_matching": {
+    "bpm_map": {
+      "fast_ugc": "115-130 BPM",
+      "product_show": "90-110 BPM",
+      "brand_cinematic": "60-85 BPM"
+    }
+  }
+}

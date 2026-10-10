@@ -5,9 +5,21 @@ import i18n from "@/i18n";
 import { canvasThemes } from "@/lib/canvas-theme";
 import type { AgentCanvasReference } from "@/stores/use-agent-store";
 
+// 模块级静态图标映射：组件渲染期只做索引访问，不在 render 中“创建”组件
+export const REFERENCE_ICONS = {
+    audio: Music2,
+    video: Video,
+    image: ImageIcon,
+    text: FileText,
+};
+
+export function canvasReferenceIcon(kind: AgentCanvasReference["kind"]) {
+    return REFERENCE_ICONS[kind];
+}
+
 export function AgentCanvasReferencePreview({ reference, previewUrl, previewText, theme }: { reference: AgentCanvasReference; previewUrl?: string; previewText?: string; theme: (typeof canvasThemes)[keyof typeof canvasThemes] }) {
     const { t } = useTranslation();
-    const Icon = canvasReferenceIcon(reference.kind);
+    const Icon = REFERENCE_ICONS[reference.kind];
     return (
         <div className="w-64" style={{ color: theme.node.text }}>
             <div className="mb-2 flex min-w-0 items-center gap-2">
@@ -25,10 +37,6 @@ export function AgentCanvasReferencePreview({ reference, previewUrl, previewText
             {!previewUrl && !(reference.kind === "text" && previewText) ? <div className="py-3 text-center text-xs" style={{ color: theme.node.muted }}>{t("agent.composer.mentions.previewUnavailable")}</div> : null}
         </div>
     );
-}
-
-export function canvasReferenceIcon(kind: AgentCanvasReference["kind"]) {
-    return kind === "audio" ? Music2 : kind === "video" ? Video : kind === "image" ? ImageIcon : FileText;
 }
 
 export function canvasReferenceKindLabel(kind: AgentCanvasReference["kind"]) {

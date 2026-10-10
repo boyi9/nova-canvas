@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 
 import i18n from "@/i18n";
 
-export type ApiCallFormat = "openai" | "gemini" | "ark";
+export type ApiCallFormat = "openai" | "gemini" | "ark" | "new-api";
 export type ModelCapability = "image" | "video" | "text" | "audio";
 export type ReasoningEffort = "auto" | "low" | "medium" | "high" | "xhigh";
 
@@ -51,6 +51,7 @@ export type AiConfig = {
     background: string;
     count: string;
     canvasImageCount: string;
+    joyaiServerUrl: string;
 };
 
 export type WebdavSyncConfig = {
@@ -67,6 +68,7 @@ const CHANNEL_MODEL_SEPARATOR = "::";
 const OPENAI_BASE_URL = "https://api.openai.com";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com";
 const ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";
+const NEW_API_BASE_URL = "http://localhost:3000"; // new-api 网关默认地址
 
 export const defaultConfig: AiConfig = {
     channelMode: "local",
@@ -85,6 +87,19 @@ export const defaultConfig: AiConfig = {
                 { name: "grok-imagine-video", capability: "video" },
                 { name: "gpt-5.5", capability: "text" },
                 { name: "gpt-4o-mini-tts", capability: "audio" },
+            ],
+        },
+        {
+            id: "new-api",
+            name: "new-api Gateway",
+            baseUrl: NEW_API_BASE_URL,
+            apiKey: "",
+            apiFormat: "new-api",
+            models: [
+                { name: "gpt-4o", capability: "image" },
+                { name: "gpt-4o", capability: "video" },
+                { name: "gpt-4o", capability: "text" },
+                { name: "tts-1", capability: "audio" },
             ],
         },
     ],
@@ -109,6 +124,7 @@ export const defaultConfig: AiConfig = {
     background: "",
     count: "1",
     canvasImageCount: "3",
+    joyaiServerUrl: "ws://localhost:8080",
 };
 
 export const defaultWebdavSyncConfig: WebdavSyncConfig = {

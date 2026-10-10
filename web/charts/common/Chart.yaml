@@ -1,0 +1,18 @@
+apiVersion: v2
+name: common
+description: Common dependencies for Nova Canvas
+type: library
+version: 0.1.0
+kubernetesVersion: ">=1.20.0"
+dependencies: []
+annotations: {}
+appVersion: "1.0.0"
+deprecated: false
+description: Common configuration and resources shared across Nova Canvas components
+maintainers: []
+keywords: []
+icon: ""
+dependencies: []
+dependenciesNS: []
+notes: ""
+versionStrategy: "replace"

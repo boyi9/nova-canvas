@@ -301,7 +301,7 @@ function createReferenceChip(reference: CanvasResourceReference, theme: (typeof 
 }
 
 function serializeEditor(editor: HTMLElement) {
-    return serializeNodes(editor.childNodes).replace(/﻿/g, "");
+    return serializeNodes(editor.childNodes).replace(/\uFEFF/g, "");
 }
 
 function serializeNodes(nodes: NodeListOf<ChildNode>) {

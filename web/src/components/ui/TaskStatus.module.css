@@ -1,0 +1,166 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-lg);
+  background-color: var(--status-bg);
+  color: var(--status-color);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.sm {
+  padding: 4px 8px;
+  font-size: 11px;
+  gap: 6px;
+}
+
+.md {
+  padding: 6px 12px;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.lg {
+  padding: 8px 16px;
+  font-size: 14px;
+  gap: 10px;
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 120px;
+}
+
+.sm .progressContainer {
+  width: 80px;
+}
+
+.lg .progressContainer {
+  width: 160px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background-color: color-mix(in srgb, var(--status-color) 30%, transparent);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--status-color);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-fast);
+  width: 0%;
+}
+
+.progressText {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--status-color);
+  opacity: 0.8;
+}
+
+.message {
+  font-size: 11px;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--status-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionButton:hover {
+  background-color: color-mix(in srgb, var(--status-color) 15%, transparent);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background-color: var(--color-white);
+  border: 1 solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+}
+
+.dark .listItem {
+  background-color: var(--color-gray-800);
+  border-color: var(--color-gray-700);
+}
+
+.listItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.listItemName {
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listItemMessage {
+  font-size: 11px;
+  color: var(--color-gray-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark .listItemMessage {
+  color: var(--color-gray-400);
+}

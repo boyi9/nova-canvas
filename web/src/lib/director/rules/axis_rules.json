@@ -1,0 +1,15 @@
+{
+  "axis_180": "对话/运动场景保持180度轴线，避免越轴导致空间混乱；越轴需用中性镜头过渡（特写/空镜/骑轴）",
+  "composition": {
+    "rule_of_thirds": "主体置于三分线交点",
+    "center_symmetry": "仪式感/产品正位图",
+    "leading_lines": "引导线指向产品/文字",
+    "negative_space": "留白≥30%给文字区"
+  },
+  "lighting_hints": {
+    "product": "柔光箱正面光+轮廓光",
+    "food": "侧逆光表现油光蒸汽",
+    "jewelry": "高光点+深背景增强火彩",
+    "tech": "冷色调+光效线条"
+  }
+}

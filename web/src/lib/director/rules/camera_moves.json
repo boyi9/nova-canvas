@@ -1,0 +1,64 @@
+{
+  "moves": [
+    {
+      "id": "push-in",
+      "cn": "推镜",
+      "prompt": "camera slowly pushes in",
+      "use": "强调/聚焦情绪，电商卖点强调首选"
+    },
+    {
+      "id": "pull-out",
+      "cn": "拉镜",
+      "prompt": "camera pulls back",
+      "use": "揭示环境/反差"
+    },
+    {
+      "id": "pan-left",
+      "cn": "左摇",
+      "prompt": "camera pans left",
+      "use": "空间展示"
+    },
+    {
+      "id": "pan-right",
+      "cn": "右摇",
+      "prompt": "camera pans right",
+      "use": "空间展示/转场"
+    },
+    {
+      "id": "tilt-up",
+      "cn": "上摇",
+      "prompt": "camera tilts up",
+      "use": "产品从下到上揭示/气势"
+    },
+    {
+      "id": "tilt-down",
+      "cn": "下摇",
+      "prompt": "camera tilts down",
+      "use": "产品到环境/重量感"
+    },
+    {
+      "id": "orbit",
+      "cn": "环绕",
+      "prompt": "camera orbits around subject",
+      "use": "360°产品展示/电影感"
+    },
+    {
+      "id": "handheld",
+      "cn": "手持跟拍",
+      "prompt": "handheld tracking shot",
+      "use": "真实感/代入感（UGC 风格）"
+    },
+    {
+      "id": "static",
+      "cn": "固定机位",
+      "prompt": "static tripod shot",
+      "use": "信息型/口播默认"
+    },
+    {
+      "id": "aerial",
+      "cn": "航拍",
+      "prompt": "aerial drone shot",
+      "use": "环境大场面开场"
+    }
+  ]
+}

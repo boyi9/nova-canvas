@@ -17,3 +17,19 @@ plugins/canvas/*/node_modules
 web/public/plugins
 # Playwright
 web/test-results/
+
+# ── Python 后端 ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# SQLite 运行时数据库（由 services/db.py 生成）
+*.db
+*.db-wal
+*.db-shm

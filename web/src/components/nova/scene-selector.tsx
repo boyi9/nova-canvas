@@ -16,7 +16,7 @@ const SCENE_ICONS: Record<SceneId, React.ComponentType<{ className?: string }>> 
 
 export function SceneSelector({ activeScene, onSceneChange }: SceneSelectorProps) {
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-stone-100 p-1 dark:bg-stone-800">
+    <div className="flex items-center gap-1 rounded-lg bg-muted p-1 dark:bg-card">
       {(Object.keys(NOVA_CONFIG.scenes) as SceneId[]).map((sceneId) => {
         const scene = NOVA_CONFIG.scenes[sceneId];
         const Icon = SCENE_ICONS[sceneId];
@@ -31,7 +31,7 @@ export function SceneSelector({ activeScene, onSceneChange }: SceneSelectorProps
               className={`flex items-center gap-2 ${
                 isActive
                   ? "!bg-blue-600 !text-white"
-                  : "!text-stone-600 hover:!text-stone-950 dark:!text-stone-400 dark:hover:!text-white"
+                  : "!text-muted-foreground hover:!text-foreground dark:!text-muted-foreground dark:hover:!text-white"
               }`}
             >
               <span className="hidden sm:inline">{scene.name}</span>

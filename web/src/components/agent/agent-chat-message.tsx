@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { App, Button, Image, Modal, Popover } from "antd";
 import { Brain, CheckCircle2, ChevronDown, ChevronRight, Circle, CircleAlert, Copy, ExternalLink, FilePenLine, FileText, FolderOpen, ListChecks, LoaderCircle, Search, ShieldAlert, TerminalSquare, Wrench, XCircle } from "lucide-react";
 import { Streamdown, type LinkSafetyModalProps } from "streamdown";
+import { STATUS_COLORS, roleColor, runStatusColor } from "@/lib/status-colors";
 import { useTranslation } from "react-i18next";
 
 import i18n from "@/i18n";
@@ -9,7 +10,7 @@ import { useCopyText } from "@/hooks/use-copy-text";
 import { canvasThemes } from "@/lib/canvas-theme";
 import { useAgentStore, type AgentCanvasReference, type AgentPendingApproval, type AgentSkillReference } from "@/stores/use-agent-store";
 import { resolveAgentMessageAssetUrl, revealAgentLocalFile } from "@/services/api/canvas-agent";
-import { AgentCanvasReferencePreview, canvasReferenceIcon, canvasReferenceKindLabel } from "./agent-canvas-reference-preview";
+import { AgentCanvasReferencePreview, REFERENCE_ICONS, canvasReferenceKindLabel } from "./agent-canvas-reference-preview";
 import { agentInlineTokenClass, agentInlineTokenIconClass, agentInlineTokenMediaClass, agentReferenceMarker, parseAgentInlineTokens } from "./agent-chat-inline-tokens";
 
 const streamdownProps = () => ({
@@ -105,7 +106,7 @@ export type AgentChatMessageItem = {
 export function AgentChatMessage({ item, theme, onRejectTool, onApproveTool }: { item: AgentChatMessageItem; theme: (typeof canvasThemes)[keyof typeof canvasThemes]; onRejectTool?: (id: string) => void; onApproveTool?: (id: string) => void }) {
     const isUser = item.role === "user";
     const isSystem = item.role === "system";
-    const color = item.role === "error" ? "#dc2626" : item.role === "tool" ? "#2563eb" : theme.node.text;
+    const color = roleColor(item.role, theme.node.text);
     if (isSystem) {
         return (
             <div className="flex justify-center text-xs">
@@ -161,7 +162,7 @@ function AgentCanvasMention({ reference, theme }: { reference: AgentCanvasRefere
     const token = useAgentStore((state) => state.token);
     const previewUrl = resolveAgentMessageAssetUrl(endpoint, token, reference.previewUrl || node?.metadata?.content || "");
     const previewText = reference.text || node?.metadata?.content || node?.metadata?.prompt;
-    const Icon = canvasReferenceIcon(reference.kind);
+    const Icon = REFERENCE_ICONS[reference.kind];
     return (
         <Popover
             trigger={["hover", "focus"]}
@@ -205,7 +206,7 @@ export function AgentPendingToolCard({ summary, detail, theme, onReject, onAppro
                     <Button danger type="text" className="!h-8" icon={<XCircle className="size-3.5" />} onClick={() => onReject?.()}>
                         {t("agent.message.reject")}
                     </Button>
-                    <Button type="text" className="!h-8" icon={<CheckCircle2 className="size-3.5" />} style={{ color: "#16a34a" }} onClick={() => onApprove?.()}>
+                    <Button type="text" className="!h-8" icon={<CheckCircle2 className="size-3.5" />} style={{ color: STATUS_COLORS.success }} onClick={() => onApprove?.()}>
                         {t("agent.message.approve")}
                     </Button>
                 </div>
@@ -233,7 +234,7 @@ export function AgentApprovalCard({ approval, theme, onDecision }: { approval: A
             <div className="mt-3 flex flex-wrap justify-end gap-1.5 border-t pt-3" style={{ borderColor: theme.node.stroke }}>
                 <Button danger type="text" className="!h-8" disabled={Boolean(approval.deciding)} loading={approval.deciding === "decline"} onClick={() => onDecision("decline")}>{t("agent.message.decline")}</Button>
                 <Button type="text" className="!h-8" disabled={Boolean(approval.deciding)} loading={approval.deciding === "accept"} onClick={() => onDecision("accept")}>{t("agent.message.allowOnce")}</Button>
-                <Button type="text" className="!h-8" disabled={Boolean(approval.deciding)} loading={approval.deciding === "acceptForSession"} style={{ color: "#ea580c" }} onClick={() => onDecision("acceptForSession")}>{t("agent.message.allowSession")}</Button>
+                <Button type="text" className="!h-8" disabled={Boolean(approval.deciding)} loading={approval.deciding === "acceptForSession"} style={{ color: STATUS_COLORS.warning }} onClick={() => onDecision("acceptForSession")}>{t("agent.message.allowSession")}</Button>
             </div>
         </div>
     );
@@ -302,7 +303,7 @@ export function AgentCommandGroup({ items, theme }: { items: AgentCommandItem[];
     const running = states.some((state) => state.running);
     const failed = states.filter((state) => state.failed).length;
     const expandable = items.some((item) => Boolean(item.text.trim() || userDetail(item.detail)));
-    const color = running ? "#d97706" : failed ? "#dc2626" : theme.node.muted;
+    const color = runStatusColor({ running, failed: failed > 0, success: !running && failed === 0 });
     const label = running ? t(items.length > 1 ? "agent.message.commandsRunning" : "agent.message.commandRunning", { count: items.length }) : t("agent.message.commandsCompleted", { count: items.length, failed: failed ? t("agent.message.commandsFailed", { count: failed }) : "" });
     const header = (
         <div className="flex min-w-0 items-center gap-2 text-sm" style={{ color }}>
@@ -340,7 +341,7 @@ function AgentCommandEntry({ item, index, theme }: { item: AgentCommandItem; ind
     const view = userDetail(item.detail);
     const state = commandViewState(item.detail);
     const status = t(state.failed ? "agent.message.failed" : state.running ? "agent.message.running" : "agent.message.completed");
-    const color = state.failed ? "#dc2626" : state.running ? "#d97706" : "#16a34a";
+    const color = runStatusColor({ failed: state.failed, running: state.running, success: true });
     const content = (
         <>
             <span className="w-4 shrink-0 text-center text-[10px] tabular-nums opacity-50" style={{ color: theme.node.muted }}>{index + 1}</span>
@@ -523,12 +524,12 @@ function toolCardState(title: string, text: string, detail?: unknown) {
     const raw = `${title} ${text} ${normalizeText(objectField(detail, "error"))}`;
     const lower = raw.toLowerCase();
     const status = String(objectField(detail, "status") || "").toLowerCase();
-    if (status === "noop" || /未生效|无需|没有找到|没有.*可|已存在/.test(raw)) return { label: tr("noEffect"), color: "#d97706", icon: <CircleAlert className="size-4" />, isError: false };
-    if (["declined", "rejected", "cancelled", "canceled"].includes(status) || /拒绝|取消/.test(raw)) return { label: tr("canceled"), color: "#dc2626", icon: <XCircle className="size-4" />, isError: true };
-    if (["failed", "error"].includes(status) || /失败|错误/.test(raw) || lower.includes("failed") || lower.includes("error")) return { label: tr("failed"), color: "#dc2626", icon: <XCircle className="size-4" />, isError: true };
-    if (["inprogress", "in_progress", "running", "started", "pending"].includes(status)) return { label: tr("running"), color: "#d97706", icon: <LoaderCircle className="size-4 animate-spin" />, isError: false };
-    if (["completed", "succeeded", "success"].includes(status) || /完成|成功/.test(raw)) return { label: tr("completed"), color: "#16a34a", icon: <CheckCircle2 className="size-4" />, isError: false };
-    return { label: tr("recorded"), color: "#2563eb", icon: <Wrench className="size-4" />, isError: false };
+    if (status === "noop" || /未生效|无需|没有找到|没有.*可|已存在/.test(raw)) return { label: tr("noEffect"), color: STATUS_COLORS.warning, icon: <CircleAlert className="size-4" />, isError: false };
+    if (["declined", "rejected", "cancelled", "canceled"].includes(status) || /拒绝|取消/.test(raw)) return { label: tr("canceled"), color: STATUS_COLORS.error, icon: <XCircle className="size-4" />, isError: true };
+    if (["failed", "error"].includes(status) || /失败|错误/.test(raw) || lower.includes("failed") || lower.includes("error")) return { label: tr("failed"), color: STATUS_COLORS.error, icon: <XCircle className="size-4" />, isError: true };
+    if (["inprogress", "in_progress", "running", "started", "pending"].includes(status)) return { label: tr("running"), color: STATUS_COLORS.warning, icon: <LoaderCircle className="size-4 animate-spin" />, isError: false };
+    if (["completed", "succeeded", "success"].includes(status) || /完成|成功/.test(raw)) return { label: tr("completed"), color: STATUS_COLORS.success, icon: <CheckCircle2 className="size-4" />, isError: false };
+    return { label: tr("recorded"), color: STATUS_COLORS.info, icon: <Wrench className="size-4" />, isError: false };
 }
 
 function toolIcon(kind: string | undefined, fallback: ReactNode) {
@@ -539,16 +540,16 @@ function toolIcon(kind: string | undefined, fallback: ReactNode) {
 }
 
 function planCardState(plan: PlanDetail, completed: number) {
-    if (plan.status === "failed") return { label: tr("failed"), color: "#dc2626" };
-    if (["interrupted", "cancelled", "canceled"].includes(plan.status)) return { label: tr("stopped"), color: "#d97706" };
-    if (completed === plan.tasks.length) return { label: tr("completed"), color: "#16a34a" };
-    if (plan.status === "finished") return { label: tr("finished"), color: "#2563eb" };
-    return { label: tr("running"), color: "#d97706" };
+    if (plan.status === "failed") return { label: tr("failed"), color: STATUS_COLORS.error };
+    if (["interrupted", "cancelled", "canceled"].includes(plan.status)) return { label: tr("stopped"), color: STATUS_COLORS.warning };
+    if (completed === plan.tasks.length) return { label: tr("completed"), color: STATUS_COLORS.success };
+    if (plan.status === "finished") return { label: tr("finished"), color: STATUS_COLORS.info };
+    return { label: tr("running"), color: STATUS_COLORS.warning };
 }
 
 function planTaskState(status: string, muted: string) {
-    if (status === "completed") return { label: tr("completed"), color: "#16a34a", icon: <CheckCircle2 className="size-3.5" /> };
-    if (status === "inProgress") return { label: tr("running"), color: "#d97706", icon: <LoaderCircle className="size-3.5 animate-spin" /> };
+    if (status === "completed") return { label: tr("completed"), color: STATUS_COLORS.success, icon: <CheckCircle2 className="size-3.5" /> };
+    if (status === "inProgress") return { label: tr("running"), color: STATUS_COLORS.warning, icon: <LoaderCircle className="size-3.5 animate-spin" /> };
     return { label: tr("pending"), color: muted, icon: <Circle className="size-3.5" /> };
 }
 

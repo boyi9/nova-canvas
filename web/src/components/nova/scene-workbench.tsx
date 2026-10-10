@@ -96,7 +96,7 @@ export function SceneWorkbench({ scene, onGenerate, generating = false, result =
 
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="mb-1 block text-sm text-stone-600 dark:text-stone-400">
+              <label className="mb-1 block text-sm text-muted-foreground dark:text-muted-foreground">
                 产品名称
               </label>
               <Input
@@ -106,7 +106,7 @@ export function SceneWorkbench({ scene, onGenerate, generating = false, result =
               />
             </div>
             <div className="flex-1">
-              <label className="mb-1 block text-sm text-stone-600 dark:text-stone-400">
+              <label className="mb-1 block text-sm text-muted-foreground dark:text-muted-foreground">
                 补充描述
               </label>
               <Input.TextArea
@@ -141,8 +141,8 @@ export function SceneWorkbench({ scene, onGenerate, generating = false, result =
           />
 
           {selectedTemplate && (
-            <Card size="small" className="!bg-stone-50 dark:!bg-stone-800">
-              <p className="m-0 text-xs text-stone-500">
+            <Card size="small" className="!bg-background dark:!bg-card">
+              <p className="m-0 text-xs text-muted-foreground">
                 <strong>生成提示词：</strong>
                 {selectedTemplate.prompt
                   .replace(/\{product_name\}/g, productName || "[产品名]")
@@ -163,16 +163,16 @@ export function SceneWorkbench({ scene, onGenerate, generating = false, result =
             (result.images.length > 0 ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {result.images.map((image) => (
-                  <img key={image.id} src={image.url} alt={image.prompt} className="aspect-square w-full rounded-lg border border-stone-200 object-cover dark:border-stone-700" />
+                  <img key={image.id} src={image.url} alt={image.prompt} className="aspect-square w-full rounded-lg border border-border object-cover dark:border-border" />
                 ))}
               </div>
             ) : (
               <Alert type="info" showIcon message="本次未返回图片，请重试或调整模板/描述" />
             ))}
           {result?.kind === "text" && (
-            <Card size="small" className="!bg-stone-50 dark:!bg-stone-800">
+            <Card size="small" className="!bg-background dark:!bg-card">
               {result.text ? (
-                <pre className="m-0 max-h-72 overflow-auto whitespace-pre-wrap text-xs text-stone-700 dark:text-stone-300">{result.text}</pre>
+                <pre className="m-0 max-h-72 overflow-auto whitespace-pre-wrap text-xs text-foreground dark:text-muted-foreground">{result.text}</pre>
               ) : (
                 <Alert type="info" showIcon message="本次未生成文案，请重试" />
               )}

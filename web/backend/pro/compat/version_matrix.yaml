@@ -1,0 +1,21 @@
+# 宿主版本矩阵：明确每个软件的支持档位
+# 解决"用户环境版本碎片化"导致的脚本失败
+
+after_effects:
+  supported: ["26.2", "26.3", "26.5"]   # 2026 年生产档
+  legacy_best_effort: ["25.x", "24.x"]
+  capability_probe_required: true         # AI 能力（对象遮罩等）需探测后再用
+
+nuke:
+  supported: ["15.x", "16.x"]
+  legacy_best_effort: ["14.x"]
+  feature_gate:
+    copycat: "NukeX+"        # CopyCat 需 NukeX 及以上
+    inference: "Nuke 13+"
+
+maya:
+  supported: ["2026", "2025"]
+  legacy_best_effort: ["2023", "2022", "2020", "2018"]   # 生产环境大量停留旧版
+  plugin_gate:
+    mayausd: "2022+"
+    arnold: "bundled"

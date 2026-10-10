@@ -420,8 +420,11 @@ function logSignature(value: string) {
         .replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, "<ID>");
 }
 
+// 用字符码构造，避免 no-control-regex 对正则字面量的报错
+const ANSI_PATTERN = new RegExp(String.fromCharCode(27) + "\\[[0-?]*[ -/]*[@-~]", "g");
+
 function stripAnsi(value: string) {
-    return value.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "");
+    return value.replace(ANSI_PATTERN, "");
 }
 
 function safeString(value: unknown) {

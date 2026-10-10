@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { ChevronRight, Copy, Download, Group, Image as ImageIcon, Music2, Puzzle, RefreshCw, Star, Trash2, Video } from "lucide-react";
+import { ChevronRight, Clapperboard, Copy, Download, Group, Image as ImageIcon, Music2, Puzzle, RefreshCw, Star, Trash2, User, Video } from "lucide-react";
 
 import { canvasThemes } from "@/lib/canvas-theme";
 import { formatBytes } from "@/lib/image-utils";
@@ -72,7 +72,7 @@ type CanvasNodeProps = {
     onRetry?: (node: CanvasNodeData) => void;
     onGenerateImage?: (node: CanvasNodeData) => void;
     onViewImage?: (node: CanvasNodeData) => void;
-    onContextMenu: (event: React.MouseEvent, nodeId: string) => void;
+    onContextMenu: (event: React.MouseEvent, nodeId: string, nodeType?: string) => void;
 };
 
 type NodeContentRendererProps = {
@@ -188,12 +188,13 @@ export const CanvasNode = React.memo(function CanvasNode({
         titleInputRef.current?.select();
     }, [isEditingTitle]);
 
-    const finishTitleEditing = useCallback(() => {
+    // 普通函数（React Compiler 负责记忆化；手动 useCallback 会被 preserve-manual-memoization 拒绝）
+    const finishTitleEditing = () => {
         const title = titleDraft.trim() || data.title || t("canvas.node.untitled");
         setTitleDraft(title);
         setIsEditingTitle(false);
         if (title !== data.title) onTitleChange(data.id, title);
-    }, [data.id, data.title, onTitleChange, t, titleDraft]);
+    };
 
     useEffect(() => {
         if (!isEditingTitle) return;
@@ -337,7 +338,7 @@ export const CanvasNode = React.memo(function CanvasNode({
                 onHoverEnd(data.id);
             }}
             onMouseDownCapture={(event) => onSelectCapture?.(event, data.id)}
-            onContextMenu={(event) => onContextMenu(event, data.id)}
+            onContextMenu={(event) => onContextMenu(event, data.id, data.type)}
         >
             {(isSelected || hovered || isEditingTitle) && (
                 <div className="absolute left-3 top-[-28px] z-[65] max-w-[calc(100%-24px)]" onMouseDown={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
@@ -488,6 +489,8 @@ const nodeContentRenderers = {
     [CanvasNodeType.VideoTrack]: VideoTrackNodeContent,
     [CanvasNodeType.Recipe]: RecipeNodeContent,
     [CanvasNodeType.Multimodal]: MultimodalNodeContent,
+    [CanvasNodeType.Drama]: DramaNodeContent,
+    [CanvasNodeType.PortraitDirector]: PortraitDirectorNodeContent,
 } satisfies Record<CanvasNodeType, (props: NodeContentRendererProps) => ReactNode>;
 
 function GroupNodeContent({ node, theme, groupChildCount }: NodeContentRendererProps) {
@@ -547,6 +550,70 @@ function MissingPluginContent({ theme, type }: Pick<NodeContentRendererProps, "t
             <Puzzle className="size-7 opacity-40" />
             <span className="text-sm">{t("canvas.node.missingPlugin")}</span>
             <span className="text-[11px] opacity-70">{t("canvas.node.missingPluginDescription", { type })}</span>
+        </div>
+    );
+}
+
+function DramaNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
+    const { t } = useTranslation();
+    const metadata = node.metadata || {};
+    const acts = metadata.acts || [];
+    const characters = metadata.characters || [];
+
+    return (
+        <div className="flex h-full w-full flex-col gap-2 p-3">
+            <div className="flex items-center gap-2">
+                <span className="grid size-8 place-items-center rounded-xl" style={{ background: theme.toolbar.activeBg, color: theme.node.muted }}>
+                    <Clapperboard className="size-4" />
+                </span>
+                <span className="text-sm font-semibold" style={{ color: theme.node.text }}>{t("canvas.nodeTypes.drama")}</span>
+            </div>
+            <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+                {acts.length > 0 ? (
+                    acts.map((act, idx) => (
+                        <div key={idx} className="rounded border p-2 text-xs" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }}>
+                            <span className="font-medium">第 {idx + 1} 幕</span>
+                            <div className="mt-1 text-[10px] opacity-70">{act}</div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-xs opacity-50" style={{ color: theme.node.muted }}>{t("canvas.node.noActs")}</div>
+                )}
+                {characters.length > 0 && (
+                    <div className="rounded border p-2 text-xs" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }}>
+                        <span className="font-medium">角色</span>
+                        <div className="mt-1 text-[10px] opacity-70">{characters.join('、')}</div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function PortraitDirectorNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
+    const { t } = useTranslation();
+    const metadata = node.metadata || {};
+    const characterRef = metadata.characterRef || '';
+    const currentScene = metadata.currentScene || 0;
+
+    return (
+        <div className="flex h-full w-full flex-col gap-2 p-3">
+            <div className="flex items-center gap-2">
+                <span className="grid size-8 place-items-center rounded-xl" style={{ background: theme.toolbar.activeBg, color: theme.node.muted }}>
+                    <User className="size-4" />
+                </span>
+                <span className="text-sm font-semibold" style={{ color: theme.node.text }}>{t("canvas.nodeTypes.portraitDirector")}</span>
+            </div>
+            <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+                <div className="rounded border p-2 text-xs" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }}>
+                    <span className="font-medium">参考角色</span>
+                    <div className="mt-1 text-[10px] opacity-70">{characterRef || t("canvas.node.noCharacterRef")}</div>
+                </div>
+                <div className="rounded border p-2 text-xs" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }}>
+                    <span className="font-medium">当前场景</span>
+                    <div className="mt-1 text-[10px] opacity-70">第 {currentScene + 1} 场</div>
+                </div>
+            </div>
         </div>
     );
 }

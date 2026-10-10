@@ -1,6 +1,7 @@
-// Nova启画 - 风格迁移选择器组件
-import { useState } from "react";
-import { Alert, Button, Card, Empty, Input, Radio, Slider, Spin, message } from "antd";
+// Nova启画 - 风格迁移选择器组件（支持URL和文件上传）
+import { useState, useRef } from "react";
+import { Alert, Button, Card, Empty, Input, Radio, Slider, Spin, Tabs, Upload, message } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 import { ExternalLink, Film, Image as ImageIcon, Sparkles } from "lucide-react";
 import {
   IMAGE_STYLE_TEMPLATES,
@@ -9,6 +10,7 @@ import {
   transferVideoStyle,
   type StyleTransferConfig,
 } from "@/templates/style-transfer";
+import { uploadMedia } from "@/services/nova/api";
 
 interface StyleTransferPickerProps {
   onSelect?: (config: StyleTransferConfig, resultUrl?: string) => void;
@@ -21,8 +23,11 @@ export function StyleTransferPicker({ onSelect }: StyleTransferPickerProps) {
   const [strength, setStrength] = useState(0.7);
   const [fidelity, setFidelity] = useState(0.8);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sourceTab, setSourceTab] = useState<"url" | "file">("url");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const templates = mediaType === "image" ? IMAGE_STYLE_TEMPLATES : VIDEO_STYLE_TEMPLATES;
 
@@ -31,9 +36,24 @@ export function StyleTransferPicker({ onSelect }: StyleTransferPickerProps) {
     setError(null);
   };
 
+  const handleFileUpload = async (file: File) => {
+    resetResult();
+    setUploading(true);
+    try {
+      const result = await uploadMedia(file);
+      setSourceUrl(result.url);
+      message.success("文件上传成功");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "文件上传失败");
+    } finally {
+      setUploading(false);
+    }
+    return false; // Prevent default upload behavior
+  };
+
   const handleApply = async () => {
     if (!sourceUrl.trim()) {
-      message.warning("请先粘贴需要迁移的图片/视频 URL");
+      message.warning("请先粘贴需要迁移的图片/视频 URL 或上传文件");
       return;
     }
     if (!selectedStyle) {
@@ -92,16 +112,49 @@ export function StyleTransferPicker({ onSelect }: StyleTransferPickerProps) {
 
       <div>
         <label className="mb-2 block text-sm font-medium">
-          源{mediaType === "image" ? "图片" : "视频"} URL
+          源{mediaType === "image" ? "图片" : "视频"}
         </label>
-        <Input
-          placeholder="粘贴公网可访问的图片/视频地址（风格迁移后端需能抓取该 URL）"
-          value={sourceUrl}
-          onChange={(e) => {
-            setSourceUrl(e.target.value);
-            resetResult();
-          }}
+        <Tabs
+          activeKey={sourceTab}
+          onChange={(key) => setSourceTab(key as "url" | "file")}
+          items={[
+            {
+              key: "url",
+              label: "URL粘贴",
+              children: (
+                <Input
+                  placeholder="粘贴公网可访问的图片/视频地址"
+                  value={sourceUrl}
+                  onChange={(e) => {
+                    setSourceUrl(e.target.value);
+                    resetResult();
+                  }}
+                />
+              ),
+            },
+            {
+              key: "file",
+              label: "文件上传",
+              children: (
+                <Upload
+                  accept={mediaType === "image" ? "image/*" : "video/*"}
+                  showUploadList={false}
+                  beforeUpload={handleFileUpload}
+                  disabled={uploading}
+                >
+                  <Button icon={<UploadOutlined />} loading={uploading} block>
+                    {uploading ? "上传中..." : "选择文件"}
+                  </Button>
+                </Upload>
+              ),
+            },
+          ]}
         />
+        {sourceUrl && (
+          <div className="mt-2">
+            <span className="text-xs text-muted-foreground">当前源：{sourceUrl}</span>
+          </div>
+        )}
       </div>
 
       <div>
@@ -129,7 +182,7 @@ export function StyleTransferPicker({ onSelect }: StyleTransferPickerProps) {
                   <Sparkles className="size-4 text-blue-500" />
                   <span className="text-sm font-medium">{template.name}</span>
                 </div>
-                <p className="m-0 mt-1 text-xs text-stone-500">{template.description}</p>
+                <p className="m-0 mt-1 text-xs text-muted-foreground">{template.description}</p>
               </Card>
             ))}
           </div>
@@ -162,14 +215,14 @@ export function StyleTransferPicker({ onSelect }: StyleTransferPickerProps) {
             />
           </div>
 
-          <Card size="small" className="!bg-stone-50 dark:!bg-stone-800">
-            <p className="m-0 text-xs text-stone-500">
+          <Card size="small" className="!bg-background dark:!bg-card">
+            <p className="m-0 text-xs text-muted-foreground">
               <strong>提示词：</strong>
               {selectedStyle.prompt.replace(/\{content\}/g, "[您的内容]")}
             </p>
           </Card>
 
-          <Button type="primary" block onClick={handleApply} loading={loading}>
+          <Button type="primary" block onClick={handleApply} loading={loading} disabled={!sourceUrl.trim()}>
             应用风格
           </Button>
         </>
@@ -190,9 +243,9 @@ export function StyleTransferPicker({ onSelect }: StyleTransferPickerProps) {
           </a>
         }>
           {mediaType === "image" ? (
-            <img src={resultUrl} alt="风格迁移结果" className="max-h-72 w-full rounded border border-stone-200 object-contain dark:border-stone-700" />
+            <img src={resultUrl} alt="风格迁移结果" className="max-h-72 w-full rounded border border-border object-contain dark:border-border" />
           ) : (
-            <video src={resultUrl} controls className="max-h-72 w-full rounded border border-stone-200 dark:border-stone-700" />
+            <video src={resultUrl} controls className="max-h-72 w-full rounded border border-border dark:border-border" />
           )}
         </Card>
       )}

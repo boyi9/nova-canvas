@@ -1,0 +1,47 @@
+{
+  "scales": [
+    {
+      "id": "extreme-wide",
+      "name": "大远景",
+      "subject_ratio": "<5%",
+      "function": "交代环境/氛围/渺小感",
+      "duration_hint": "3-6s"
+    },
+    {
+      "id": "wide",
+      "name": "全景",
+      "subject_ratio": "10-20%",
+      "function": "全身动作+人物与环境关系",
+      "duration_hint": "3-5s"
+    },
+    {
+      "id": "full",
+      "name": "全景全身",
+      "subject_ratio": "30-50%",
+      "function": "人物全身+动作设计",
+      "duration_hint": "3-4s"
+    },
+    {
+      "id": "medium",
+      "name": "中景",
+      "subject_ratio": "50-70%",
+      "function": "动作+关系，多人对话默认",
+      "duration_hint": "2.5-4s"
+    },
+    {
+      "id": "close-up",
+      "name": "近景",
+      "subject_ratio": "70-90%",
+      "function": "情绪表达/产品细节",
+      "duration_hint": "2-3.5s"
+    },
+    {
+      "id": "extreme-close-up",
+      "name": "特写",
+      "subject_ratio": ">90%",
+      "function": "放大情绪/冲击力/爆点",
+      "duration_hint": "1.5-3s"
+    }
+  ],
+  "pacing_rule": "景别越小视觉冲击越强；电商短视频建议景别梯度：特写→中景→全景→特写（先勾后交代再冲击）"
+}

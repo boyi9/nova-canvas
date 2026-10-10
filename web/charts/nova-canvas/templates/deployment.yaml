@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nova-canvas.fullname" . }}
+  labels:
+    app: {{ include "nova-canvas.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicaCount: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "nova-canvas.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "nova-canvas.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: nova-canvas
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+            - name: health
+              containerPort: 8080
+          env:
+            - name: NODE_ENV
+              value: "{{ .Values.env.NODE_ENV }}"
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: nova-canvas-redis-config
+                  key: redis_url
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nova-canvas-db-secret
+                  key: connection_string
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+            - containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: nova-canvas-config
+            - secretRef:
+                name: nova-canvas-db-secret
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nova-canvas-config
+              mountPath: /etc/nova-canvas/config
+            - name: nova-canvas-secrets
+              mountPath: /etc/nova-canvas/secrets
+          {{- with .Values.extraVolumeMounts }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+{{ toYaml .Values.securityContext | indent 8 }}
+      {{- with .Values.containerSecurityContext }}
+      securityContext:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nova-canvas-config
+          configMap:
+            name: nova-canvas-config
+        - name: nova-canvas-secrets
+          secret:
+            secretName: nova-canvas-db-secret
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+  {{- with .Values.autoscaler }}
+  autoscaler:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      name: {{ include "nova-canvas.fullname" . }}-hpa
+      namespace: {{ .Values.common.namespace }}
+    spec:
+      minReplicas: {{ .Values.autoscaler.minReplicas }}
+      maxReplicas: {{ .Values.autoscaler.maxReplicas }}
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: {{ .Values.autoscaler.targetCPUUtilizationPercentage }}
+        - type: Resource
+          resource: memory
+          target:
+            type: Utilization
+            averageUtilization: {{ .Values.autoscaler.targetMemoryUtilizationPercentage }}
+  {{- end }}
+{{- tpl "nova-canvas.deployment" . | nindent 4 }}

@@ -183,7 +183,6 @@ export function createIframeSandbox(options: IframeSandboxOptions): {
     const pendingRequests = new Map<string, PendingRequest>();
     const eventHandlers = new Map<string, Set<(payload: unknown) => void>>();
     let ready = false;
-    let messageId = 0;
 
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';

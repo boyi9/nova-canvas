@@ -1,0 +1,116 @@
+# config/models_catalog.yaml
+# NC-CAP-03 机器可读模型能力目录
+# 加载校验规则：
+#   - license == commercial 或 allow_noncommercial: true
+#   - regions 非空
+#   - capabilities 非空
+
+models:
+  - alias: image-edit-primary
+    model: doubao/seedream-5.0-pro
+    capabilities: [image_gen, image_edit, inpaint, point_edit, layer_split, text_render_zh]
+    max_resolution: [2048, 2048]
+    regions: [cn]
+    risk_level: low
+    license: commercial
+    quality: 0.92
+    availability: 0.98
+    unit_cost_cny: 0.12
+    max_latency_s: 30
+
+  - alias: image-edit-fallback
+    model: aliyun/qwen-image-3.0
+    capabilities: [image_gen, image_edit, inpaint, outpaint, style_transfer, text_render_zh]
+    max_resolution: [2048, 2048]
+    regions: [cn]
+    risk_level: low
+    license: commercial
+    quality: 0.88
+    availability: 0.97
+    unit_cost_cny: 0.10
+    max_latency_s: 35
+
+  - alias: video-gen-primary
+    model: volcengine/seedance-2.5
+    capabilities: [video_gen, image_to_video, first_last_frame, multi_ref]
+    max_duration_s: 60
+    regions: [cn]
+    risk_level: low
+    license: commercial
+    quality: 0.90
+    availability: 0.96
+    unit_cost_cny: 0.45
+    max_latency_s: 300
+
+  - alias: video-edit-audio-sync
+    model: kuaishou/kling-3.0
+    capabilities: [video_gen, video_edit, element_edit, audio_sync, multi_lang]
+    max_duration_s: 30
+    regions: [cn]
+    risk_level: low
+    license: commercial
+    quality: 0.91
+    availability: 0.95
+    unit_cost_cny: 0.60
+    max_latency_s: 240
+
+  - alias: repair-openrail
+    model: local/sdxl-inpainting-0.1
+    capabilities: [inpaint, repair, object_remove]
+    regions: [cn]
+    risk_level: medium
+    license: openrail-plus-plus
+    requires_attribution: true
+    allow_noncommercial: true
+    quality: 0.75
+    availability: 0.90
+    unit_cost_cny: 0.0
+    max_latency_s: 60
+
+  - alias: llm-orchestrator
+    model: aliyun/qwen3-max
+    capabilities: [text, tools, json_schema, long_context]
+    context_window: 262000
+    regions: [cn]
+    risk_level: low
+    license: commercial
+    quality: 0.93
+    availability: 0.99
+    unit_cost_cny: 0.0055
+    max_latency_s: 20
+
+  - alias: batch-fission-budget
+    model: doubao/seedream-4.0
+    capabilities: [image_gen, image_edit, text_render_zh]
+    max_resolution: [1536, 1536]
+    regions: [cn]
+    risk_level: low
+    license: commercial
+    quality: 0.80
+    availability: 0.97
+    unit_cost_cny: 0.04
+    max_latency_s: 15
+
+  - alias: brand-keyvisual-premium
+    model: amazon/nova-canvas-pro
+    capabilities: [image_gen, image_edit, inpaint, outpaint, style_transfer, text_render_zh]
+    max_resolution: [4096, 4096]
+    regions: [cn, us]
+    risk_level: low
+    license: commercial
+    quality: 0.96
+    availability: 0.94
+    unit_cost_cny: 0.35
+    max_latency_s: 45
+
+  - alias: overseas-video
+    model: runway/gen-4
+    capabilities: [video_gen, image_to_video, first_last_frame]
+    max_duration_s: 20
+    regions: [us, eu]
+    risk_level: low
+    license: commercial
+    quality: 0.93
+    availability: 0.92
+    unit_cost_cny: 1.20
+    max_latency_s: 180

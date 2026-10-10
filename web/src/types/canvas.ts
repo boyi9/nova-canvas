@@ -22,6 +22,8 @@ export enum CanvasNodeType {
     VideoTrack = "video_track",
     Recipe = "recipe",
     Multimodal = "multimodal",
+    Drama = "drama",        // 短剧制作节点
+    PortraitDirector = "portrait_director", // 人像导演节点
 }
 
 // Node types are open strings: built-ins use CanvasNodeType and plugins use "<pluginId>:<name>".
@@ -93,6 +95,12 @@ export type CanvasNodeMetadata = {
     params?: Record<string, string>;
     modalities?: string[];
     workflowResult?: Record<string, unknown>;
+    // Drama node fields
+    acts?: string[];
+    characters?: string[];
+    // Portrait Director node fields
+    characterRef?: string;
+    currentScene?: number;
 };
 
 export type CanvasNodeData = {
@@ -165,6 +173,7 @@ export type ContextMenuState =
           x: number;
           y: number;
           nodeId: string;
+          nodeType?: string;
       }
     | {
           type: "connection";

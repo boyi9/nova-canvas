@@ -1,8 +1,9 @@
 // Nova启画 - 主页面组件
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button, Card, message } from "antd";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, ClipboardList, CheckCircle } from "lucide-react";
 import { NOVA_CONFIG, type SceneId } from "@/config/nova-config";
 import { SceneSelector } from "@/components/nova/scene-selector";
 import { SceneWorkbench, type GenResult } from "@/components/nova/scene-workbench";
@@ -10,6 +11,7 @@ import { batchGenerateImages, chatCompletion, generateAdScript } from "@/service
 import { buildGenResult } from "@/lib/nova/generate-result";
 
 export function NovaHomePage() {
+  const { t } = useTranslation();
   const [activeScene, setActiveScene] = useState<SceneId>("ecommerce");
   const navigate = useNavigate();
   const [generating, setGenerating] = useState(false);
@@ -19,13 +21,13 @@ export function NovaHomePage() {
     // 创建新项目并跳转到画布
     const projectId = `nova-${Date.now()}`;
     navigate(`/canvas/${projectId}?scene=${sceneId}`);
-    message.success("正在创建新项目...");
+    message.success(t("novaHome.creating"));
   };
 
   const handleGenerate = async (prompt: string, options: any) => {
     const scene = (options?.scene as SceneId) || activeScene;
     if (!prompt.trim()) {
-      message.warning("请先选择模板并填写产品名称");
+      message.warning(t("novaHome.needTemplate"));
       return;
     }
     setGenerating(true);
@@ -41,27 +43,27 @@ export function NovaHomePage() {
         const res = await chatCompletion([{ role: "user", content: prompt }], scene);
         setResult(buildGenResult(scene, res));
       }
-      message.success("生成完成");
+      message.success(t("novaHome.generateDone"));
     } catch (error) {
-      message.error(error instanceof Error ? error.message : "生成失败，请重试");
+      message.error(error instanceof Error ? error.message : t("novaHome.generateFail"));
     } finally {
       setGenerating(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-900 dark:to-stone-950">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted dark:from-card dark:to-background">
       <div className="mx-auto max-w-7xl px-6 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="mb-4 flex items-center justify-center gap-3">
             <Sparkles className="size-8 text-blue-500" />
-            <h1 className="text-3xl font-bold text-stone-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-foreground dark:text-white">
               Nova启画
             </h1>
           </div>
-          <p className="text-stone-600 dark:text-stone-400">
-            一站式AI内容创作平台 · 电商素材 · 广告宣传片 · 轻情景剧
+          <p className="text-muted-foreground dark:text-muted-foreground">
+            {t("novaHome.tagline")}
           </p>
         </div>
 
@@ -80,7 +82,7 @@ export function NovaHomePage() {
               <h2 className="m-0 text-xl font-medium">
                 {NOVA_CONFIG.scenes[activeScene].name}
               </h2>
-              <p className="mt-1 text-stone-500">
+              <p className="mt-1 text-muted-foreground">
                 {NOVA_CONFIG.scenes[activeScene].description}
               </p>
             </div>
@@ -90,7 +92,7 @@ export function NovaHomePage() {
               icon={<Plus />}
               onClick={() => handleCreateProject(activeScene)}
             >
-              创建新项目
+              {t("novaHome.createProject")}
             </Button>
           </div>
         </Card>
@@ -100,27 +102,19 @@ export function NovaHomePage() {
 
         {/* Features */}
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
-            {
-              title: "AI智能生成",
-              desc: "一键生成主图/详情图/短视频",
-              icon: "✨",
-            },
-            {
-              title: "模板复用",
-              desc: "电商/广告/短剧模板一键套用",
-              icon: "📋",
-            },
-            {
-              title: "合规检测",
-              desc: "广告法合规自动检测",
-              icon: "✅",
-            },
-          ].map((feature) => (
-            <Card key={feature.title} size="small" className="text-center">
-              <div className="text-3xl">{feature.icon}</div>
-              <h3 className="mt-2 mb-1 text-sm font-medium">{feature.title}</h3>
-              <p className="m-0 text-xs text-stone-500">{feature.desc}</p>
+          {(["ai", "template", "compliance"] as const).map((key) => (
+            <Card key={key} size="small" className="text-center">
+              <div className="text-3xl">
+                {key === "ai" ? (
+                  <Sparkles className="size-8" />
+                ) : key === "template" ? (
+                  <ClipboardList className="size-8" />
+                ) : (
+                  <CheckCircle className="size-8" />
+                )}
+              </div>
+              <h3 className="mt-2 mb-1 text-sm font-medium">{t(`novaHome.feature.${key}`)}</h3>
+              <p className="m-0 text-xs text-muted-foreground">{t(`novaHome.feature.${key}Desc`)}</p>
             </Card>
           ))}
         </div>

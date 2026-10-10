@@ -27,7 +27,7 @@ export function useVersionCheck() {
     const { t } = useTranslation();
     const currentVersion = APP_VERSION;
     const { message } = App.useApp();
-    const localReleases = useMemo(readLocalReleases, []);
+    const localReleases = useMemo(() => readLocalReleases(), []);
     const [latestVersion, setLatestVersion] = useState(currentVersion);
     const [releases, setReleases] = useState<ReleaseInfo[]>(localReleases);
     const [checking, setChecking] = useState(false);

@@ -1,0 +1,71 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    ports: ["3000:3000"]
+    environment:
+      - DATABASE_URL=postgresql://canvas:canvas@postgres:5432/canvas
+      - REDIS_URL=redis://redis:6379/0
+      - S3_ENDPOINT=http://minio:9000
+      - MODEL_API_KEYS={"flux":"xxx","seedance":"xxx","claude":"xxx","nova":"xxx"}
+    depends_on: [postgres, redis, minio, api, qdrant]
+
+  api:
+    build: ./backend
+    ports: ["8000:8000"]
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - DATABASE_URL=postgresql://canvas:canvas@postgres:5432/canvas
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - QDRANT_URL=http://qdrant:6333
+    depends_on: [postgres, redis, minio, qdrant]
+
+  worker:
+    build: ./backend
+    command: celery -A tasks worker -l info -c 4 -Q image,video,compile,psd,jianying
+    environment:
+      - DATABASE_URL=postgresql://canvas:canvas@postgres:5432/canvas
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - QDRANT_URL=http://qdrant:6333
+    depends_on: [postgres, redis, minio, qdrant]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: canvas
+      POSTGRES_PASSWORD: canvas
+      POSTGRES_DB: canvas
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    ports: ["5432:5432"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes: ["miniodata:/data"]
+    ports: ["9000:9000", "9001:9001"]
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.2
+    container_name: nova-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniodata:
+  qdrant_data:

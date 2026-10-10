@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Clapperboard, Loader2 } from "lucide-react";
+import { Clapperboard, Loader2, Mic } from "lucide-react";
 import { Button, Modal, Select, Tabs } from "antd";
 
 import { generateAdScript, generateDrama, type AdScriptResult, type DramaResult } from "@/services/nova/api";
@@ -92,7 +92,7 @@ export function ScenarioStudio({ open, onClose }: Props) {
                                         {t("scenario.shot")} {scene.shot} · {scene.duration}s
                                     </div>
                                     <div className="text-black/70 dark:text-white/70">{scene.visual}</div>
-                                    <div className="text-black/50 dark:text-white/50">🎙 {scene.voiceover}</div>
+                                    <div className="text-black/50 dark:text-white/50"><Mic className="mr-1 inline size-3" /> {scene.voiceover}</div>
                                 </li>
                             ))}
                         </ol>

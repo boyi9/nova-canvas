@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nova-canvas.fullname" . }}-config
+  labels:
+    app: {{ include "nova-canvas.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  NODE_ENV: "{{ .Values.env.NODE_ENV }}"
+  REDIS_URL: "redis://redis:6379"
+  DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD}@postgresql:5432/nova_canvas"
+  LOG_LEVEL: "info"
+  MAX_SESSION_DURATION: "3600"
+  FEATURE_FLAG_MAGIC_CANVAS: "true"
+  FEATURE_FLAG_DIRECTOR: "true"
+  FEATURE_FLAG_SKILLS: "true"
+  FEATURE_FLAG_VIDEO_EDIT: "true"
+  FEATURE_FLAG_I18N: "true"

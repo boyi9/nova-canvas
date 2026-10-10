@@ -9,7 +9,7 @@ import { isImeComposing, isPlainEnterKey } from "@/lib/keyboard-event";
 import type { AgentSkillSummary } from "@/services/api/canvas-agent";
 import { useAgentSkillStore } from "@/stores/use-agent-skill-store";
 import { useAgentStore, type AgentCanvasReference, type AgentSkillReference } from "@/stores/use-agent-store";
-import { AgentCanvasReferencePreview, canvasReferenceIcon, canvasReferenceKindLabel } from "./agent-canvas-reference-preview";
+import { AgentCanvasReferencePreview, REFERENCE_ICONS, canvasReferenceKindLabel } from "./agent-canvas-reference-preview";
 import { agentInlineTokenClass, agentInlineTokenMediaClass, agentReferenceMarker, agentSkillMarker, parseAgentInlineTokens } from "./agent-chat-inline-tokens";
 
 type ComposerCommand = { type: "skill" | "resource"; query: string; length: number };
@@ -271,7 +271,7 @@ function AgentCommandMenu({ command, candidates, activeIndex, loading, theme, on
 
 function ReferencePreview({ reference }: { reference: CanvasResourceReference }) {
     if (reference.kind === "image" && reference.previewUrl) return <img src={reference.previewUrl} alt="" className="size-9 rounded-md object-cover" />;
-    const Icon = canvasReferenceIcon(reference.kind);
+    const Icon = REFERENCE_ICONS[reference.kind];
     return <span className="grid size-9 shrink-0 place-items-center"><Icon className="size-4" /></span>;
 }
 
@@ -410,7 +410,7 @@ function textBeforeCaret(editor: HTMLElement | null) {
 }
 
 function serializeEditor(editor: HTMLElement) {
-    return serializeNodes(editor.childNodes).replace(/﻿/g, "");
+    return serializeNodes(editor.childNodes).replace(/\uFEFF/g, "");
 }
 
 function serializeNodes(nodes: NodeListOf<ChildNode>) {

@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
+import compression from "vite-plugin-compression";
 import { defineConfig, type Plugin } from "vite";
 
 import { parseChangelog } from "./src/lib/release";
@@ -92,7 +93,13 @@ function localPluginsManifest(): Plugin {
 
 export default defineConfig({
     base: process.env.VITE_BASE || "/",
-    plugins: [react(), localPluginsManifest(), cspPlugin()],
+    plugins: [
+        react(),
+        localPluginsManifest(),
+        cspPlugin(),
+        compression({ algorithm: "gzip" }),
+        compression({ algorithm: "brotliCompress" }),
+    ],
     resolve: {
         alias: {
             "@": resolve(webDir, "src"),
@@ -102,8 +109,50 @@ export default defineConfig({
         __APP_VERSION__: JSON.stringify(localVersion),
         __APP_RELEASES__: JSON.stringify(parseChangelog(localChangelog)),
     },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    "vendor-react": ["react", "react-dom", "react-router", "react-router-dom"],
+                    "vendor-antd": ["antd", "@ant-design/icons", "@ant-design/pro-components"],
+                    "vendor-state": ["zustand", "@tanstack/react-query"],
+                    "vendor-utils": ["dayjs", "nanoid", "uuid", "clsx", "tailwind-merge"],
+                },
+            },
+        },
+    },
     server: {
         proxy: {
+            // Python 后端（FastAPI, backend/main.py）——NC-CAP 模型路由/生成/留痕、host 接缝总线、pro 管线
+            "/api/model": {
+                target: `http://localhost:${process.env.BACKEND_PORT || 8000}`,
+                changeOrigin: true,
+            },
+            "/api/host": {
+                target: `http://localhost:${process.env.BACKEND_PORT || 8000}`,
+                changeOrigin: true,
+            },
+            "/api/pro": {
+                target: `http://localhost:${process.env.BACKEND_PORT || 8000}`,
+                changeOrigin: true,
+            },
+            "/api/billing": {
+                target: `http://localhost:${process.env.BACKEND_PORT || 8000}`,
+                changeOrigin: true,
+            },
+            "/api/export": {
+                target: `http://localhost:${process.env.BACKEND_PORT || 8000}`,
+                changeOrigin: true,
+            },
+            "/api/projects": {
+                target: `http://localhost:${process.env.BACKEND_PORT || 8000}`,
+                changeOrigin: true,
+            },
+            "/api/health": {
+                target: `http://localhost:${process.env.BACKEND_PORT || 8000}`,
+                changeOrigin: true,
+            },
+            // 前端 Mock server（mock-api.mjs）——其余 /api/v1 业务
             "/api/v1": {
                 target: `http://localhost:${process.env.MOCK_PORT || 4174}`,
                 changeOrigin: true,

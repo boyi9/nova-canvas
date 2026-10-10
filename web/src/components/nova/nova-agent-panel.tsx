@@ -1,14 +1,15 @@
-// Nova启画 - Agent面板（对接真实LLM）
+// Nova启画 - Agent面板（对接真实LLM，支持SSE流式）
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Button, Input, Space, Tag, message } from "antd";
+import { Button, Input, Space, Switch, Tag, message } from "antd";
 import { Send, Sparkles, Image, Film, Wand2, Video, Clapperboard } from "lucide-react";
 import { NOVA_CONFIG, type SceneId } from "@/config/nova-config";
-import { chatCompletion, type ChatMessage } from "@/services/nova/api";
+import { chatCompletion, chatCompletionStream, type ChatMessage } from "@/services/nova/api";
 
 interface NovaAgentPanelProps {
   scene: SceneId;
   onSendMessage: (message: string) => void;
   isGenerating: boolean;
+  enableStreaming?: boolean;
 }
 
 const SCENE_QUICK_ACTIONS: Record<SceneId, Array<{ label: string; prompt: string; icon: React.ReactNode }>> = {
@@ -32,11 +33,13 @@ const SCENE_QUICK_ACTIONS: Record<SceneId, Array<{ label: string; prompt: string
   ],
 };
 
-export function NovaAgentPanel({ scene, onSendMessage, isGenerating }: NovaAgentPanelProps) {
+export function NovaAgentPanel({ scene, onSendMessage, isGenerating, enableStreaming = true }: NovaAgentPanelProps) {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingEnabled, setStreamingEnabled] = useState(enableStreaming);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const streamingContentRef = useRef("");
 
   const quickActions = SCENE_QUICK_ACTIONS[scene];
 
@@ -58,9 +61,44 @@ export function NovaAgentPanel({ scene, onSendMessage, isGenerating }: NovaAgent
         .concat(userMsg)
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const result = await chatCompletion(chatMessages, scene);
+      if (streamingEnabled) {
+        // SSE流式模式
+        streamingContentRef.current = "";
+        setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      setMessages((prev) => [...prev, { role: "assistant", content: result.reply }]);
+        await chatCompletionStream(chatMessages, scene, {
+          onToken: (token) => {
+            streamingContentRef.current += token;
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                role: "assistant",
+                content: streamingContentRef.current,
+              };
+              return updated;
+            });
+          },
+          onDone: () => {
+            setIsStreaming(false);
+          },
+          onError: (err) => {
+            console.error("Stream error:", err);
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = {
+                role: "assistant",
+                content: "抱歉，AI服务暂时不可用。",
+              };
+              return updated;
+            });
+            setIsStreaming(false);
+          },
+        });
+      } else {
+        // 普通请求模式
+        const result = await chatCompletion(chatMessages, scene);
+        setMessages((prev) => [...prev, { role: "assistant", content: result.reply }]);
+      }
     } catch (err: any) {
       console.error("Chat error:", err);
 
@@ -73,13 +111,25 @@ export function NovaAgentPanel({ scene, onSendMessage, isGenerating }: NovaAgent
         fallbackReply = `服务异常：${err.detail}`;
       }
 
-      setMessages((prev) => [...prev, { role: "assistant", content: fallbackReply }]);
+      if (streamingEnabled) {
+        setMessages((prev) => {
+          const updated = [...prev];
+          if (updated.length > 0 && updated[updated.length - 1].content === "") {
+            updated[updated.length - 1] = { role: "assistant", content: fallbackReply };
+          } else {
+            updated.push({ role: "assistant", content: fallbackReply });
+          }
+          return updated;
+        });
+      } else {
+        setMessages((prev) => [...prev, { role: "assistant", content: fallbackReply }]);
+      }
     } finally {
       setIsStreaming(false);
     }
 
     onSendMessage(messageText);
-  }, [inputValue, isStreaming, messages, scene, onSendMessage]);
+  }, [inputValue, isStreaming, messages, scene, onSendMessage, streamingEnabled]);
 
   const handleQuickAction = (prompt: string) => {
     setInputValue(prompt);
@@ -93,11 +143,20 @@ export function NovaAgentPanel({ scene, onSendMessage, isGenerating }: NovaAgent
           <Sparkles className="size-5 text-blue-500" />
           <span className="font-medium">Nova AI助手</span>
         </div>
-        <Tag color="blue">{NOVA_CONFIG.scenes[scene].name}</Tag>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">流式</span>
+          <Switch
+            size="small"
+            checked={streamingEnabled}
+            onChange={setStreamingEnabled}
+            disabled={isStreaming}
+          />
+          <Tag color="blue">{NOVA_CONFIG.scenes[scene].name}</Tag>
+        </div>
       </div>
 
       <div className="border-b px-4 py-2">
-        <div className="mb-2 text-xs text-stone-500">快捷指令</div>
+        <div className="mb-2 text-xs text-muted-foreground">快捷指令</div>
         <div className="flex flex-wrap gap-2">
           {quickActions.map((action) => (
             <Button
@@ -115,7 +174,7 @@ export function NovaAgentPanel({ scene, onSendMessage, isGenerating }: NovaAgent
 
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {messages.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center text-center text-stone-400">
+          <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground">
             <Sparkles className="mb-4 size-12" />
             <p className="mb-2 text-lg font-medium">您好！我是Nova AI助手</p>
             <p className="text-sm">我可以帮您生成{NOVA_CONFIG.scenes[scene].name}</p>
@@ -132,7 +191,7 @@ export function NovaAgentPanel({ scene, onSendMessage, isGenerating }: NovaAgent
               className={`max-w-[85%] rounded-lg px-4 py-2 ${
                 msg.role === "user"
                   ? "bg-blue-500 text-white"
-                  : "bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-200"
+                  : "bg-muted text-foreground dark:bg-card dark:text-foreground"
               }`}
             >
               <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
@@ -142,8 +201,8 @@ export function NovaAgentPanel({ scene, onSendMessage, isGenerating }: NovaAgent
 
         {isStreaming && (
           <div className="flex justify-start">
-            <div className="rounded-lg bg-stone-100 px-4 py-2 dark:bg-stone-800">
-              <div className="flex items-center gap-2 text-sm text-stone-500">
+            <div className="rounded-lg bg-muted px-4 py-2 dark:bg-card">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="size-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
                 Nova正在思考...
               </div>

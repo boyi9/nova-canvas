@@ -37,6 +37,7 @@ import { EcommerceFullFlow } from "@/components/ecommerce-full-flow";
 import { ScenarioStudio } from "@/components/scenario-studio";
 import { PromptLibrary } from "@/components/prompt-library";
 import { CanvasComplianceModal } from "@/components/canvas-compliance-modal";
+import { CollabPanel } from "@/components/collab/CollabPanel";
 import { OnboardingModal, MembershipModal } from "@/components/membership-onboarding";
 import { hasSeenOnboarding } from "@/lib/onboarding";
 import { CanvasConfigComposer } from "@/components/canvas/canvas-config-composer";
@@ -47,6 +48,7 @@ import { CanvasNodeCropDialog, type CanvasImageCropRect } from "@/components/can
 import { CanvasNodeMaskEditDialog, type CanvasImageMaskEditPayload } from "@/components/canvas/canvas-node-mask-edit-dialog";
 import { CanvasNodeSplitDialog, type CanvasImageSplitParams } from "@/components/canvas/canvas-node-split-dialog";
 import { CanvasNodeUpscaleDialog, type CanvasImageUpscaleParams } from "@/components/canvas/canvas-node-upscale-dialog";
+import { VideoEditor } from "@/components/video/VideoEditor";
 import { buildNodeGenerationContext, buildNodeGenerationInputs, buildNodeResponseMessages, hydrateNodeGenerationContext, type NodeGenerationInput } from "@/components/canvas/canvas-node-generation";
 import { CanvasNodeHoverToolbar, CanvasNodeInfoModal } from "@/components/canvas/canvas-node-hover-toolbar";
 import { NovaCanvas } from "@/components/canvas/nova-canvas";
@@ -257,11 +259,13 @@ function NovaCanvasPage() {
     const [batchImageOpen, setBatchImageOpen] = useState(false);
     const [scriptsOpen, setScriptsOpen] = useState(false);
     const [videoOpen, setVideoOpen] = useState(false);
+    const [videoEditorOpen, setVideoEditorOpen] = useState<{ open: boolean; nodeId: string | null }>({ open: false, nodeId: null });
     const [fissionOpen, setFissionOpen] = useState(false);
     const [ecommerceFlowOpen, setEcommerceFlowOpen] = useState(false);
     const [scenarioOpen, setScenarioOpen] = useState(false);
     const [promptLibOpen, setPromptLibOpen] = useState(false);
     const [canvasComplianceOpen, setCanvasComplianceOpen] = useState(false);
+    const [collabOpen, setCollabOpen] = useState(false);
     const [onboardingOpen, setOnboardingOpen] = useState(false);
     const [membershipOpen, setMembershipOpen] = useState(false);
 
@@ -1751,6 +1755,16 @@ function NovaCanvasPage() {
         setEditRequestNonce((value) => value + 1);
     }, []);
 
+    const openVideoEditorForNode = useCallback((nodeId: string) => {
+        const node = nodes.find((n) => n.id === nodeId);
+        if (!node || node.type !== CanvasNodeType.Video) return;
+        if (!node.metadata?.content) {
+            message.warning(t("canvas.projectPage.noVideoToSave"));
+            return;
+        }
+        setVideoEditorOpen({ open: true, nodeId });
+    }, [nodes, message, t]);
+
     const handleNodePromptChange = useCallback((nodeId: string, prompt: string) => {
         setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, metadata: { ...node.metadata, prompt } } : node)));
     }, []);
@@ -2916,10 +2930,10 @@ function NovaCanvasPage() {
     }, []);
     const handleNodeViewImage = useCallback((node: CanvasNodeData) => setPreviewNodeId(node.id), []);
     const handleNodeRetry = useCallback((node: CanvasNodeData) => void handleRetryNode(node), [handleRetryNode]);
-    const handleNodeContextMenu = useCallback((event: ReactMouseEvent, nodeId: string) => {
+    const handleNodeContextMenu = useCallback((event: ReactMouseEvent, nodeId: string, nodeType?: string) => {
         event.preventDefault();
         event.stopPropagation();
-        setContextMenu({ type: "node", x: event.clientX, y: event.clientY, nodeId });
+        setContextMenu({ type: "node", x: event.clientX, y: event.clientY, nodeId, nodeType });
     }, []);
 
     const renderNodePanel = useCallback(
@@ -3011,6 +3025,7 @@ function NovaCanvasPage() {
                     onArrangeDetailPage={handleArrangeDetailPage}
                     onImportImage={() => handleUploadRequest()}
                     onOpenPlugins={() => setPluginManagerOpen(true)}
+                    onOpenCollab={() => setCollabOpen(true)}
                     onUndo={undoCanvas}
                     onRedo={redoCanvas}
                     agentOpen={agentPanelOpen}
@@ -3069,8 +3084,15 @@ function NovaCanvasPage() {
                             title: node.title,
                             prompt: String(node.metadata?.prompt || node.metadata?.productName || node.title || ""),
                         }))}
-                    onArrangeDetailPage={handleArrangeDetailPage}
                     onRunWorkflow={handleRunWorkflow}
+                    onArrangeDetailPage={handleArrangeDetailPage}
+                />
+
+                <CollabPanel
+                    open={collabOpen}
+                    onClose={() => setCollabOpen(false)}
+                    projectId={currentProject?.id || projectId || null}
+                    getCanvasData={() => JSON.stringify({ nodes: nodesRef.current, connections: connectionsRef.current })}
                 />
 
                 <ScenarioStudio
@@ -3345,6 +3367,11 @@ function NovaCanvasPage() {
                             }
                             setContextMenu(null);
                         }}
+                        onEditVideo={contextMenu.type === "node" && contextMenu.nodeType === "video" ? () => {
+                            if (contextMenu.nodeId) {
+                                openVideoEditorForNode(contextMenu.nodeId);
+                            }
+                        } : undefined}
                     />
                 ) : null}
 
@@ -3438,6 +3465,41 @@ function NovaCanvasPage() {
                 </Modal>
 
                 <AssetPickerModal open={assetPickerOpen} onInsert={handleAssetInsert} onClose={() => setAssetPickerOpen(false)} />
+                {videoEditorOpen.open && videoEditorOpen.nodeId && (
+                    <Modal
+                        title={t("videoEditor.title")}
+                        open={videoEditorOpen.open}
+                        width={1200}
+                        centered={false}
+                        onCancel={() => setVideoEditorOpen({ open: false, nodeId: null })}
+                        footer={null}
+                        styles={{ body: { maxHeight: "85vh", overflowY: "auto", paddingRight: 12 } }}
+                    >
+                        <VideoEditor
+                            sourceVideoUrl={nodes.find((n) => n.id === videoEditorOpen.nodeId)?.metadata?.content || ""}
+                            duration={Number(effectiveConfig.videoSeconds) || 15}
+                            serverUrl={config.joyaiServerUrl || "ws://localhost:8080"}
+                            onEditComplete={(blob, frames) => {
+                                const nodeId = videoEditorOpen.nodeId;
+                                if (!nodeId) return;
+                                setNodes((prev) => prev.map((node) => {
+                                    if (node.id !== nodeId) return node;
+                                    return {
+                                        ...node,
+                                        metadata: {
+                                            ...node.metadata,
+                                            content: URL.createObjectURL(blob),
+                                            status: NODE_STATUS_SUCCESS,
+                                            editedFrames: frames.length,
+                                        },
+                                    };
+                                }));
+                                message.success(t("videoEditor.editComplete", { count: frames.length }));
+                            }}
+                            onError={(err) => message.error(err.message)}
+                        />
+                    </Modal>
+                )}
             </section>
         </main>
     );
