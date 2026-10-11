@@ -33,3 +33,9 @@ env/
 *.db
 *.db-wal
 *.db-shm
+
+# ── 调试产物（不入库；正式覆盖由 tests/ 提供）────────────────────
+smoke_*.py
+smoke_*.txt
+smoke_*.json
+test_output.txt

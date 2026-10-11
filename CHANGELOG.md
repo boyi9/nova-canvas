@@ -2,11 +2,20 @@
 
 ## Unreleased
 
+### 功能
+- [新增] **协作六件套（P2-1）**：项目级 RBAC（owner/editor/viewer + 14 项细粒度权限，`web/backend/collab/permissions.py`），红线权限标记（发布/成员管理/删除项目，需人工确认）；分享链接（token 只返回一次、常量时间比较防时序攻击、可选过期、可撤销）；版本历史（快照 + 安全回滚——回滚前先把当前状态存为新版本）；审批流（提交/裁决/撤销状态机）；发布排期（创建/执行/取消，执行幂等返回 409 防重复投放）；Presence 实时协同（在线状态/输入指示/光标位置）。后端 25 个接口 + SQLite 持久化。
+- [新增] **音频生成（P2-3）**：`web/backend/audio/` 音色（7 种）/BGM（6 首）/音效（9 个）目录；TTS/BGM/SFX 任务规划（时长与费用预估、参数钳制、音色校验）；批量规划原子性（任一子任务非法则整批回滚，绝不残留半成功状态）；混音计划（人声活跃时 BGM 自动闪避 −12dB、母线上限告警、`atempo` 变速倍率计算）；WAV 渲染与下载两阶段流程（规划与渲染解耦，渲染幂等）。13 个接口。
+- [新增] **游戏资产生成（P2-4）**：`web/backend/game_assets/` Sprite Sheet 打包规格（按 cell 步长生成帧矩形，规避 padding 反推导致帧数错算）、纹理显存估算（mip 链 +33%、多格式）、Tilemap 索引数据量、9 个预设。5 个接口。
+- [新增] 协作前端面板 `web/src/components/collab/CollabPanel.tsx`（成员/分享/版本/审批/排期五页签）+ API 客户端 `web/src/services/nova/collab-api.ts` + 中英双语 i18n，已接入画布页顶栏。
+
 ### 安全
 - [安全] 沙箱插件 iframe 移除 `allow-same-origin` 与 `allow-popups-to-escape-sandbox`，改以不透明源（opaque origin）运行，从根上杜绝沙箱逃逸父页面；插件与宿主通信统一走 postMessage（RPC/事件），不依赖同源。
 - [测试] Playwright 端到端冒烟测试新增不透明源安全回归断言（断言沙箱 iframe `window.origin === 'null'`）。
+- [安全] `git config --unset core.hooksPath` 修复提交失败：`core.hooksPath` 被错误写为 `--dir/_`（源自 `husky --dir .husky` 参数解析异常），导致所有 git hook 以 `env --dir/_/pre-commit` 形式调用而崩溃。修复方法已写入用户手册 FAQ。
 
 ### 文档
+- [文档] 新增《P2 API 参考》（`web/docs/api/p2-reference.md`）：43 个端点的完整规格——请求/响应示例、RBAC 权限矩阵、错误码语义、幂等与原子性约定，并显式说明 `cancel`/`execute` 路径不对称的取舍原因、presence 的 REST 轮询局限、音频的本地合成局限。
+- [文档] 重写《用户手册》（`web/docs/user/user-manual.md`）：原文件为模板桩（描述 Magic Canvas/Director 等未实现功能，端口与命令均不正确）。新版替换为已实现功能——真实路由表、真实端口（前端 5173/3000、后端 8000）、协作者工作流、音频与游戏资产使用流程、FAQ（含 `core.hooksPath` 被写成 `--dir/_` 导致 `git commit` 失败的修复方法）。
 - [文档] 新增《第三方沙箱插件开发指南》（`docs/sandbox-plugin-guide.md`）：信封格式、运行时全局对象（`window.__PluginRuntime` / `hostBridge` / `__pluginRpc`）、声明式面板、能力表与安全模型，配套 `web/public/plugins/sandbox-sample.json` 示例。
 - [文档] 新增《Sprint 2 完成度核查清单》（`docs/Sprint2-Status.md`）：逐项比对计划与实际实现（含代码证据与提交号），列明剩余后端耦合缺口与优先级，作为前端交付基线。
 - [文档] 新增《后端接口契约》（`docs/Backend-API-Contract.md`）：汇总前端 `services/nova/api.ts` 与 `sdk/client.ts` 全部已声明端点（请求/响应结构、异步任务范式、错误包络），并标注每个端点的前端联调状态与后端待办（多模型路由、媒体托管、Agent 流式、裂变/短视频真出片、脚本沙箱、支付/会员、PSD 导出），按 P0/P1/P2 排序，供后端接手。

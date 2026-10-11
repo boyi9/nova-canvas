@@ -16,6 +16,11 @@ from web.backend.audio import (
     MixTrack,
     normalize_gain,
     reset_audio_engine,
+    synth_bgm,
+    synth_sfx,
+    synth_tts,
+    synthesize_wav,
+    wav_info,
 )
 from web.backend.main import create_app
 
@@ -266,3 +271,116 @@ class TestMixer:
         d = client.get("/api/audio/tools/atempo?target_bpm=90&current_bpm=120").json()
         assert d["ratio"] == 0.75
         assert d["clamped"] is False
+
+
+class TestSynthesizer:
+    def test_silence_wav(self):
+        wav = synthesize_wav(1.0, mode="silence")
+        assert wav[:4] == b"RIFF"
+        info = wav_info(wav)
+        assert info["duration_s"] == 1.0
+        assert info["channels"] == 1
+        assert info["sample_rate"] == 24000
+
+    def test_sine_wav(self):
+        wav = synthesize_wav(0.5, mode="sine", freq_hz=440.0)
+        info = wav_info(wav)
+        assert info["duration_s"] == 0.5
+        # 正弦波非全零
+        assert any(b != 0 for b in wav[44:])
+
+    def test_fade_sine(self):
+        wav = synthesize_wav(0.5, mode="fade_sine")
+        info = wav_info(wav)
+        assert info["duration_s"] == 0.5
+
+    def test_duration_clamped(self):
+        wav = synthesize_wav(9999.0, mode="silence")
+        info = wav_info(wav)
+        assert info["duration_s"] == 600.0
+
+    def test_invalid_wav_info(self):
+        assert wav_info(b"not a wav")["error"] == "invalid wav"
+
+    def test_tts_synth_by_voice(self):
+        for vid in ("zh_female_warm", "zh_male_steady", "en_female_neutral"):
+            wav = synth_tts(vid, 0.3)
+            assert wav[:4] == b"RIFF"
+
+    def test_bgm_synth_by_id(self):
+        for bid in ("bgm_upbeat_pop", "bgm_warm_acoustic"):
+            wav = synth_bgm(bid, 0.3)
+            assert wav[:4] == b"RIFF"
+
+    def test_sfx_synth_by_id(self):
+        for sid in ("sfx_ui_click", "sfx_whoosh_light"):
+            wav = synth_sfx(sid, 0.2)
+            assert wav[:4] == b"RIFF"
+
+
+class TestRender:
+    def test_render_tts(self):
+        jid = client.post(
+            "/api/audio/tts", json={"text": "测试", "voice_id": "zh_female_warm"}
+        ).json()["job_id"]
+        r = client.post(f"/api/audio/jobs/{jid}/render")
+        assert r.status_code == 200
+        d = r.json()
+        assert d["status"] == "done"
+        assert d["output"]["format"] == "wav"
+        assert d["output"]["bytes"] > 0
+
+    def test_render_bgm(self):
+        jid = client.post(
+            "/api/audio/bgm", json={"bgm_id": "bgm_upbeat_pop", "duration_s": 2.0}
+        ).json()["job_id"]
+        r = client.post(f"/api/audio/jobs/{jid}/render")
+        assert r.status_code == 200
+        assert r.json()["status"] == "done"
+
+    def test_render_sfx(self):
+        jid = client.post(
+            "/api/audio/sfx", json={"sfx_id": "sfx_ui_success"}
+        ).json()["job_id"]
+        r = client.post(f"/api/audio/jobs/{jid}/render")
+        assert r.status_code == 200
+        assert r.json()["status"] == "done"
+
+    def test_download_rendered_audio(self):
+        jid = client.post(
+            "/api/audio/tts", json={"text": "下载测试", "voice_id": "zh_female_warm"}
+        ).json()["job_id"]
+        client.post(f"/api/audio/jobs/{jid}/render")
+        r = client.get(f"/api/audio/jobs/{jid}/audio")
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "audio/wav"
+        assert r.content[:4] == b"RIFF"
+
+    def test_download_unrendered_conflict(self):
+        jid = client.post(
+            "/api/audio/tts", json={"text": "未渲染", "voice_id": "zh_female_warm"}
+        ).json()["job_id"]
+        assert client.get(f"/api/audio/jobs/{jid}/audio").status_code == 409
+
+    def test_render_missing_job(self):
+        assert client.post("/api/audio/jobs/nope/render").status_code == 400
+
+    def test_render_idempotent(self):
+        jid = client.post(
+            "/api/audio/tts", json={"text": "幂等", "voice_id": "zh_female_warm"}
+        ).json()["job_id"]
+        r1 = client.post(f"/api/audio/jobs/{jid}/render").json()
+        r2 = client.post(f"/api/audio/jobs/{jid}/render").json()
+        assert r1["status"] == "done"
+        assert r2["status"] == "done"
+        assert r1["output"]["bytes"] == r2["output"]["bytes"]
+
+    def test_job_detail_includes_output_after_render(self):
+        jid = client.post(
+            "/api/audio/tts", json={"text": "详情", "voice_id": "zh_female_warm"}
+        ).json()["job_id"]
+        client.post(f"/api/audio/jobs/{jid}/render")
+        d = client.get(f"/api/audio/jobs/{jid}").json()
+        assert d["status"] == "done"
+        assert "output" in d
+        assert d["output"]["format"] == "wav"

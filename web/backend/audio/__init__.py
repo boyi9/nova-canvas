@@ -23,6 +23,14 @@ from .engine import (
     get_audio_engine,
     reset_audio_engine,
 )
+
+from .synthesizer import (
+    synth_tts,
+    synth_bgm,
+    synth_sfx,
+    synthesize_wav,
+    wav_info,
+)
 from .mixer import (
     MixPlan,
     MixTrack,
@@ -48,6 +56,11 @@ __all__ = [
     "AudioEngine",
     "get_audio_engine",
     "reset_audio_engine",
+    "synth_tts",
+    "synth_bgm",
+    "synth_sfx",
+    "synthesize_wav",
+    "wav_info",
     "MixPlan",
     "MixTrack",
     "build_mix_plan",

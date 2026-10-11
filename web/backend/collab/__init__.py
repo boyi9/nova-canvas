@@ -14,6 +14,13 @@ from .permissions import (
     missing,
     require,
 )
+from .presence import (
+    PresenceBus,
+    PresenceError,
+    PresenceSession,
+    get_presence_bus,
+    reset_presence_bus,
+)
 from .store import (
     ApprovalRequest,
     CollabStore,
@@ -43,4 +50,9 @@ __all__ = [
     "is_red_line",
     "missing",
     "require",
+    "PresenceBus",
+    "PresenceError",
+    "PresenceSession",
+    "get_presence_bus",
+    "reset_presence_bus",
 ]

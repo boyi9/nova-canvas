@@ -3,13 +3,15 @@
 # 作用：音频接口 —— 音色/BGM/音效目录、TTS/BGM/SFX 任务规划、混音计划、预算查询
 from __future__ import annotations
 
+import base64
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from web.backend.audio import (
     AudioError,
+    AudioJobStatus,
     atempo_ratio,
     build_mix_plan,
     get_audio_engine,
@@ -24,7 +26,7 @@ router = APIRouter(prefix="/api/audio", tags=["audio"])
 
 
 def _job_dict(job) -> Dict[str, Any]:
-    return {
+    d = {
         "job_id": job.job_id,
         "kind": job.kind,
         "status": job.status.value,
@@ -33,7 +35,16 @@ def _job_dict(job) -> Dict[str, Any]:
         "estimated_cost_cny": job.estimated_cost_cny,
         "estimated_bytes": job.estimated_bytes,
         "created_at": job.created_at,
+        "finished_at": job.finished_at,
+        "error": job.error,
     }
+    if job.output:
+        d["output"] = {
+            "format": job.output.get("format"),
+            "bytes": job.output.get("bytes"),
+            "audio_url": f"/api/audio/jobs/{job.job_id}/audio",
+        }
+    return d
 
 
 class TtsIn(BaseModel):
@@ -178,6 +189,39 @@ def get_audio_job(job_id: str) -> Dict[str, Any]:
     if job is None:
         raise HTTPException(status_code=404, detail="任务不存在")
     return _job_dict(job)
+
+
+@router.post("/jobs/{job_id}/render", summary="渲染任务为真实 WAV（本地合成演示）")
+def render_audio_job(job_id: str, mode: str = "demo") -> Dict[str, Any]:
+    """
+    将已规划的任务渲染为真实音频。
+    mode=demo 使用本地正弦波合成；生产环境替换为真实 TTS/BGM/SFX 服务。
+    """
+    try:
+        job = get_audio_engine().render_job(job_id, mode=mode)
+    except AudioError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return _job_dict(job)
+
+
+@router.get("/jobs/{job_id}/audio", summary="下载渲染后的音频（WAV）")
+def download_audio_job(job_id: str) -> Response:
+    job = get_audio_engine().get_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    if job.status != AudioJobStatus.DONE or not job.output or "audio_b64" not in job.output:
+        raise HTTPException(status_code=409, detail="任务尚未渲染完成，请先调用 render")
+
+    audio_bytes = base64.b64decode(job.output["audio_b64"])
+    return Response(
+        content=audio_bytes,
+        media_type="audio/wav",
+        headers={
+            "Content-Disposition": f'attachment; filename="{job_id}.wav"',
+            "X-Audio-Format": "wav",
+            "X-Audio-Bytes": str(len(audio_bytes)),
+        },
+    )
 
 
 @router.get("/budget", summary="按任务列表汇总预算")

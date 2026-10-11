@@ -4,6 +4,7 @@
 # 说明：无真实 TTS/音频服务时以"任务计划"形式返回，绝不伪造音频二进制。
 from __future__ import annotations
 
+import base64
 import math
 import secrets
 import threading
@@ -201,6 +202,61 @@ class AudioEngine:
         with self._lock:
             self._jobs[job.job_id] = job
         return job
+
+    # ── 渲染（本地合成演示模式）─────────────────────────────────────────
+    def render_job(self, job_id: str, mode: str = "demo") -> AudioJob:
+        """
+        渲染任务为真实 WAV 二进制。
+        mode: demo（本地正弦波演示）| silence（静音）
+        生产环境应替换为真实 TTS/BGM/SFX 服务调用。
+        """
+        from web.backend.audio.synthesizer import (
+            synth_bgm,
+            synth_sfx,
+            synth_tts,
+        )
+
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                raise AudioError(f"任务不存在: {job_id}")
+
+            if job.status == AudioJobStatus.DONE:
+                return job
+
+            try:
+                job.status = AudioJobStatus.RENDERING
+
+                if job.kind == "tts":
+                    audio_bytes = synth_tts(
+                        job.params["voice_id"],
+                        job.estimated_duration_s,
+                    )
+                elif job.kind == "bgm":
+                    audio_bytes = synth_bgm(
+                        job.params["bgm_id"],
+                        job.estimated_duration_s,
+                    )
+                elif job.kind == "sfx":
+                    audio_bytes = synth_sfx(
+                        job.params["sfx_id"],
+                        job.estimated_duration_s,
+                    )
+                else:
+                    raise AudioError(f"未知任务类型: {job.kind}")
+
+                job.output = {
+                    "format": "wav",
+                    "bytes": len(audio_bytes),
+                    "audio_b64": base64.b64encode(audio_bytes).decode("ascii"),
+                }
+                job.status = AudioJobStatus.DONE
+                job.finished_at = time.time()
+            except Exception as e:
+                job.status = AudioJobStatus.FAILED
+                job.error = str(e)
+
+            return job
 
     def total_cost(self, job_ids: List[str]) -> float:
         with self._lock:

@@ -7,7 +7,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from web.backend.collab import Permission, can, missing, reset_collab_store
+from web.backend.collab import Permission, can, missing, reset_collab_store, reset_presence_bus
 from web.backend.collab.permissions import RED_LINE_PERMISSIONS
 from web.backend.main import create_app
 from web.backend.services.db import Database
@@ -22,11 +22,13 @@ STRANGER = {"Authorization": "Bearer tok_dave"}
 def client():
     Database.reset()
     reset_collab_store()
+    reset_presence_bus()
     app = create_app()
     with TestClient(app) as c:
         _seed(c)
         yield c
     reset_collab_store()
+    reset_presence_bus()
     Database.reset()
 
 
@@ -415,4 +417,156 @@ class TestPersistence:
         s2 = get_collab_store()
         assert s2.role_of("pX", "u1") == "owner"
         assert s2.get_version(v.version_id) is not None
+
+
+class TestPresence:
+    def test_join_and_list(self, client):
+        pid = _pid(client)
+        r = client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Alice"},
+            headers=OWNER,
+        )
+        assert r.status_code == 200
+        assert r.json()["user_id"] == "alice"
+        # 在线列表
+        lst = client.get(f"/api/collab/{pid}/presence", headers=OWNER).json()
+        assert lst["count"] == 1
+        assert lst["online"][0]["user_name"] == "Alice"
+
+    def test_stranger_cannot_join(self, client):
+        pid = _pid(client)
+        assert client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Dave"},
+            headers=STRANGER,
+        ).status_code == 403
+
+    def test_unauthenticated_rejected(self, client):
+        pid = _pid(client)
+        assert client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Anon"},
+        ).status_code == 401
+
+    def test_cursor_update(self, client):
+        pid = _pid(client)
+        client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Alice"},
+            headers=OWNER,
+        )
+        r = client.post(
+            f"/api/collab/{pid}/presence/cursor",
+            json={"x": 100.0, "y": 200.0, "zoom": 1.5},
+            headers=OWNER,
+        )
+        assert r.status_code == 200
+        assert r.json()["cursor"] == {"x": 100.0, "y": 200.0, "zoom": 1.5}
+        # 列表应包含光标
+        lst = client.get(f"/api/collab/{pid}/presence", headers=OWNER).json()
+        assert lst["online"][0]["cursor"]["x"] == 100.0
+
+    def test_typing_toggle(self, client):
+        pid = _pid(client)
+        client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Alice"},
+            headers=OWNER,
+        )
+        r = client.post(
+            f"/api/collab/{pid}/presence/typing",
+            json={"typing": True},
+            headers=OWNER,
+        )
+        assert r.status_code == 200
+        assert r.json()["typing"] is True
+        lst = client.get(f"/api/collab/{pid}/presence", headers=OWNER).json()
+        assert lst["online"][0]["typing"] is True
+
+    def test_multi_user_presence(self, client):
+        pid = _pid(client)
+        client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Alice"},
+            headers=OWNER,
+        )
+        client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Bob"},
+            headers=EDITOR,
+        )
+        client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Carol"},
+            headers=VIEWER,
+        )
+        lst = client.get(f"/api/collab/{pid}/presence", headers=OWNER).json()
+        assert lst["count"] == 3
+        names = {m["user_name"] for m in lst["online"]}
+        assert names == {"Alice", "Bob", "Carol"}
+
+    def test_leave_removes_from_list(self, client):
+        pid = _pid(client)
+        client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Alice"},
+            headers=OWNER,
+        )
+        assert client.get(f"/api/collab/{pid}/presence", headers=OWNER).json()["count"] == 1
+        r = client.post(f"/api/collab/{pid}/presence/leave", headers=OWNER)
+        assert r.status_code == 200
+        assert client.get(f"/api/collab/{pid}/presence", headers=OWNER).json()["count"] == 0
+
+    def test_cursor_before_join_404(self, client):
+        pid = _pid(client)
+        assert client.post(
+            f"/api/collab/{pid}/presence/cursor",
+            json={"x": 1.0, "y": 1.0},
+            headers=OWNER,
+        ).status_code == 404
+
+    def test_same_user_reuses_session(self, client):
+        pid = _pid(client)
+        j1 = client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Alice"},
+            headers=OWNER,
+        ).json()
+        # 第二次 join 会创建新会话，但 _presence_session 取第一个
+        j2 = client.post(
+            f"/api/collab/{pid}/presence/join",
+            json={"user_name": "Alice"},
+            headers=OWNER,
+        ).json()
+        assert j1["session_id"] != j2["session_id"]
+
+    def test_presence_bus_unit(self):
+        from web.backend.collab import get_presence_bus
+
+        bus = get_presence_bus()
+        s = bus.join("u1", "Alice", "p1", "editor")
+        assert s.user_id == "u1"
+        assert s.role == "editor"
+        # 更新光标
+        bus.update_cursor(s.session_id, {"x": 10, "y": 20})
+        assert bus.get_session(s.session_id).cursor == {"x": 10, "y": 20}
+        # 订阅广播
+        events = []
+        bus.subscribe("p1", events.append)
+        bus.set_typing(s.session_id, True)
+        assert any(e["type"] == "typing" for e in events)
+        # 离开
+        bus.leave(s.session_id)
+        assert bus.get_session(s.session_id) is None
+        assert bus.list_project("p1") == []
+
+    def test_presence_invalid_params(self):
+        from web.backend.collab import PresenceError, get_presence_bus
+
+        bus = get_presence_bus()
+        with pytest.raises(PresenceError):
+            bus.join("", "Alice", "p1")
+        with pytest.raises(PresenceError):
+            bus.join("u1", "Alice", "")
         reset_collab_store()

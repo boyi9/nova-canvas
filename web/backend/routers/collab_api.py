@@ -13,6 +13,7 @@ from web.backend.collab import (
     Permission,
     can,
     get_collab_store,
+    get_presence_bus,
     is_red_line,
 )
 from web.backend.projects import verify_token
@@ -452,3 +453,104 @@ def execute_schedule(
     if result is None:
         raise HTTPException(status_code=409, detail="排期已执行或已取消")
     return {"schedule_id": result.schedule_id, "status": result.status, "executed_at": result.executed_at}
+
+
+# ── 实时 Presence（在线状态/输入指示/光标）──────────────────────
+class PresenceJoinIn(BaseModel):
+    user_name: str
+    role: str = "viewer"
+
+
+class CursorIn(BaseModel):
+    x: float = 0.0
+    y: float = 0.0
+    zoom: float = 1.0
+
+
+class TypingIn(BaseModel):
+    typing: bool
+
+
+def _presence_session(project_id: str, user_id: str) -> str:
+    """取或创建用户的 presence session（同一用户同项目复用）。"""
+    bus = get_presence_bus()
+    for s in bus.list_project(project_id):
+        if s.user_id == user_id:
+            return s.session_id
+    raise HTTPException(status_code=404, detail="未加入 presence，请先调用 join")
+
+
+@router.post("/{project_id}/presence/join", summary="加入项目实时协同")
+def presence_join(
+    project_id: str, req: PresenceJoinIn, authorization: Optional[str] = Header(None)
+) -> Dict[str, Any]:
+    user_id = _user(authorization)
+    _role(project_id, user_id)  # 必须是项目成员
+    bus = get_presence_bus()
+    session = bus.join(
+        user_id=user_id,
+        user_name=req.user_name,
+        project_id=project_id,
+        role=req.role,
+    )
+    return {
+        "session_id": session.session_id,
+        "user_id": session.user_id,
+        "user_name": session.user_name,
+        "project_id": session.project_id,
+        "connected_at": session.connected_at,
+    }
+
+
+@router.post("/{project_id}/presence/leave", summary="离开项目实时协同")
+def presence_leave(
+    project_id: str, authorization: Optional[str] = Header(None)
+) -> Dict[str, Any]:
+    user_id = _user(authorization)
+    session_id = _presence_session(project_id, user_id)
+    get_presence_bus().leave(session_id)
+    return {"session_id": session_id, "left": True}
+
+
+@router.post("/{project_id}/presence/cursor", summary="更新光标位置")
+def presence_cursor(
+    project_id: str, req: CursorIn, authorization: Optional[str] = Header(None)
+) -> Dict[str, Any]:
+    user_id = _user(authorization)
+    session_id = _presence_session(project_id, user_id)
+    cursor = {"x": req.x, "y": req.y, "zoom": req.zoom}
+    get_presence_bus().update_cursor(session_id, cursor)
+    return {"session_id": session_id, "cursor": cursor}
+
+
+@router.post("/{project_id}/presence/typing", summary="设置输入状态")
+def presence_typing(
+    project_id: str, req: TypingIn, authorization: Optional[str] = Header(None)
+) -> Dict[str, Any]:
+    user_id = _user(authorization)
+    session_id = _presence_session(project_id, user_id)
+    get_presence_bus().set_typing(session_id, req.typing)
+    return {"session_id": session_id, "typing": req.typing}
+
+
+@router.get("/{project_id}/presence", summary="在线成员列表")
+def presence_list(project_id: str, authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
+    user_id = _user(authorization)
+    _role(project_id, user_id)
+    sessions = get_presence_bus().list_project(project_id)
+    return {
+        "project_id": project_id,
+        "online": [
+            {
+                "session_id": s.session_id,
+                "user_id": s.user_id,
+                "user_name": s.user_name,
+                "role": s.role,
+                "typing": s.typing,
+                "cursor": s.cursor,
+                "last_active": s.last_active,
+            }
+            for s in sessions
+        ],
+        "count": len(sessions),
+    }
