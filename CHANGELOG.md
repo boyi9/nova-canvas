@@ -13,6 +13,22 @@
 - [测试] Playwright 端到端冒烟测试新增不透明源安全回归断言（断言沙箱 iframe `window.origin === 'null'`）。
 - [安全] `git config --unset core.hooksPath` 修复提交失败：`core.hooksPath` 被错误写为 `--dir/_`（源自 `husky --dir .husky` 参数解析异常），导致所有 git hook 以 `env --dir/_/pre-commit` 形式调用而崩溃。修复方法已写入用户手册 FAQ。
 
+### 缺陷修复
+- [修复] **协作面板权限预检**：新增 `GET /api/collab/{project_id}/members/me` 返回当前用户角色，前端按 `ROLE_PERMISSIONS` 推导禁用无权按钮（`member:manage`/`share:manage`/`version:rollback`/`approval:review`/`schedule:manage`/`version:create`/`approval:submit` 逐项对应），杜绝"点了才报错"；成员列表新增"你"徽标与防自删（后端已 400 拦截，前端按钮同步禁用）。
+- [修复] **403 本地化**：后端返回的「角色 'viewer' 缺少权限 'member:manage'」英文技术串，现按权限域映射到本地化说明（7 条映射 + 通用兜底），启用此前已定义但未使用的 `noPermission` 键。
+- [修复] **红线操作确认一致性**：移除成员、取消排期补 `Modal.confirm` 确认弹窗（此前仅回滚有确认，移除成员作为红线操作却直接执行）。
+- [修复] **剪贴板失败回退**：非 HTTPS 或权限被拒时不再静默失败（`.catch(() => {})`），改为弹窗展示内容并自动全选，可手动 Ctrl+C。
+- [修复] **分享列表显示完整 URL**：此前仅显示 `/share/{id}` 路径，与复制所得的完整 URL 不一致，易误导。
+- [修复] **无障碍**：图标按钮 `aria-label` 带对象名（如"移除 张三"而非"移除"），读屏用户可区分操作对象。
+- [修复] **成员徽标按角色着色**：owner 琥珀 / editor 蓝 / viewer 灰，与 `status-colors` 设计意图打通，一眼区分角色高低。
+- [修复] **审批页签图标** `Check` → `ClipboardCheck`（语义更贴切，原图标更像"完成"）。
+- [修复] **审批裁决补意见输入框**：`decideApproval` 已支持 `comment` 参数，此前 UI 无入口，该字段实际无法填写。
+- [测试] `tests/test_collab.py` 新增 4 个 `/me` 端点用例（owner / editor / 非成员 403 / 未登录 401）。
+
+### 文档
+- [文档] `web/docs/api/p2-reference.md` 补 `/members/me` 端点（接口数 43→44）；权限矩阵改为与 `Permission` 枚举一致的 **12 项**（原写 14 项）+ 逐角色 ✅ 表，由 `tests/test_docs_coverage.py` 逐格比对 `ROLE_PERMISSIONS` 守护。
+- [文档] `docs/P3-Plan.md` 基线路由数 97 → 98、用例数同步更新。
+
 ### 文档
 - [文档] 新增《P2 API 参考》（`web/docs/api/p2-reference.md`）：43 个端点的完整规格——请求/响应示例、RBAC 权限矩阵、错误码语义、幂等与原子性约定，并显式说明 `cancel`/`execute` 路径不对称的取舍原因、presence 的 REST 轮询局限、音频的本地合成局限。
 - [文档] 重写《用户手册》（`web/docs/user/user-manual.md`）：原文件为模板桩（描述 Magic Canvas/Director 等未实现功能，端口与命令均不正确）。新版替换为已实现功能——真实路由表、真实端口（前端 5173/3000、后端 8000）、协作者工作流、音频与游戏资产使用流程、FAQ（含 `core.hooksPath` 被写成 `--dir/_` 导致 `git commit` 失败的修复方法）。

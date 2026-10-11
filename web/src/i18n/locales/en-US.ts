@@ -599,6 +599,10 @@ export default {
         retry: "Retry",
         redLineBadge: "Red line",
         redLineHint: "This action cannot be automated; manual confirmation required",
+        noPermission: "Insufficient permissions. Contact the project owner.",
+        you: "You",
+        copyFallbackTitle: "Copy failed",
+        copyFallbackHint: "Clipboard unavailable. Please manually select and copy the content below",
         members: {
             title: "Members & Permissions",
             add: "Add member",
@@ -609,6 +613,7 @@ export default {
             viewer: "Viewer",
             invitedBy: "Invited by",
             remove: "Remove",
+            removeConfirm: "Remove member {name}? This action cannot be undone.",
             removeSelfHint: "You cannot remove yourself",
             noPermission: "Not allowed to manage members",
         },
@@ -627,6 +632,7 @@ export default {
             never: "Never",
             openShare: "Open",
             publicHint: "Anyone with the link can access. Share with care.",
+            noPermission: "Not allowed to manage share links",
         },
         version: {
             title: "Version History",
@@ -669,8 +675,13 @@ export default {
             failed: "Failed",
             canceled: "Canceled",
             cancel: "Cancel schedule",
+            cancelConfirm: "Cancel this publishing schedule?",
             redLineHint: "Publishing is a red-line action; automation still requires manual confirmation",
             upcoming: "Upcoming",
+            noPermission: "Not allowed to manage publishing schedules",
+        },
+        project: {
+            noPermission: "Not allowed to operate this project",
         },
         channels: {
             douyin: "Douyin",

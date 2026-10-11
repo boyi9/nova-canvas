@@ -94,6 +94,26 @@ class TestMembers:
         pid = _pid(client)
         assert client.get(f"/api/collab/{pid}/members").status_code == 401
 
+    def test_my_role_owner(self, client):
+        pid = _pid(client)
+        r = client.get(f"/api/collab/{pid}/members/me", headers=OWNER)
+        assert r.status_code == 200
+        assert r.json() == {"user_id": "alice", "role": "owner"}
+
+    def test_my_role_editor(self, client):
+        pid = _pid(client)
+        r = client.get(f"/api/collab/{pid}/members/me", headers=EDITOR)
+        assert r.status_code == 200
+        assert r.json()["role"] == "editor"
+
+    def test_my_role_stranger_403(self, client):
+        pid = _pid(client)
+        assert client.get(f"/api/collab/{pid}/members/me", headers=STRANGER).status_code == 403
+
+    def test_my_role_unauthenticated_401(self, client):
+        pid = _pid(client)
+        assert client.get(f"/api/collab/{pid}/members/me").status_code == 401
+
     def test_editor_cannot_add_member(self, client):
         pid = _pid(client)
         r = client.post(

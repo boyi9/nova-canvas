@@ -87,6 +87,11 @@ async function collabRequest<T>(path: string, options: RequestInit = {}): Promis
 export const listMembers = (projectId: string) =>
     collabRequest<{ members: CollabMember[]; total: number }>(`/${projectId}/members`);
 
+export const getMyRole = (projectId: string) =>
+    collabRequest<{ user_id: string; role: CollabMember["role"] }>(
+        `/${projectId}/members/me`,
+    );
+
 export const addMember = (projectId: string, user_id: string, role: CollabMember["role"]) =>
     collabRequest<{ user_id: string; role: string }>(`/${projectId}/members`, {
         method: "POST",

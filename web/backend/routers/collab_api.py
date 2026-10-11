@@ -100,6 +100,14 @@ def list_members(project_id: str, authorization: Optional[str] = Header(None)) -
     }
 
 
+@router.get("/{project_id}/members/me", summary="当前用户在项目中的角色")
+def get_my_role(project_id: str, authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
+    """供前端做权限预检：按角色禁用无权按钮。非成员返回 403。"""
+    user_id = _user(authorization)
+    role = _role(project_id, user_id)
+    return {"user_id": user_id, "role": role}
+
+
 @router.post("/{project_id}/members", summary="添加成员")
 def add_member(
     project_id: str, req: MemberIn, authorization: Optional[str] = Header(None)

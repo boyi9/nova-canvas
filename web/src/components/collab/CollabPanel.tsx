@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import {
     AlertTriangle,
     CalendarClock,
-    Check,
+    ClipboardCheck,
     Copy,
     History,
     Loader2,
@@ -24,6 +24,7 @@ import {
     createShare,
     createVersion,
     decideApproval,
+    getMyRole,
     listApprovals,
     listMembers,
     listSchedules,
@@ -33,6 +34,7 @@ import {
     revokeShare,
     rollbackVersion,
     submitApproval,
+    CollabApiError,
     type ApprovalRequest,
     type CollabMember,
     type ProjectVersion,
@@ -52,7 +54,7 @@ const TABS = [
     { key: "members", icon: Users },
     { key: "share", icon: Share2 },
     { key: "version", icon: History },
-    { key: "approval", icon: Check },
+    { key: "approval", icon: ClipboardCheck },
     { key: "schedule", icon: CalendarClock },
 ] as const;
 
@@ -76,6 +78,9 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
     const [versions, setVersions] = useState<ProjectVersion[]>([]);
     const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
     const [schedules, setSchedules] = useState<PublishScheduleItem[]>([]);
+    const [me, setMe] = useState<{ user_id: string; role: CollabMember["role"] } | null>(null);
+    const [approvalComments, setApprovalComments] = useState<Record<string, string>>({});
+    const [fallbackCopy, setFallbackCopy] = useState<{ text: string; label?: string } | null>(null);
 
     const [newMemberId, setNewMemberId] = useState("");
     const [newMemberRole, setNewMemberRole] = useState<CollabMember["role"]>("viewer");
@@ -90,18 +95,20 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
         setError(null);
         try {
             // 并行拉取，单个失败不阻塞整体
-            const [m, s, v, a, sc] = await Promise.all([
+            const [m, s, v, a, sc, myRole] = await Promise.all([
                 listMembers(projectId).catch(() => ({ members: [], total: 0 })),
                 listShares(projectId).catch(() => ({ shares: [], total: 0 })),
                 listVersions(projectId).catch(() => ({ versions: [], total: 0 })),
                 listApprovals(projectId).catch(() => ({ approvals: [], total: 0 })),
                 listSchedules(projectId).catch(() => ({ schedules: [], total: 0, now: 0 })),
+                getMyRole(projectId).catch(() => null),
             ]);
             setMembers(m.members);
             setShares(s.shares);
             setVersions(v.versions);
             setApprovals(a.approvals);
             setSchedules(sc.schedules);
+            setMe(myRole);
         } finally {
             setLoading(false);
         }
@@ -111,13 +118,48 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
         if (open) void load();
     }, [open, load]);
 
+    // 权限预检：由 /me 端点取得当前角色，按后端 ROLE_PERMISSIONS 推导，禁用无权按钮
+    const isOwner = me?.role === "owner";
+    const isEditorOrAbove = me?.role === "owner" || me?.role === "editor";
+
+    // 后端 403 文案形如 "角色 'viewer' 缺少权限 'member:manage'"，
+    // 提取权限域并映射到本地化说明，避免向用户暴露英文技术串。
+    const PERMISSION_MESSAGE_KEY: Record<string, string> = {
+        "member:manage": "collab.members.noPermission",
+        "share:manage": "collab.share.noPermission",
+        "version:rollback": "collab.version.noPermission",
+        "approval:review": "collab.approval.noPermission",
+        "schedule:manage": "collab.schedule.noPermission",
+        "publish:execute": "collab.schedule.noPermission",
+        "project:delete": "collab.project.noPermission",
+    };
+
+    const friendlyError = (e: unknown): string => {
+        if (e instanceof CollabApiError && e.status === 403) {
+            const match = e.message.match(/'([a-z]+:[a-z]+)'/);
+            const key = match && PERMISSION_MESSAGE_KEY[match[1]];
+            return t(key ?? "collab.noPermission");
+        }
+        return e instanceof Error ? e.message : String(e);
+    };
+
     const guard = async (fn: () => Promise<unknown>, okMsg?: string) => {
         try {
             await fn();
             if (okMsg) message.success(okMsg);
             await load();
         } catch (e) {
-            message.error(e instanceof Error ? e.message : String(e));
+            message.error(friendlyError(e));
+        }
+    };
+
+    // 剪贴板不可用（非 HTTPS 或权限被拒）时回退到可手动复制的弹窗，而非静默失败
+    const copyText = async (text: string, label?: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            message.success(label ? `${t("collab.share.copied")}: ${label}` : t("collab.share.copied"));
+        } catch {
+            setFallbackCopy({ text, label });
         }
     };
 
@@ -169,7 +211,8 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                 />
                                 <Button
                                     type="primary"
-                                    disabled={!newMemberId.trim()}
+                                    disabled={!newMemberId.trim() || !isOwner}
+                                    title={isOwner ? undefined : t("collab.members.noPermission")}
                                     onClick={() =>
                                         guard(async () => {
                                             await addMember(projectId!, newMemberId.trim(), newMemberRole);
@@ -183,24 +226,50 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                             {members.length === 0 ? (
                                 <p className="py-8 text-center text-sm text-muted-foreground">{t("collab.empty")}</p>
                             ) : (
-                                members.map((m) => (
-                                    <div key={m.user_id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium">{m.user_id}</span>
-                                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                                                {t(`collab.members.${m.role}`)}
-                                            </span>
+                                members.map((m) => {
+                                    const isSelf = !!me && m.user_id === me.user_id;
+                                    const roleBadge =
+                                        m.role === "owner"
+                                            ? "bg-warning/15 text-warning"
+                                            : m.role === "editor"
+                                              ? "bg-info/15 text-info"
+                                              : "bg-muted text-muted-foreground";
+                                    // 移除成员属红线（member:manage），仅 owner 可操作，且不能移除自己
+                                    const canRemove = isOwner && !isSelf;
+                                    return (
+                                        <div key={m.user_id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium">{m.user_id}</span>
+                                                {isSelf && (
+                                                    <span className="rounded-full bg-brand/15 px-2 py-0.5 text-xs text-brand">
+                                                        {t("collab.you")}
+                                                    </span>
+                                                )}
+                                                <span className={cn("rounded-full px-2 py-0.5 text-xs", roleBadge)}>
+                                                    {t(`collab.members.${m.role}`)}
+                                                </span>
+                                            </div>
+                                            <Button
+                                                size="small"
+                                                type="text"
+                                                aria-label={`${t("collab.members.remove")} ${m.user_id}`}
+                                                disabled={!canRemove}
+                                                title={isSelf ? t("collab.members.removeSelfHint") : undefined}
+                                                onClick={() =>
+                                                    Modal.confirm({
+                                                        title: t("collab.members.removeConfirm", { name: m.user_id }),
+                                                        okText: t("collab.members.remove"),
+                                                        okButtonProps: { danger: true },
+                                                        cancelText: t("collab.approval.cancel"),
+                                                        onOk: () => guard(() => removeMember(projectId!, m.user_id)),
+                                                    })
+                                                }
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                            </Button>
                                         </div>
-                                        <Button
-                                            size="small"
-                                            type="text"
-                                            aria-label={t("collab.members.remove")}
-                                            onClick={() => guard(() => removeMember(projectId!, m.user_id))}
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </Button>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                     )}
@@ -214,12 +283,13 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                             </div>
                             <Button
                                 type="primary"
+                                disabled={!isOwner}
+                                title={isOwner ? undefined : t("collab.share.noPermission")}
                                 onClick={() =>
                                     guard(async () => {
                                         const r = await createShare(projectId!, "viewer");
                                         const url = `${location.origin}${r.url}`;
-                                        await navigator.clipboard?.writeText(url).catch(() => {});
-                                        message.success(`${t("collab.share.copied")}: ${url}`);
+                                        await copyText(url, url);
                                     })
                                 }
                             >
@@ -231,10 +301,11 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                 shares.map((s) => {
                                     const expired = s.expires_at !== null && s.expires_at * 1000 < Date.now();
                                     const dead = s.revoked || expired;
+                                    const fullUrl = `${location.origin}/share/${s.share_id}`;
                                     return (
                                         <div key={s.share_id} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
                                             <div className="min-w-0 flex-1">
-                                                <code className="block truncate text-xs text-muted-foreground">/share/{s.share_id}</code>
+                                                <code className="block truncate text-xs text-muted-foreground">{fullUrl}</code>
                                                 <span className="text-xs text-muted-foreground">
                                                     {dead ? (s.revoked ? t("collab.share.revoked") : t("collab.share.expired")) : t("collab.share.views", { count: s.view_count })}
                                                 </span>
@@ -243,20 +314,18 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                                 <Button
                                                     size="small"
                                                     type="text"
-                                                    aria-label={t("collab.share.copy")}
+                                                    aria-label={`${t("collab.share.copy")} ${fullUrl}`}
                                                     disabled={dead}
-                                                    onClick={async () => {
-                                                        await navigator.clipboard?.writeText(`${location.origin}/share/${s.share_id}`).catch(() => {});
-                                                        message.success(t("collab.share.copied"));
-                                                    }}
+                                                    onClick={() => void copyText(fullUrl)}
                                                 >
                                                     <Copy className="size-3.5" />
                                                 </Button>
                                                 <Button
                                                     size="small"
                                                     type="text"
-                                                    aria-label={t("collab.share.revoke")}
-                                                    disabled={s.revoked}
+                                                    aria-label={`${t("collab.share.revoke")} ${s.share_id}`}
+                                                    disabled={s.revoked || !isOwner}
+                                                    title={isOwner ? undefined : t("collab.share.noPermission")}
                                                     onClick={() => guard(() => revokeShare(projectId!, s.share_id))}
                                                 >
                                                     <X className="size-3.5" />
@@ -280,6 +349,8 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                 />
                                 <Button
                                     type="primary"
+                                    disabled={!isEditorOrAbove}
+                                    title={isEditorOrAbove ? undefined : t("collab.version.noPermission")}
                                     onClick={() =>
                                         guard(async () => {
                                             await createVersion(projectId!, getCanvasData?.() ?? "[]", versionNote);
@@ -304,11 +375,13 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                         </div>
                                         <Button
                                             size="small"
+                                            disabled={!isOwner}
+                                            title={isOwner ? undefined : t("collab.version.noPermission")}
                                             onClick={() =>
                                                 Modal.confirm({
                                                     title: t("collab.version.restoreConfirm"),
                                                     okText: t("collab.version.restore"),
-                                                    cancelText: t("collab.empty"),
+                                                    cancelText: t("collab.approval.cancel"),
                                                     onOk: () =>
                                                         guard(
                                                             () => rollbackVersion(projectId!, v.version_id),
@@ -336,7 +409,8 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                 />
                                 <Button
                                     type="primary"
-                                    disabled={!approvalTitle.trim()}
+                                    disabled={!approvalTitle.trim() || !isEditorOrAbove}
+                                    title={isEditorOrAbove ? undefined : t("collab.approval.noPermission")}
                                     onClick={() =>
                                         guard(async () => {
                                             await submitApproval(projectId!, approvalTitle.trim());
@@ -370,16 +444,63 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                             {t("collab.approval.by")}: {a.requested_by} · {fmtTime(a.created_at)}
                                         </div>
                                         {a.status === "pending" ? (
-                                            <div className="mt-2 flex gap-2">
-                                                <Button size="small" type="primary" onClick={() => guard(() => decideApproval(projectId!, a.request_id, true))}>
-                                                    {t("collab.approval.approve")}
-                                                </Button>
-                                                <Button size="small" onClick={() => guard(() => decideApproval(projectId!, a.request_id, false))}>
-                                                    {t("collab.approval.reject")}
-                                                </Button>
-                                                <Button size="small" type="text" onClick={() => guard(() => cancelApproval(projectId!, a.request_id))}>
-                                                    {t("collab.approval.cancel")}
-                                                </Button>
+                                            <div className="mt-2 space-y-2">
+                                                <Input
+                                                    placeholder={t("collab.approval.comment")}
+                                                    value={approvalComments[a.request_id] ?? ""}
+                                                    onChange={(e) =>
+                                                        setApprovalComments((prev) => ({
+                                                            ...prev,
+                                                            [a.request_id]: e.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="small"
+                                                        type="primary"
+                                                        disabled={!isOwner}
+                                                        title={isOwner ? undefined : t("collab.approval.noPermission")}
+                                                        onClick={() =>
+                                                            guard(() =>
+                                                                decideApproval(
+                                                                    projectId!,
+                                                                    a.request_id,
+                                                                    true,
+                                                                    approvalComments[a.request_id] ?? "",
+                                                                ),
+                                                            )
+                                                        }
+                                                    >
+                                                        {t("collab.approval.approve")}
+                                                    </Button>
+                                                    <Button
+                                                        size="small"
+                                                        disabled={!isOwner}
+                                                        title={isOwner ? undefined : t("collab.approval.noPermission")}
+                                                        onClick={() =>
+                                                            guard(() =>
+                                                                decideApproval(
+                                                                    projectId!,
+                                                                    a.request_id,
+                                                                    false,
+                                                                    approvalComments[a.request_id] ?? "",
+                                                                ),
+                                                            )
+                                                        }
+                                                    >
+                                                        {t("collab.approval.reject")}
+                                                    </Button>
+                                                    <Button
+                                                        size="small"
+                                                        type="text"
+                                                        disabled={!isEditorOrAbove}
+                                                        title={isEditorOrAbove ? undefined : t("collab.approval.noPermission")}
+                                                        onClick={() => guard(() => cancelApproval(projectId!, a.request_id))}
+                                                    >
+                                                        {t("collab.approval.cancel")}
+                                                    </Button>
+                                                </div>
                                             </div>
                                         ) : null}
                                     </div>
@@ -410,7 +531,8 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                 />
                                 <Button
                                     type="primary"
-                                    disabled={!scheduleAt}
+                                    disabled={!scheduleAt || !isOwner}
+                                    title={isOwner ? undefined : t("collab.schedule.noPermission")}
                                     onClick={() =>
                                         guard(async () => {
                                             const ts = new Date(scheduleAt).getTime() / 1000;
@@ -436,7 +558,20 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                                 {t(`collab.schedule.${s.status}`)}
                                             </span>
                                             {s.status === "pending" ? (
-                                                <Button size="small" type="text" onClick={() => guard(() => cancelSchedule(projectId!, s.schedule_id))}>
+                                                <Button
+                                                    size="small"
+                                                    type="text"
+                                                    disabled={!isOwner}
+                                                    title={isOwner ? undefined : t("collab.schedule.noPermission")}
+                                                    onClick={() =>
+                                                        Modal.confirm({
+                                                            title: t("collab.schedule.cancelConfirm"),
+                                                            okText: t("collab.schedule.cancel"),
+                                                            cancelText: t("collab.approval.cancel"),
+                                                            onOk: () => guard(() => cancelSchedule(projectId!, s.schedule_id)),
+                                                        })
+                                                    }
+                                                >
                                                     {t("collab.schedule.cancel")}
                                                 </Button>
                                             ) : null}
@@ -457,6 +592,21 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                     </Button>
                 </div>
             ) : null}
+
+            <Modal
+                open={!!fallbackCopy}
+                onCancel={() => setFallbackCopy(null)}
+                footer={null}
+                centered
+                title={t("collab.copyFallbackTitle")}
+            >
+                <p className="mb-2 text-xs text-muted-foreground">{t("collab.copyFallbackHint")}</p>
+                <Input
+                    readOnly
+                    value={fallbackCopy?.text ?? ""}
+                    onFocus={(e) => e.target.select()}
+                />
+            </Modal>
         </Modal>
     );
 }

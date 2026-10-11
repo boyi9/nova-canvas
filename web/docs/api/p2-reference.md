@@ -1,6 +1,6 @@
 # P2 API Reference - Collaboration / Audio / Game Assets
 
-> 本文档覆盖 Nova Canvas P2 阶段的 43 个后端接口。
+> 本文档覆盖 Nova Canvas P2 阶段的 44 个后端接口。
 > 准确性由 `tests/test_docs_coverage.py` 守护：文档中的每个端点都会与 FastAPI OpenAPI schema 比对，
 > 实现新增或删除端点而文档未同步时测试会失败。
 
@@ -49,6 +49,7 @@
 | Method | Endpoint | 说明 | 所需权限 |
 |---|---|---|---|
 | `GET` | `/api/collab/{project_id}/members` | 成员列表 | 仅需为项目成员 |
+| `GET` | `/api/collab/{project_id}/members/me` | 当前用户角色（供前端权限预检） | 仅需为项目成员 |
 | `POST` | `/api/collab/{project_id}/members` | 添加成员 **（红线）** | `member:manage` |
 | `PATCH` | `/api/collab/{project_id}/members/{member_id}` | 调整成员角色 **（红线）** | `member:manage` |
 | `DELETE` | `/api/collab/{project_id}/members/{member_id}` | 移除成员 **（红线）** | `member:manage` |

@@ -600,6 +600,10 @@ export default {
         retry: "重试",
         redLineBadge: "红线操作",
         redLineHint: "该操作不可自动执行，需人工确认",
+        noPermission: "权限不足，请联系项目拥有者",
+        you: "你",
+        copyFallbackTitle: "复制失败",
+        copyFallbackHint: "剪贴板不可用，请手动选择并复制以下内容",
         members: {
             title: "成员与权限",
             add: "添加成员",
@@ -610,6 +614,7 @@ export default {
             viewer: "查看者",
             invitedBy: "邀请人",
             remove: "移除",
+            removeConfirm: "确定移除成员 {name}？该操作不可撤销",
             removeSelfHint: "不能移除自己",
             noPermission: "无权管理成员",
         },
@@ -628,6 +633,7 @@ export default {
             never: "永久",
             openShare: "打开",
             publicHint: "任何持有链接的人可访问，谨慎分享",
+            noPermission: "无权管理分享链接",
         },
         version: {
             title: "版本历史",
@@ -670,8 +676,13 @@ export default {
             failed: "失败",
             canceled: "已取消",
             cancel: "取消排期",
+            cancelConfirm: "确定取消该发布排期？",
             redLineHint: "发布属红线动作，自动化链路也会要求人工确认",
             upcoming: "即将发布",
+            noPermission: "无权管理发布排期",
+        },
+        project: {
+            noPermission: "无权操作该项目",
         },
         channels: {
             douyin: "抖音",
