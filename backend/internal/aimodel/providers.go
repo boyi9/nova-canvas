@@ -6,11 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"nova-canvas-backend/internal/security"
 )
 
 type ProviderKind string
@@ -52,7 +55,8 @@ func defaultProviders() []*Provider {
 	providers := []*Provider{
 		{ID: "mock", Name: "Mock (offline)", Kind: KindChat, BaseURL: "", Model: "mock", Enabled: true},
 	}
-	if raw := os.Getenv("AI_PROVIDERS"); raw != "" {
+	raw := providerConfig()
+	if raw != "" {
 		var cfg []Provider
 		if err := json.Unmarshal([]byte(raw), &cfg); err == nil {
 			for i := range cfg {
@@ -69,6 +73,34 @@ func defaultProviders() []*Provider {
 		}
 	}
 	return providers
+}
+
+// providerConfig 读取供应商配置：优先 AI_PROVIDERS（明文），
+// 其次 AI_PROVIDERS_ENC（AES-256-GCM 密文，密钥来自 NOVA_SECRET_KEY）。
+// 加密配置用于避免 API Key 以明文躺在环境变量/编排文件里。
+func providerConfig() string {
+	if raw := os.Getenv("AI_PROVIDERS"); raw != "" {
+		return raw
+	}
+	encoded := strings.TrimSpace(os.Getenv("AI_PROVIDERS_ENC"))
+	if encoded == "" {
+		return ""
+	}
+	box, err := security.LoadSecretBoxFromEnv()
+	if err != nil {
+		log.Printf("[WARN] AI_PROVIDERS_ENC ignored: invalid %s: %v", security.SecretKeyEnv, err)
+		return ""
+	}
+	if box == nil {
+		log.Printf("[WARN] AI_PROVIDERS_ENC ignored: %s is not set", security.SecretKeyEnv)
+		return ""
+	}
+	plaintext, err := box.Open(encoded)
+	if err != nil {
+		log.Printf("[WARN] AI_PROVIDERS_ENC ignored: decryption failed")
+		return ""
+	}
+	return plaintext
 }
 
 // Registry returns the process-wide provider registry (lazily initialized).

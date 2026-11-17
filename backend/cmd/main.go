@@ -3,25 +3,37 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
-    "net/http"
 	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"nova-canvas-backend/internal/config"
 	"nova-canvas-backend/internal/database"
 	"nova-canvas-backend/internal/handlers"
 	"nova-canvas-backend/internal/logger"
 	"nova-canvas-backend/internal/middleware"
 	"nova-canvas-backend/internal/repository"
+	"nova-canvas-backend/internal/security"
 	"nova-canvas-backend/internal/taskqueue"
 )
 
 func main() {
 	_ = godotenv.Load()
 	logger.Init()
+
+	// 安全配置先于任何外部依赖加载：密钥缺失/过弱时立即退出，避免半可用状态。
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("[FATAL] Security config invalid: %v", err)
+	}
+	tokens, err := security.NewTokenManager(cfg.Auth.JWTSecret, cfg.Auth.Issuer, cfg.Auth.AccessTTL)
+	if err != nil {
+		log.Fatalf("[FATAL] JWT configuration invalid: %v", err)
+	}
 
 	dbCfg := database.LoadConfig()
 	db := database.MustConnect(dbCfg)
@@ -38,10 +50,11 @@ func main() {
 	}
 
 	repos := &repository.Repos{
-		Users:       repository.NewUserRepository(db),
-		Projects:    repository.NewProjectRepository(db),
-		Generations: repository.NewGenerationRepository(db),
-		Templates:   repository.NewTemplateRepository(db),
+		Users:         repository.NewUserRepository(db),
+		Projects:      repository.NewProjectRepository(db),
+		Generations:   repository.NewGenerationRepository(db),
+		Templates:     repository.NewTemplateRepository(db),
+		RefreshTokens: repository.NewRefreshTokenRepository(db),
 	}
 
 	queue, err := taskqueue.NewRedisQueue()
@@ -54,21 +67,32 @@ func main() {
 	}
 
 	h := handlers.NewHandler(repos.Users, repos.Projects, repos.Generations, repos.Templates)
+	h.EnableAuth(tokens, repos.RefreshTokens, cfg.Auth.RefreshTTL, cfg.Auth.CookieSecure, cfg.Auth.CookieDomain)
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+	// 默认不信任任何代理头，避免伪造 X-Forwarded-For 绕过按 IP 限流；
+	// 由 nginx 反代时通过 TRUSTED_PROXIES 显式声明代理地址。
+	if err := r.SetTrustedProxies(cfg.TrustedProxies); err != nil {
+		log.Fatalf("[FATAL] TRUSTED_PROXIES invalid: %v", err)
+	}
 	r.Use(gin.Recovery())
 	r.Use(logger.Middleware())
-	r.Use(middleware.CORS())
+	r.Use(middleware.SecurityHeaders())
+	r.Use(middleware.CORS(cfg.CORS.AllowedOrigins))
+
+	authLimiter := middleware.RateLimit(cfg.RateLimit.RPS, cfg.RateLimit.Burst)
 
 	v1 := r.Group("/api/v1")
 	{
-		v1.POST("/auth/register", h.Register)
-		v1.POST("/auth/login", h.Login)
+		v1.POST("/auth/register", authLimiter, h.Register)
+		v1.POST("/auth/login", authLimiter, h.Login)
+		v1.POST("/auth/refresh", authLimiter, h.Refresh)
+		v1.POST("/auth/logout", h.Logout)
 		v1.GET("/health", h.HealthCheck)
 
 		auth := v1.Group("")
-		auth.Use(middleware.Auth())
+		auth.Use(middleware.Auth(tokens))
 		{
 			auth.GET("/user/profile", h.GetProfile)
 			auth.PUT("/user/profile", h.UpdateProfile)

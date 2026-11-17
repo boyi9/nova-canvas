@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"nova-canvas-backend/internal/models"
@@ -41,8 +42,19 @@ type TemplateRepository interface {
 }
 
 type Repos struct {
-	Users       UserRepository
-	Projects    ProjectRepository
-	Generations GenerationRepository
-	Templates   TemplateRepository
+	Users         UserRepository
+	Projects      ProjectRepository
+	Generations   GenerationRepository
+	Templates     TemplateRepository
+	RefreshTokens RefreshTokenRepository
+}
+
+// RefreshTokenRepository 管理刷新令牌的持久化与撤销。
+// 以哈希检索（不存明文），撤销为软删除标记，过期清理由登录/刷新时顺带触发。
+type RefreshTokenRepository interface {
+	Create(ctx context.Context, token *models.RefreshToken) error
+	FindByHash(ctx context.Context, hash string) (*models.RefreshToken, error)
+	Revoke(ctx context.Context, id uuid.UUID) error
+	RevokeAllByUser(ctx context.Context, userID uuid.UUID) error
+	DeleteExpired(ctx context.Context, now time.Time) error
 }

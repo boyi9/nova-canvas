@@ -70,6 +70,24 @@ jobs:
       - run: pnpm test
         working-directory: web
 
+  # Go 后端承载认证/加密/CORS 等安全逻辑，必须由单测锁住行为
+  backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Vet
+        working-directory: backend
+        run: go vet ./...
+      - name: Test
+        working-directory: backend
+        run: go test ./...
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -147,7 +165,7 @@ jobs:
   ci-success:
     name: CI success
     if: always()
-    needs: [typecheck, lint, test, build, commit-lint]
+    needs: [typecheck, lint, test, backend, build, commit-lint]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs passed
@@ -155,11 +173,13 @@ jobs:
           echo "typecheck: ${{ needs.typecheck.result }}"
           echo "lint:      ${{ needs.lint.result }}"
           echo "test:      ${{ needs.test.result }}"
+          echo "backend:   ${{ needs.backend.result }}"
           echo "build:     ${{ needs.build.result }}"
           echo "commits:   ${{ needs.commit-lint.result }}"
           if [ "${{ needs.typecheck.result }}" != "success" ] || \
              [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.backend.result }}" != "success" ] || \
              [ "${{ needs.build.result }}" != "success" ] || \
              [ "${{ needs.commit-lint.result }}" != "success" ]; then
             echo "::error::CI failed - see the job logs above."

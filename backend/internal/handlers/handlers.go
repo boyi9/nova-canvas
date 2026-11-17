@@ -1,24 +1,33 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"nova-canvas-backend/internal/aimodel"
 	"nova-canvas-backend/internal/errs"
-	"nova-canvas-backend/internal/middleware"
 	"nova-canvas-backend/internal/models"
 	"nova-canvas-backend/internal/repository"
+	"nova-canvas-backend/internal/security"
 )
 
 type Handler struct {
-	Users      repository.UserRepository
-	Projects   repository.ProjectRepository
+	Users       repository.UserRepository
+	Projects    repository.ProjectRepository
 	Generations repository.GenerationRepository
-	Templates  repository.TemplateRepository
+	Templates   repository.TemplateRepository
+
+	// 认证依赖由 EnableAuth 注入（见 auth.go），存量测试可以不构造这些依赖。
+	Tokens        *security.TokenManager
+	RefreshTokens repository.RefreshTokenRepository
+	RefreshTTL    time.Duration
+	CookieSecure  bool
+	CookieDomain  string
 }
 
 func NewHandler(u repository.UserRepository, p repository.ProjectRepository, g repository.GenerationRepository, t repository.TemplateRepository) *Handler {
@@ -28,7 +37,7 @@ func NewHandler(u repository.UserRepository, p repository.ProjectRepository, g r
 func (h *Handler) Register(c *gin.Context) {
 	var req struct {
 		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=6"`
+		Password string `json:"password" binding:"required,min=8,max=72"`
 		Name     string `json:"name" binding:"required,min=1"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -62,14 +71,18 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	token, err := middleware.GenerateToken(user.ID.String(), user.Email)
+	access, err := h.issueSession(c, user)
 	if err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to generate token"))
+		errs.RespondError(c, errs.ErrInternal("Failed to create session"))
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"user": user, "token": token})
+	c.JSON(http.StatusCreated, h.sessionResponse(user, access))
 }
+
+// dummyPasswordHash 用于「邮箱不存在」时仍执行一次 bcrypt 校验，
+// 让两种失败路径的响应耗时接近，降低通过时序枚举账号的风险。
+const dummyPasswordHash = "$2a$10$BVlpK0uOPiOlxljuz/RrWupWO/f7vJ.tx6x1l.ZOxdn5VKQMdfvg."
 
 func (h *Handler) Login(c *gin.Context) {
 	var req struct {
@@ -83,6 +96,7 @@ func (h *Handler) Login(c *gin.Context) {
 
 	user, err := h.Users.FindByEmail(c.Request.Context(), req.Email)
 	if err != nil {
+		_ = bcrypt.CompareHashAndPassword([]byte(dummyPasswordHash), []byte(req.Password))
 		errs.RespondError(c, errs.ErrUnauthorized("Invalid email or password"))
 		return
 	}
@@ -92,13 +106,13 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := middleware.GenerateToken(user.ID.String(), user.Email)
+	access, err := h.issueSession(c, user)
 	if err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to generate token"))
+		errs.RespondError(c, errs.ErrInternal("Failed to create session"))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": user, "token": token})
+	c.JSON(http.StatusOK, h.sessionResponse(user, access))
 }
 
 func (h *Handler) GetProfile(c *gin.Context) {
@@ -306,7 +320,11 @@ func (h *Handler) GenerateImage(c *gin.Context) {
 		UserID:      uid,
 		Type:        "image",
 		Prompt:      req.Prompt,
-		Params:      `{"width":` + strconv.Itoa(req.Width) + `,"height":` + strconv.Itoa(req.Height) + `,"style":"` + req.Style + `"}`,
+		Params: marshalParams(map[string]any{
+			"width":  req.Width,
+			"height": req.Height,
+			"style":  req.Style,
+		}),
 		Status:      "pending",
 		CreditsCost: 1,
 		TaskID:      uuid.New().String(),
@@ -360,7 +378,10 @@ func (h *Handler) GenerateVideo(c *gin.Context) {
 		UserID:      uid,
 		Type:        "video",
 		Prompt:      req.Prompt,
-		Params:      `{"duration":` + strconv.Itoa(req.Duration) + `,"style":"` + req.Style + `"}`,
+		Params: marshalParams(map[string]any{
+			"duration": req.Duration,
+			"style":    req.Style,
+		}),
 		Status:      "pending",
 		CreditsCost: 10,
 		TaskID:      uuid.New().String(),
@@ -414,7 +435,10 @@ func (h *Handler) StyleTransfer(c *gin.Context) {
 		UserID:      uid,
 		Type:        "style_transfer",
 		Prompt:      req.ImageURL,
-		Params:      `{"style":"` + req.Style + `","strength":` + strconv.FormatFloat(req.Strength, 'f', 2, 64) + `}`,
+		Params: marshalParams(map[string]any{
+			"style":    req.Style,
+			"strength": req.Strength,
+		}),
 		Status:      "pending",
 		CreditsCost: 1,
 		TaskID:      uuid.New().String(),
@@ -567,6 +591,16 @@ func (h *Handler) CheckComplianceBatch(c *gin.Context) {
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"results": results})
+}
+
+// marshalParams 把生成参数编码为 JSON 字符串。
+// 早期实现用字符串拼接，style 等字段含引号/反斜杠时会破坏 JSON（注入类缺陷）。
+func marshalParams(params map[string]any) string {
+	encoded, err := json.Marshal(params)
+	if err != nil {
+		return "{}"
+	}
+	return string(encoded)
 }
 
 func containsSubstring(s, sub string) bool {

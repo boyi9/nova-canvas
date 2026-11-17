@@ -5,17 +5,15 @@ go 1.25
 require (
 	github.com/dop251/goja v0.0.0-20260806115107-493f22071ef6
 	github.com/gin-gonic/gin v1.10.0
-	github.com/go-playground/validator/v10 v10.20.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
-	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/hibiken/asynq v0.24.1
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.12.1
-	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.28.0
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.10
 )
@@ -32,6 +30,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -62,7 +61,6 @@ require (
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
-	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -58,6 +58,10 @@ cd ../backend && go run cmd/main.go
 # 依赖已在 backend/requirements.txt 或 pyproject.toml
 ```
 
+## 安全
+
+认证、令牌、CORS、密钥管理与敏感数据加密的约定见 [SECURITY.md](SECURITY.md)。部署前请确认 `JWT_SECRET`、`AUTH_COOKIE_SECURE`、`CORS_ALLOWED_ORIGINS` 已按生产环境配置。
+
 ## 许可证
 
 本项目采用 MIT License。详见 [LICENSE](LICENSE)。

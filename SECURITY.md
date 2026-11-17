@@ -78,3 +78,118 @@ this community project.
 Please allow time for investigation and remediation before publishing details.
 Credit will be given on request unless you prefer to remain anonymous.
 
+---
+
+# 安全基线（实现说明）
+
+以下内容描述 Nova Canvas **Go 后端**（`backend/`）的安全模型与运行要求。`web/backend/`（Python 服务）不在本节范围内。
+
+## 1. 令牌模型
+
+### 访问令牌（Access Token）
+
+| 项目 | 说明 |
+| --- | --- |
+| 格式 | JWT，HS256（服务端强制校验算法，拒绝 `alg=none` / HS512 等） |
+| 签名密钥 | `JWT_SECRET`，**至少 32 字节**，启动时校验，缺失或过短直接退出 |
+| 有效期 | `JWT_ACCESS_TTL`，默认 `15m`，上限 `24h` |
+| 载荷 | `user_id`、`email`、`typ=access`、`iss`、`sub`、`iat`、`nbf`、`exp` |
+| 校验 | 算法白名单 + issuer + 必须存在 `exp`（5 秒时钟容差）+ `typ` 必须为 `access` |
+| 传输 | `Authorization: Bearer <token>` |
+
+访问令牌**无状态**，服务端不保存。需要立即失效时，请轮换 `JWT_SECRET`（所有已签发令牌同时失效）。
+
+### 刷新令牌（Refresh Token）
+
+- 不透明随机值：32 字节（256 bit），base64url 编码，不含任何用户信息。
+- 数据库只保存 **SHA-256 哈希**（`refresh_tokens.token_hash`），明文仅下发给浏览器 Cookie。
+- **轮换式**：每次刷新都会撤销旧令牌并签发新令牌；旧令牌立即失效。
+- **重放检测**：已撤销的令牌再次出现视为泄露信号，立即撤销该用户的**全部**刷新令牌（所有设备被登出）。
+- 有效期：`JWT_REFRESH_TTL`，默认 `720h`（30 天）。
+- 清理：仅在登录/刷新时删除**自然过期**的记录；已撤销记录保留到过期，用于重放检测。
+
+### 刷新令牌 Cookie
+
+| 属性 | 值 |
+| --- | --- |
+| 名称 | `nova_refresh` |
+| `HttpOnly` | 是（JS 无法读取） |
+| `SameSite` | `Lax` |
+| `Path` | `/api/v1/auth`（业务请求不携带） |
+| `Secure` | `AUTH_COOKIE_SECURE`，**生产环境（HTTPS）必须为 `true`** |
+| `Domain` | `AUTH_COOKIE_DOMAIN`（可选，前后端不同子域时填写，如 `.example.com`） |
+
+刷新接口额外要求请求头 `X-Requested-With: XMLHttpRequest`。跨站表单无法携带自定义头，配合 `SameSite=Lax` 构成 CSRF 纵深防御。
+
+### 认证接口
+
+| 接口 | 说明 |
+| --- | --- |
+| `POST /api/v1/auth/register` | 注册并直接建立会话 |
+| `POST /api/v1/auth/login` | 登录 |
+| `POST /api/v1/auth/refresh` | 用 Cookie 中的刷新令牌换取新的访问令牌（需 `X-Requested-With`） |
+| `POST /api/v1/auth/logout` | 撤销当前刷新令牌并清除 Cookie，始终返回 `204` |
+
+登录/注册响应同时包含 `access_token`、旧字段 `token`、`token_type`、`expires_in` 和 `user`，旧客户端无需改动即可继续使用。
+
+### 密码
+
+- 使用 bcrypt（`bcrypt.DefaultCost`）存储，不可逆。
+- 密码策略：`min=8`，`max=72`（bcrypt 输入上限）。
+
+## 2. 传输与浏览器防护
+
+- **CORS**：仅回显 `CORS_ALLOWED_ORIGINS` 白名单中的来源，始终发送 `Vary: Origin`；允许携带凭据（`Access-Control-Allow-Credentials: true`），因此**禁止 `*`**，配置为 `*` 时启动失败。非白名单来源的预检请求返回 `403`。
+- **安全响应头**（所有 API 响应）：
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+  - `Referrer-Policy: no-referrer`
+  - `Cache-Control: no-store`
+- **限流**：注册/登录/刷新按客户端 IP 做令牌桶限流（`RATE_LIMIT_RPS` 默认 `5`，`RATE_LIMIT_BURST` 默认 `10`），超限返回 `429` 与 `Retry-After`。默认**不信任** `X-Forwarded-For`；经 nginx 等反向代理部署时，用 `TRUSTED_PROXIES`（逗号分隔 IP/CIDR，例如 `127.0.0.1`）显式声明代理地址，否则所有请求会被视为同一 IP。
+- **前端 CSP**：开发服务器由 `web/vite.config.ts` 配置；生产环境由部署侧反向代理按需下发（仓库内 `nginx.conf` 目前未设置 CSP，若接入第三方 API 域名请自行补充 `connect-src`）。前端 BYOK（用户自带 API Key）只存在于浏览器本地，不经过后端存储。
+
+## 3. 注入防护
+
+- **SQL 注入**：数据访问全部使用 GORM 参数化查询，仓库内没有 `Raw` / 字符串拼接 SQL。新增查询必须使用占位符（`Where("email = ?", email)`），禁止 `fmt.Sprintf` 拼接语句。
+- **JSON/参数注入**：生成参数（`width`/`style` 等）统一经 `json.Marshal` 编码后入库，不再拼接字符串，避免引号/反斜杠破坏结构。
+- **XSS**：文本节点渲染进 `contentEditable` 前会转义 `& < > " '`（`web/src/components/canvas/nodes/NovaTextNode.tsx`）。任何使用 `dangerouslySetInnerHTML` 的新代码都必须先转义或用受信任的渲染器。
+
+## 4. 敏感数据加密
+
+需要**可取回**的敏感配置（如供应商 API Key）使用 AES-256-GCM 加密，密钥来自 `NOVA_SECRET_KEY`（32 字节，base64url 无填充）。
+
+```bash
+# 1) 生成密钥
+go run ./cmd/secretctl genkey
+
+# 2) 加密明文（AI_PROVIDERS 的 JSON 内容）
+go run ./cmd/secretctl seal --value '[{"id":"deepseek","name":"DeepSeek","kind":"chat","base_url":"https://api.deepseek.com","api_key":"sk-...","model":"deepseek-chat"}]'
+
+# 3) 把输出填入 AI_PROVIDERS_ENC，并删除 AI_PROVIDERS 明文
+```
+
+- 启动时优先读取 `AI_PROVIDERS`（明文）；未设置时读取 `AI_PROVIDERS_ENC` 并解密。
+- `NOVA_SECRET_KEY` 缺失或格式错误时，`AI_PROVIDERS_ENC` 会被忽略并打印警告（服务仍可用，只是没有额外供应商）。
+- 密文带 `v1:` 版本前缀，便于将来平滑更换算法。
+- **不要**对密码、刷新令牌等不需要取回的数据使用此加密：密码用 bcrypt，刷新令牌用 SHA-256。
+
+## 5. 密钥与配置管理
+
+- 所有秘密只来自**运行期环境变量**，仓库不提交 `.env`（根 `.gitignore` 已忽略），生产镜像也不再打包 `.env.example`。
+- 必填：`JWT_SECRET`。推荐同时设置：`AUTH_COOKIE_SECURE=true`、`CORS_ALLOWED_ORIGINS`、`NOVA_SECRET_KEY`。
+- 环境变量清单见 `backend/.env.example`。
+- 轮换影响：
+  - 轮换 `JWT_SECRET`：所有访问令牌立即失效，用户重新登录即可（刷新令牌仍有效）。
+  - 轮换 `NOVA_SECRET_KEY`：需用新密钥重新 `seal` 并更新 `AI_PROVIDERS_ENC`，否则该配置无法解密。
+- 生产建议：密钥由编排平台 Secret 注入，不写入镜像、日志或构建产物。
+
+## 6. 本地验证
+
+```bash
+cd backend
+go vet ./...
+go test ./...
+go build ./...
+```
+
+CI 中的 `Backend Tests` job 会执行 `go vet` 与 `go test`，并与 `CI success` 聚合门禁联动。

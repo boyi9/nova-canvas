@@ -15,6 +15,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Project{},
 		&models.Generation{},
 		&models.Template{},
+		&models.RefreshToken{},
 	)
 	if err != nil {
 		return err

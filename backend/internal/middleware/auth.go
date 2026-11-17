@@ -1,105 +1,47 @@
 package middleware
 
 import (
-    "log"
-    "net/http"
-    "os"
-    "strings"
-    "sync"
-    "time"
+	"net/http"
+	"strings"
 
-    "github.com/gin-gonic/gin"
-    "github.com/golang-jwt/jwt/v5"
-    "github.com/joho/godotenv"
+	"github.com/gin-gonic/gin"
+	"nova-canvas-backend/internal/security"
 )
 
-var (
-    jwtSecret     []byte
-    jwtSecretOnce sync.Once
+// Gin context 键名：handlers 通过这两个键读取当前用户身份。
+const (
+	ContextUserID = "user_id"
+	ContextEmail  = "email"
 )
 
-func jwtSecretFunc() []byte {
-    jwtSecretOnce.Do(func() {
-        _ = godotenv.Load()
-        secret := os.Getenv("JWT_SECRET")
-        if secret == "" {
-            log.Fatal("[FATAL] JWT_SECRET environment variable is required")
-        }
-        jwtSecret = []byte(secret)
-    })
-    return jwtSecret
+func abortUnauthorized(c *gin.Context, detail string) {
+	c.JSON(http.StatusUnauthorized, gin.H{
+		"error": gin.H{"code": http.StatusUnauthorized, "message": "Unauthorized", "detail": detail},
+	})
+	c.Abort()
 }
 
-func GenerateToken(userID, email string) (string, error) {
-    claims := jwt.MapClaims{
-        "user_id": userID,
-        "email":   email,
-        "exp":     time.Now().Add(24 * time.Hour).Unix(),
-        "iat":     time.Now().Unix(),
-    }
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString(jwtSecretFunc())
-}
-
-func Auth() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        authHeader := c.GetHeader("Authorization")
-        if authHeader == "" {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
-            c.Abort()
-            return
-        }
-        parts := strings.SplitN(authHeader, " ", 2)
-        if len(parts) != 2 || parts[0] != "Bearer" {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
-            c.Abort()
-            return
-        }
-        tokenString := parts[1]
-        token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-            return jwtSecretFunc(), nil
-        })
-        if err != nil || !token.Valid {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-            c.Abort()
-            return
-        }
-        claims, ok := token.Claims.(jwt.MapClaims)
-        if !ok {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-            c.Abort()
-            return
-        }
-        userID, _ := claims["user_id"].(string)
-        email, _ := claims["email"].(string)
-        c.Set("user_id", userID)
-        c.Set("email", email)
-        c.Next()
-    }
-}
-
-func CORS() gin.HandlerFunc {
-    allowedOrigins := strings.Split(os.Getenv("CORS_ALLOWED_ORIGINS"), ",")
-    if len(allowedOrigins) == 0 || allowedOrigins[0] == "" {
-        allowedOrigins = []string{"http://localhost:3000", "http://localhost:5173"}
-    }
-    originMap := make(map[string]bool, len(allowedOrigins))
-    for _, o := range allowedOrigins {
-        originMap[strings.TrimSpace(o)] = true
-    }
-    return func(c *gin.Context) {
-        origin := c.GetHeader("Origin")
-        if originMap[origin] {
-            c.Header("Access-Control-Allow-Origin", origin)
-        }
-        c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
-        c.Header("Access-Control-Allow-Credentials", "true")
-        c.Header("Access-Control-Max-Age", "86400")
-        if c.Request.Method == "OPTIONS" {
-            c.AbortWithStatus(http.StatusNoContent)
-            return
-        }
-        c.Next()
-    }
+// Auth 校验 Bearer 访问令牌。令牌必须是通过显式限定算法的 HS256 签名、
+// issuer 匹配、带 exp 且 typ=access；任何异常统一返回 401，不泄露原因。
+func Auth(tokens *security.TokenManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		header := c.GetHeader("Authorization")
+		if header == "" {
+			abortUnauthorized(c, "Authorization header required")
+			return
+		}
+		parts := strings.SplitN(header, " ", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			abortUnauthorized(c, "Authorization format must be: Bearer <token>")
+			return
+		}
+		claims, err := tokens.Parse(strings.TrimSpace(parts[1]))
+		if err != nil {
+			abortUnauthorized(c, "Invalid or expired token")
+			return
+		}
+		c.Set(ContextUserID, claims.UserID)
+		c.Set(ContextEmail, claims.Email)
+		c.Next()
+	}
 }

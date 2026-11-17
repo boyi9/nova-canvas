@@ -66,7 +66,7 @@ WORKDIR /app
 
 COPY --from=builder /nova-backend ./nova-backend
 COPY --from=builder /app/web/dist ./web/dist
-COPY backend/.env.example ./.env
+# 不再把 .env.example 复制成 .env：配置只能来自运行期环境变量（避免打包出「看起来已配置」的假配置）
 
 EXPOSE 8080
 

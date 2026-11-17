@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -223,12 +224,56 @@ func (r *pgTemplateRepo) ListAll(ctx context.Context, limit, offset int) ([]*mod
 	return templates, total, nil
 }
 
+// pgRefreshTokenRepo 实现 RefreshTokenRepository。
+type pgRefreshTokenRepo struct {
+	db *gorm.DB
+}
+
+func NewRefreshTokenRepository(db *gorm.DB) RefreshTokenRepository {
+	return &pgRefreshTokenRepo{db: db}
+}
+
+func (r *pgRefreshTokenRepo) Create(ctx context.Context, token *models.RefreshToken) error {
+	return r.db.WithContext(ctx).Create(token).Error
+}
+
+func (r *pgRefreshTokenRepo) FindByHash(ctx context.Context, hash string) (*models.RefreshToken, error) {
+	var token models.RefreshToken
+	if err := r.db.WithContext(ctx).Where("token_hash = ?", hash).First(&token).Error; err != nil {
+		return nil, err
+	}
+	return &token, nil
+}
+
+func (r *pgRefreshTokenRepo) Revoke(ctx context.Context, id uuid.UUID) error {
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&models.RefreshToken{}).
+		Where("id = ? AND revoked_at IS NULL", id).
+		Update("revoked_at", now).Error
+}
+
+func (r *pgRefreshTokenRepo) RevokeAllByUser(ctx context.Context, userID uuid.UUID) error {
+	now := time.Now()
+	return r.db.WithContext(ctx).Model(&models.RefreshToken{}).
+		Where("user_id = ? AND revoked_at IS NULL", userID).
+		Update("revoked_at", now).Error
+}
+
+func (r *pgRefreshTokenRepo) DeleteExpired(ctx context.Context, now time.Time) error {
+	// 只删自然过期的记录：已撤销但未过期的记录必须保留，
+	// 否则旧令牌被重放时无法识别「已撤销」，也就无法触发全量撤销。
+	return r.db.WithContext(ctx).
+		Where("expires_at < ?", now).
+		Delete(&models.RefreshToken{}).Error
+}
+
 // Compile-time interface checks
 var (
 	_ UserRepository      = (*pgUserRepo)(nil)
 	_ ProjectRepository   = (*pgProjectRepo)(nil)
 	_ GenerationRepository = (*pgGenerationRepo)(nil)
 	_ TemplateRepository  = (*pgTemplateRepo)(nil)
+	_ RefreshTokenRepository = (*pgRefreshTokenRepo)(nil)
 )
 
 // unused import workaround

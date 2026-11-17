@@ -22,6 +22,24 @@ type User struct {
 
 func (User) TableName() string { return "users" }
 
+// RefreshToken 是刷新令牌的入库记录。数据库只保存 SHA-256 哈希，
+// 明文仅通过 HttpOnly Cookie 下发给浏览器；撤销靠 RevokedAt，轮换后旧记录立即失效。
+type RefreshToken struct {
+	ID        uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID    uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
+	TokenHash string     `gorm:"type:varchar(64);uniqueIndex;not null" json:"-"`
+	ExpiresAt time.Time  `gorm:"not null;index" json:"expires_at"`
+	RevokedAt *time.Time `gorm:"index" json:"revoked_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+}
+
+func (RefreshToken) TableName() string { return "refresh_tokens" }
+
+// IsActive 报告令牌在给定时间点是否仍可用。
+func (t *RefreshToken) IsActive(now time.Time) bool {
+	return t.RevokedAt == nil && now.Before(t.ExpiresAt)
+}
+
 type Project struct {
 	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	UserID      uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
