@@ -16,9 +16,16 @@ import (
 // recipeStore is a simple JSON-file-backed store for saved recipes. It is a
 // package-level singleton for the MVP; swapping in a database later only
 // requires changing this type.
+// recipeRecord 在配方之上记录归属用户：存储虽是文件级 MVP，
+// 访问必须按用户隔离，任何已登录用户只能看到自己的配方。
+type recipeRecord struct {
+	Owner  string          `json:"owner"`
+	Recipe workflow.Recipe `json:"recipe"`
+}
+
 type recipeStore struct {
 	mu      sync.RWMutex
-	recipes map[string]workflow.Recipe
+	recipes map[string]recipeRecord
 	path    string
 }
 
@@ -27,7 +34,7 @@ var globalRecipeStore = newRecipeStore()
 func newRecipeStore() *recipeStore {
 	dir, _ := os.Getwd()
 	path := filepath.Join(dir, "data", "recipes.json")
-	rs := &recipeStore{recipes: map[string]workflow.Recipe{}, path: path}
+	rs := &recipeStore{recipes: map[string]recipeRecord{}, path: path}
 	if data, err := os.ReadFile(path); err == nil {
 		_ = json.Unmarshal(data, &rs.recipes)
 	}
@@ -43,6 +50,11 @@ func (s *recipeStore) persist() {
 }
 
 func (h *Handler) SaveRecipe(c *gin.Context) {
+	userID := c.GetString("user_id")
+	if userID == "" {
+		errs.RespondError(c, errs.ErrUnauthorized("authentication required"))
+		return
+	}
 	var req workflow.Recipe
 	if err := c.ShouldBindJSON(&req); err != nil {
 		errs.RespondError(c, errs.ErrBadRequest(err.Error()))
@@ -56,7 +68,7 @@ func (h *Handler) SaveRecipe(c *gin.Context) {
 	req.ID = id
 
 	globalRecipeStore.mu.Lock()
-	globalRecipeStore.recipes[id] = req
+	globalRecipeStore.recipes[id] = recipeRecord{Owner: userID, Recipe: req}
 	globalRecipeStore.mu.Unlock()
 	globalRecipeStore.persist()
 
@@ -64,30 +76,36 @@ func (h *Handler) SaveRecipe(c *gin.Context) {
 }
 
 func (h *Handler) ListRecipes(c *gin.Context) {
+	userID := c.GetString("user_id")
 	globalRecipeStore.mu.RLock()
 	list := make([]workflow.Recipe, 0, len(globalRecipeStore.recipes))
-	for _, r := range globalRecipeStore.recipes {
-		list = append(list, r)
+	for _, record := range globalRecipeStore.recipes {
+		if record.Owner == userID {
+			list = append(list, record.Recipe)
+		}
 	}
 	globalRecipeStore.mu.RUnlock()
 	c.JSON(http.StatusOK, gin.H{"recipes": list})
 }
 
 func (h *Handler) GetRecipe(c *gin.Context) {
+	userID := c.GetString("user_id")
 	id := c.Param("id")
 	globalRecipeStore.mu.RLock()
-	r, ok := globalRecipeStore.recipes[id]
+	record, ok := globalRecipeStore.recipes[id]
 	globalRecipeStore.mu.RUnlock()
-	if !ok {
+	// 归属校验：他人的配方按 404 处理，不泄露存在性
+	if !ok || record.Owner != userID {
 		errs.RespondError(c, errs.ErrNotFound("recipe not found"))
 		return
 	}
-	c.JSON(http.StatusOK, r)
+	c.JSON(http.StatusOK, record.Recipe)
 }
 
 // ApplyRecipe instantiates the saved recipe with the supplied variable values
 // and returns the concrete node graph for the client to drop onto the canvas.
 func (h *Handler) ApplyRecipe(c *gin.Context) {
+	userID := c.GetString("user_id")
 	id := c.Param("id")
 	var req struct {
 		Values map[string]any `json:"values"`
@@ -98,13 +116,13 @@ func (h *Handler) ApplyRecipe(c *gin.Context) {
 	}
 
 	globalRecipeStore.mu.RLock()
-	r, ok := globalRecipeStore.recipes[id]
+	record, ok := globalRecipeStore.recipes[id]
 	globalRecipeStore.mu.RUnlock()
-	if !ok {
+	if !ok || record.Owner != userID {
 		errs.RespondError(c, errs.ErrNotFound("recipe not found"))
 		return
 	}
 
-	graph := r.Instantiate(req.Values)
+	graph := record.Recipe.Instantiate(req.Values)
 	c.JSON(http.StatusOK, gin.H{"graph": graph})
 }

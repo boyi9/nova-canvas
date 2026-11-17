@@ -463,10 +463,12 @@ func (h *Handler) StyleTransfer(c *gin.Context) {
 }
 
 func (h *Handler) GetGenerationStatus(c *gin.Context) {
+	userID := c.GetString("user_id")
 	taskID := c.Param("task_id")
 
 	gen, err := h.Generations.FindByTaskID(c.Request.Context(), taskID)
-	if err != nil {
+	// 归属校验：他人生成任务的进度与结果 URL 一律按 404 处理，不泄露存在性
+	if err != nil || gen.UserID.String() != userID {
 		errs.RespondError(c, errs.ErrNotFound("Generation task not found"))
 		return
 	}

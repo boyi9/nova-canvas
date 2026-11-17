@@ -15,6 +15,8 @@ func setupRecipeRouter() (*gin.Engine, *Handler) {
 	gin.SetMode(gin.TestMode)
 	h := NewHandler(nil, nil, nil, nil)
 	r := gin.New()
+	// 模拟 Auth 中间件：所有请求以固定用户身份进入
+	r.Use(func(c *gin.Context) { c.Set("user_id", "recipe-test-user"); c.Next() })
 	v1 := r.Group("/api/v1")
 	{
 		v1.POST("/recipes", h.SaveRecipe)

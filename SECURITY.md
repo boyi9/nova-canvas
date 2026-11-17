@@ -148,13 +148,21 @@ Credit will be given on request unless you prefer to remain anonymous.
 - **限流**：注册/登录/刷新按客户端 IP 做令牌桶限流（`RATE_LIMIT_RPS` 默认 `5`，`RATE_LIMIT_BURST` 默认 `10`），超限返回 `429` 与 `Retry-After`。默认**不信任** `X-Forwarded-For`；经 nginx 等反向代理部署时，用 `TRUSTED_PROXIES`（逗号分隔 IP/CIDR，例如 `127.0.0.1`）显式声明代理地址，否则所有请求会被视为同一 IP。
 - **前端 CSP**：开发服务器由 `web/vite.config.ts` 配置；生产环境由部署侧反向代理按需下发（仓库内 `nginx.conf` 目前未设置 CSP，若接入第三方 API 域名请自行补充 `connect-src`）。前端 BYOK（用户自带 API Key）只存在于浏览器本地，不经过后端存储。
 
-## 3. 注入防护
+## 3. 越权防护（对象级权限）
+
+- 所有业务接口都挂在 `Auth` 中间件之后，未携带有效 Bearer 访问令牌一律 `401`。公开端点白名单仅限：`register`、`login`、`refresh`、`logout`、`health`。
+- **对象级权限**：项目、生成任务、配方（recipes）、脚本（scripts）均按归属用户隔离；访问他人资源一律返回 `404`（同时不泄露资源是否存在）。相关行为由单测锁定（`ownership_test.go`、`auth_test.go`）。
+- 生成任务状态接口按 `task_id` 查询时校验 `gen.UserID` 与当前用户一致。
+- 服务端脚本执行（`/scripts/:id/run`、`/scripts/run`）仅限登录用户，脚本在 Goja 沙箱内运行并受资源限制约束。
+- 新增接口时必须：1) 挂到 `auth` 路由组；2) 明确资源归属校验；3) 补充越权用例。
+
+## 4. 注入防护
 
 - **SQL 注入**：数据访问全部使用 GORM 参数化查询，仓库内没有 `Raw` / 字符串拼接 SQL。新增查询必须使用占位符（`Where("email = ?", email)`），禁止 `fmt.Sprintf` 拼接语句。
 - **JSON/参数注入**：生成参数（`width`/`style` 等）统一经 `json.Marshal` 编码后入库，不再拼接字符串，避免引号/反斜杠破坏结构。
 - **XSS**：文本节点渲染进 `contentEditable` 前会转义 `& < > " '`（`web/src/components/canvas/nodes/NovaTextNode.tsx`）。任何使用 `dangerouslySetInnerHTML` 的新代码都必须先转义或用受信任的渲染器。
 
-## 4. 敏感数据加密
+## 5. 敏感数据加密
 
 需要**可取回**的敏感配置（如供应商 API Key）使用 AES-256-GCM 加密，密钥来自 `NOVA_SECRET_KEY`（32 字节，base64url 无填充）。
 
@@ -173,9 +181,12 @@ go run ./cmd/secretctl seal --value '[{"id":"deepseek","name":"DeepSeek","kind":
 - 密文带 `v1:` 版本前缀，便于将来平滑更换算法。
 - **不要**对密码、刷新令牌等不需要取回的数据使用此加密：密码用 bcrypt，刷新令牌用 SHA-256。
 
-## 5. 密钥与配置管理
+## 6. 密钥与配置管理
 
 - 所有秘密只来自**运行期环境变量**，仓库不提交 `.env`（根 `.gitignore` 已忽略），生产镜像也不再打包 `.env.example`。
+- **禁止硬编码密钥**：源码、配置、文档中不得出现真实 API Key / 密码 / 令牌；秘密一律经环境变量注入。测试夹具只允许占位值（如 bcrypt dummy hash）。
+- 代码中不硬编码任何密钥；数据库不存储供应商 API Key（只来自环境变量，可选 AES-256-GCM 密文）。
+- 落库的敏感数据及其保护方式：用户密码 → bcrypt；刷新令牌 → SHA-256 哈希；供应商配置 → 环境变量（可选 `AI_PROVIDERS_ENC` 密文）。业务数据（项目、生成记录）为用户内容，不做字段级加密。
 - 必填：`JWT_SECRET`。推荐同时设置：`AUTH_COOKIE_SECURE=true`、`CORS_ALLOWED_ORIGINS`、`NOVA_SECRET_KEY`。
 - 环境变量清单见 `backend/.env.example`。
 - 轮换影响：
@@ -183,7 +194,7 @@ go run ./cmd/secretctl seal --value '[{"id":"deepseek","name":"DeepSeek","kind":
   - 轮换 `NOVA_SECRET_KEY`：需用新密钥重新 `seal` 并更新 `AI_PROVIDERS_ENC`，否则该配置无法解密。
 - 生产建议：密钥由编排平台 Secret 注入，不写入镜像、日志或构建产物。
 
-## 6. 本地验证
+## 7. 本地验证
 
 ```bash
 cd backend
