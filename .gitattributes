@@ -7,4 +7,6 @@
 *.conf        text eol=lf
 *.inc         text eol=lf
 Dockerfile    text eol=lf
+# git hook 文件无扩展名，按目录匹配强制 LF（由 /bin/sh 直接执行，CRLF 会直接报错）
+**/.husky/**  text eol=lf
 *.ps1         text eol=crlf

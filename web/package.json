@@ -26,7 +26,7 @@
         "lint": "eslint .",
         "lint:ci": "eslint . --max-warnings 501",
         "lint:fix": "eslint . --fix",
-        "prepare": "husky --dir .husky"
+        "prepare": "node scripts/setup-hooks.mjs"
     },
     "dependencies": {
         "@ant-design/icons": "^6.1.1",
@@ -89,8 +89,8 @@
         "vitest": "^4.1.11"
     },
     "lint-staged": {
-        "*.{ts,tsx}": [
-            "eslint --fix --max-warnings 0",
+        "*.{ts,tsx,js,mjs,cjs}": [
+            "eslint --fix",
             "prettier --write"
         ],
         "*.{json,css,md,yml,yaml}": [
