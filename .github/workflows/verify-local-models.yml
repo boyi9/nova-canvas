@@ -1,9 +1,7 @@
 name: 本地模型验证OpenCode流水线
+# 已禁用自动触发：runs-on local-gpu-runner 自托管 runner 未上线，push 会永久挂起占用 check。
+# runner 就绪后可恢复 push/pull_request 触发；当前仅保留手动入口。
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
   workflow_dispatch:
 
 env:
