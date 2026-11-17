@@ -1,0 +1,33 @@
+name: Setup web toolchain
+description: 安装 pnpm + Node，并按 web/pnpm-lock.yaml 冻结安装前端依赖（供各 CI job 复用）
+
+inputs:
+  node-version:
+    description: Node.js 版本
+    required: false
+    default: "22"
+  pnpm-version:
+    description: pnpm 版本（需与 web/package.json 的 packageManager 一致）
+    required: false
+    default: "11.22.0"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+        run_install: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+        cache-dependency-path: web/pnpm-lock.yaml
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: web
+      run: pnpm install --frozen-lockfile --prefer-offline

@@ -240,6 +240,22 @@ export function JianyingDraftPreview({
   onMaterialSelect,
   className,
 }: JianyingDraftPreviewProps) {
+  // Hooks 必须在任何 return 之前调用，空状态放到后面渲染
+  const [zoom, setZoom] = useState(200); // px per second
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
+  const [selectedTrack, setSelectedTrack] = useState<any>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<"timeline" | "materials" | "properties">("timeline");
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+
+  const handleSegmentSelect = useCallback((segment: any, track: any) => {
+    setSelectedSegmentId(segment.id);
+    setSelectedTrack(track);
+    const material = draft?.materials.find((m: any) => m.id === segment.materialId);
+    if (material) setSelectedMaterial(material);
+    onSegmentSelect?.(segment, track);
+  }, [draft]);
+
   if (!draft) {
     return (
       <div className={cn("flex flex-col h-full bg-background", className)}>
@@ -254,21 +270,6 @@ export function JianyingDraftPreview({
       </div>
     );
   }
-
-  const [zoom, setZoom] = useState(200); // px per second
-  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
-  const [selectedTrack, setSelectedTrack] = useState<any>(null);
-  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"timeline" | "materials" | "properties">("timeline");
-  const [sidebarWidth, setSidebarWidth] = useState(320);
-
-  const handleSegmentSelect = useCallback((segment: any, track: any) => {
-    setSelectedSegmentId(segment.id);
-    setSelectedTrack(track);
-    const material = draft.materials.find((m: any) => m.id === segment.materialId);
-    if (material) setSelectedMaterial(material);
-    onSegmentSelect?.(segment, track);
-  }, [draft]);
 
   const totalDuration = draft.metadata.duration;
   const totalWidth = (totalDuration / 1000000) * zoom;

@@ -1,74 +1,120 @@
 name: CI
 
+# PR 与主干的基础质量门禁：类型检查 / Lint / 单元测试 / 构建。
+# 分支保护只需把 "CI success" 设为 required check（聚合 job），
+# 后续新增或调整子 job 都不用再改分支保护规则。
+
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+
+# 同一分支的新提交会取消上一轮未完成的 CI，避免排队浪费额度
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# 只读仓库内容；上传产物不需要额外权限
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "11.22.0"
+  # 失败时不要吞掉 pnpm 的进度输出，便于排查
+  CI: "true"
+  # CI 里跳过 husky 安装钩子（提交钩子只在本地有意义）
+  HUSKY: "0"
 
 jobs:
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup-web
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - run: npm ci
-        working-directory: web
-      - run: npm run typecheck
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - run: pnpm typecheck
         working-directory: web
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup-web
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - run: npm ci
-        working-directory: web
-      - run: npm run lint -- --max-warnings 500
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      # 阻断条件：error 必须为 0；warning 采用配额制（当前 501，见 lint:ci）。
+      # 清理掉历史 warning 后请同步下调配额，只降不升。
+      - run: pnpm lint:ci
         working-directory: web
 
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup-web
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - run: npm ci
-        working-directory: web
-      - run: npm test
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - run: pnpm test
         working-directory: web
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [typecheck, lint, test]
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup-web
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - run: npm ci
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - run: pnpm build
         working-directory: web
-      - run: npm run build
+      - name: Verify build output
         working-directory: web
+        run: |
+          test -f dist/index.html
+          test -f dist/config.js
+          test -f dist/build-info.json
+          cat dist/build-info.json
+      # PR 上也能下载产物，方便评审与联调
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-${{ github.event_name }}-${{ github.sha }}
           path: web/dist/
           retention-days: 7
+          if-no-files-found: error
+
+  # 聚合门禁：任一子 job 失败/被取消即失败。
+  # 分支保护只需要这一个 required check。
+  ci-success:
+    name: CI success
+    if: always()
+    needs: [typecheck, lint, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all jobs passed
+        run: |
+          echo "typecheck: ${{ needs.typecheck.result }}"
+          echo "lint:      ${{ needs.lint.result }}"
+          echo "test:      ${{ needs.test.result }}"
+          echo "build:     ${{ needs.build.result }}"
+          if [ "${{ needs.typecheck.result }}" != "success" ] || \
+             [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ]; then
+            echo "::error::CI failed - see the job logs above."
+            exit 1
+          fi

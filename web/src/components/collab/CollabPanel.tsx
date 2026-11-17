@@ -81,6 +81,9 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
     const [me, setMe] = useState<{ user_id: string; role: CollabMember["role"] } | null>(null);
     const [approvalComments, setApprovalComments] = useState<Record<string, string>>({});
     const [fallbackCopy, setFallbackCopy] = useState<{ text: string; label?: string } | null>(null);
+    // 分享链接是否过期取决于当前时间。渲染期禁止读 Date.now()，
+    // 这里在挂载和每次拉取分享列表时取一次时间基准。
+    const [now, setNow] = useState(() => Date.now());
 
     const [newMemberId, setNewMemberId] = useState("");
     const [newMemberRole, setNewMemberRole] = useState<CollabMember["role"]>("viewer");
@@ -105,6 +108,7 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
             ]);
             setMembers(m.members);
             setShares(s.shares);
+            setNow(Date.now());
             setVersions(v.versions);
             setApprovals(a.approvals);
             setSchedules(sc.schedules);
@@ -299,7 +303,7 @@ export function CollabPanel({ projectId, open, onClose, getCanvasData }: CollabP
                                 <p className="py-8 text-center text-sm text-muted-foreground">{t("collab.empty")}</p>
                             ) : (
                                 shares.map((s) => {
-                                    const expired = s.expires_at !== null && s.expires_at * 1000 < Date.now();
+                                    const expired = s.expires_at !== null && s.expires_at * 1000 < now;
                                     const dead = s.revoked || expired;
                                     const fullUrl = `${location.origin}/share/${s.share_id}`;
                                     return (

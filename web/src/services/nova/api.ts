@@ -567,7 +567,8 @@ export async function exportPsd(
 
 // ── P2 项目持久化（直连 Python 后端 /api/projects，Bearer tok_<user_id>）────
 // 若 nova_token 不是 tok_ 格式则回退 mock（/api/v1/projects）
-function useRealProjects(): boolean {
+// 不是 React Hook（只读 localStorage），命名保持与 Hook 区分。
+function isRealProjectsEnabled(): boolean {
   const token = localStorage.getItem("nova_token");
   return !!token && token.startsWith("tok_");
 }
@@ -625,7 +626,7 @@ export async function deleteProjectReal(id: string) {
 
 /** 智能创建项目：有 tok_ token 走真实后端，否则回退 mock。 */
 export async function createProjectSmart(name: string, scene: string, description = "") {
-  if (useRealProjects()) {
+  if (isRealProjectsEnabled()) {
     try {
       return await createProjectReal(name, scene, description);
     } catch {

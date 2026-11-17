@@ -20,15 +20,19 @@ interface ClipPropertiesPanelProps {
   onUpdate: (clipId: string, updates: Partial<TimelineClip>) => void;
 }
 
-export function ClipPropertiesPanel({
+export function ClipPropertiesPanel(props: ClipPropertiesPanelProps) {
+  // 空选中直接不渲染；Hooks 必须无条件调用，故真正的面板拆到子组件
+  if (props.clips.length === 0) return null;
+  return <ClipPropertiesPanelBody {...props} />;
+}
+
+function ClipPropertiesPanelBody({
   clips,
   onClose,
   onUpdate,
 }: ClipPropertiesPanelProps) {
   const [activeTab, setActiveTab] = useState<"basic" | "animation" | "effects" | "audio">("basic");
   const [newKeyframeProperty, setNewKeyframeProperty] = useState<string>(ANIMATABLE_PROPERTIES[0].key);
-
-  if (clips.length === 0) return null;
 
   const clip = clips[0];
   const isMulti = clips.length > 1;
