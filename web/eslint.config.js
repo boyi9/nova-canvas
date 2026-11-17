@@ -100,6 +100,21 @@ export default tseslint.config(
     },
   },
 
+  // Node build scripts (scripts/): run in Node, not in the browser
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        URL: "readonly",
+        fetch: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+      },
+    },
+  },
+
   // Test files: relax rules
   {
     files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],

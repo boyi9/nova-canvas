@@ -3,12 +3,18 @@ out/
 node_modules/
 .env*
 !.env.example
+# 仅提交不含密钥的 Vite 环境模板；个人覆盖仍走 .env.local / .env.[mode].local
+!web/.env.development
+!web/.env.production
 data/
 *.log
 *.tsbuildinfo
 .DS_Store
 .idea
 web/dist
+
+# 本地自签名证书（pnpm cert 生成，禁止入库）
+web/certs/
 
 **/dist
 web/public/plugins

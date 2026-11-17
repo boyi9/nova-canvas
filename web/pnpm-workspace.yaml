@@ -1,2 +1,8 @@
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true
+
+# shadcn 依赖树把 zod 锁在 3.24.1，但 @modelcontextprotocol/sdk 的 peer 要求
+# zod ^3.25 || ^4，pnpm 因此报 peer 依赖告警。统一把 zod 3.x 抬到 3.25.76
+# （同时满足 shadcn 的 ^3.24.1 与 MCP SDK / zod-to-json-schema 的 ^3.25.28）。
+overrides:
+  zod@^3: 3.25.76
