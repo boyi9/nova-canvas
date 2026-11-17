@@ -9,6 +9,10 @@ docs/out
 web/.next
 web/node_modules
 web/out
+web/dist
+# 本地自签名证书不进构建上下文（私钥绝不能进镜像层）
+web/certs
 *.log
 .env*
 !.env.example
+!web/.env.production
