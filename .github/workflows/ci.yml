@@ -97,12 +97,57 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  commit-lint:
+    name: Commit Messages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 需要完整历史拿到 PR base 提交与主干推送前的提交
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      # 提交信息校验的兜底层：commit-msg 钩子可被 --no-verify、网页端编辑、
+      # squash merge（PR 标题即合并提交标题）绕过，这里用与本地钩子同一份正则
+      # （web/scripts/check-commit-msg.mjs）再校验一次：
+      #   - PR：校验 PR 内全部提交标题
+      #   - push 到主干：校验新落库的提交标题（含 squash merge 产生的合并提交）
+      - name: Check commit titles
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "manual run: skip commit title check"
+            exit 0
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            echo "new branch or force push: skip commit title check"
+            exit 0
+          else
+            range="${{ github.event.before }}..${{ github.event.after }}"
+          fi
+          echo "range: $range"
+          titles="$(git log --format=%s "$range")"
+          if [ -z "$titles" ]; then
+            echo "no commits in range: skip"
+            exit 0
+          fi
+          args=()
+          while IFS= read -r title; do
+            [ -n "$title" ] || continue
+            args+=(--title "$title")
+          done <<< "$titles"
+          node web/scripts/check-commit-msg.mjs "${args[@]}"
+
   # 聚合门禁：任一子 job 失败/被取消即失败。
   # 分支保护只需要这一个 required check。
   ci-success:
     name: CI success
     if: always()
-    needs: [typecheck, lint, test, build]
+    needs: [typecheck, lint, test, build, commit-lint]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs passed
@@ -111,10 +156,12 @@ jobs:
           echo "lint:      ${{ needs.lint.result }}"
           echo "test:      ${{ needs.test.result }}"
           echo "build:     ${{ needs.build.result }}"
+          echo "commits:   ${{ needs.commit-lint.result }}"
           if [ "${{ needs.typecheck.result }}" != "success" ] || \
              [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.test.result }}" != "success" ] || \
-             [ "${{ needs.build.result }}" != "success" ]; then
+             [ "${{ needs.build.result }}" != "success" ] || \
+             [ "${{ needs.commit-lint.result }}" != "success" ]; then
             echo "::error::CI failed - see the job logs above."
             exit 1
           fi

@@ -31,8 +31,16 @@ fix(collab): 权限预检 + 403 本地化 + 红线确认一致性 + 无障碍细
 
 豁免（不校验格式）：`Merge ...`、`Revert ...`、`fixup!`、`squash!`、`amend!` 开头的提交。
 
-校验由 `web/.husky/commit-msg` → `web/scripts/check-commit-msg.mjs` 执行。
-应急绕过：`git commit --no-verify`（请勿常态化使用；CI 会再拦一次 lint，但**不会**校验提交信息格式）。
+校验是**两层防线**（同一份正则，单一事实源）：
+
+1. 本地钩子：`web/.husky/commit-msg` → `web/scripts/check-commit-msg.mjs`（第一道防线）
+2. CI 兜底：`ci.yml` 的 `Commit Messages` job（已纳入 `CI success` 聚合门禁）
+   - PR：校验 PR 内**全部提交标题**
+   - push 到主干：校验新落库的提交标题
+
+钩子可被 `--no-verify`、网页端直接编辑、squash merge（GitHub 用 PR 标题当提交信息，不走
+commit-msg 钩子）绕过——这些路径全部落在 CI 兜底层的覆盖范围内：squash merge 的 PR 标题
+作为主干新提交，会被 push 校验拦下。
 
 ## 2. Git hooks（husky v9）
 
@@ -48,6 +56,9 @@ core.hooksPath = web/.husky/_    ← git 以仓库根解析相对路径（安装
 
 - 安装：`cd web && pnpm install`（`prepare` 脚本 → `scripts/setup-hooks.mjs`），或手动 `node scripts/setup-hooks.mjs`
 - 跳过安装：`HUSKY=0`（Docker 构建已内置）；临时跳过单次钩子：`git commit --no-verify`
+- `core.hooksPath` 是本地仓库配置、**不入库**：CI 检出环境里没有钩子，也不需要——
+  CI 的 `HUSKY=0` 让 `prepare` 直接跳过，typecheck / lint / test / build 全部直跑 pnpm 命令，
+  **自成一体，不依赖钩子触发**
 - hook 文件由 `/bin/sh` 直接执行，已通过 `.gitattributes`（`**/.husky/**`）强制 LF，勿改成 CRLF
 - 新克隆若没跑过 `pnpm install`，钩子不会生效——husky 的 `core.hooksPath` 是本地仓库配置，不入库
 
