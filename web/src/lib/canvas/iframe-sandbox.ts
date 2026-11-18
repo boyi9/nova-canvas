@@ -5,35 +5,28 @@
  * { type: 'request' | 'response' | 'event' | 'error', id?: string, method?: string, payload?: unknown, error?: string }
  */
 
-export type SandboxMessageType = 'request' | 'response' | 'event' | 'error';
-
-export interface SandboxMessage<T = unknown> {
-    type: SandboxMessageType;
-    id?: string;
-    method?: string;
-    payload?: T;
-    error?: string;
-}
+// 协议类型与校验逻辑集中在 iframe-protocol.ts，host 与 plugin 共用同一份定义。
+export type { SandboxMessage, SandboxMessageType } from "./iframe-protocol";
 
 export interface PluginCapability {
     name: string;
     description: string;
-    risk?: 'low' | 'medium' | 'high';
+    risk?: "low" | "medium" | "high";
     defaultGranted?: boolean;
 }
 
 export const PLUGIN_CAPABILITIES: PluginCapability[] = [
-    { name: 'storage:read', description: '读取插件私有存储', risk: 'low', defaultGranted: true },
-    { name: 'storage:write', description: '写入插件私有存储', risk: 'low', defaultGranted: true },
-    { name: 'canvas:read', description: '读取画布节点/连线信息', risk: 'low', defaultGranted: true },
-    { name: 'canvas:write', description: '修改画布节点/连线', risk: 'medium', defaultGranted: false },
-    { name: 'ai:generate', description: '调用 AI 生成（图/视频/文本）', risk: 'high', defaultGranted: false },
-    { name: 'network:fetch', description: '发起网络请求', risk: 'high', defaultGranted: false },
-    { name: 'dom:access', description: '访问宿主 DOM', risk: 'high', defaultGranted: false },
-    { name: 'clipboard:read', description: '读取剪贴板', risk: 'medium', defaultGranted: false },
-    { name: 'clipboard:write', description: '写入剪贴板', risk: 'low', defaultGranted: true },
-    { name: 'notifications', description: '发送桌面通知', risk: 'low', defaultGranted: false },
-    { name: 'ui:render', description: '在宿主 UI 中渲染插件面板', risk: 'low', defaultGranted: true },
+    { name: "storage:read", description: "读取插件私有存储", risk: "low", defaultGranted: true },
+    { name: "storage:write", description: "写入插件私有存储", risk: "low", defaultGranted: true },
+    { name: "canvas:read", description: "读取画布节点/连线信息", risk: "low", defaultGranted: true },
+    { name: "canvas:write", description: "修改画布节点/连线", risk: "medium", defaultGranted: false },
+    { name: "ai:generate", description: "调用 AI 生成（图/视频/文本）", risk: "high", defaultGranted: false },
+    { name: "network:fetch", description: "发起网络请求", risk: "high", defaultGranted: false },
+    { name: "dom:access", description: "访问宿主 DOM", risk: "high", defaultGranted: false },
+    { name: "clipboard:read", description: "读取剪贴板", risk: "medium", defaultGranted: false },
+    { name: "clipboard:write", description: "写入剪贴板", risk: "low", defaultGranted: true },
+    { name: "notifications", description: "发送桌面通知", risk: "low", defaultGranted: false },
+    { name: "ui:render", description: "在宿主 UI 中渲染插件面板", risk: "low", defaultGranted: true },
 ];
 
 export interface PluginManifest {
@@ -53,7 +46,7 @@ export interface PluginPermissionState {
     decidedAt: Record<string, number>;
 }
 
-const STORAGE_KEY = 'nova-canvas:plugin_permissions';
+const STORAGE_KEY = "nova-canvas:plugin_permissions";
 
 export function getPluginPermissions(pluginId: string): PluginPermissionState {
     try {
@@ -76,13 +69,13 @@ export function setPluginPermission(pluginId: string, capability: string, grante
         state.decidedAt[capability] = Date.now();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
     } catch (e) {
-        console.warn('[sandbox] Failed to persist permission', e);
+        console.warn("[sandbox] Failed to persist permission", e);
     }
 }
 
 export function isCapabilityGranted(pluginId: string, capability: string): boolean {
     const state = getPluginPermissions(pluginId);
-    const cap = PLUGIN_CAPABILITIES.find(c => c.name === capability);
+    const cap = PLUGIN_CAPABILITIES.find((c) => c.name === capability);
     const defaultGranted = cap?.defaultGranted ?? false;
     return state.granted[capability] ?? defaultGranted;
 }
@@ -93,10 +86,10 @@ export function requestCapability(pluginId: string, capability: string): Promise
         return Promise.resolve(state.granted[capability]);
     }
     state.requestedAt[capability] = Date.now();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'), [pluginId]: state }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"), [pluginId]: state }));
 
     return new Promise((resolve) => {
-        const cap = PLUGIN_CAPABILITIES.find(c => c.name === capability);
+        const cap = PLUGIN_CAPABILITIES.find((c) => c.name === capability);
         const message = `插件请求权限：${cap?.description || capability}`;
         const granted = window.confirm(`${message}\n\n是否允许？`);
         setPluginPermission(pluginId, capability, granted);
@@ -128,12 +121,12 @@ export function buildCSP(manifest?: PluginManifest): string {
 
     // 根据申请的 capabilities 动态放宽
     const caps = manifest?.capabilities || [];
-    if (caps.includes('network:fetch')) {
+    if (caps.includes("network:fetch")) {
         // 允许网络请求到特定域名（需在 manifest 中声明 allowedDomains）
         base.push("connect-src 'self' https: wss:");
     }
 
-    return base.join('; ');
+    return base.join("; ");
 }
 
 /**
@@ -143,11 +136,7 @@ export function buildCSP(manifest?: PluginManifest): string {
 // 即便带 allow-scripts 也无法读取/修改父页面 DOM、cookie 或 localStorage，从根上杜绝沙箱逃逸。
 // 插件与宿主的通信一律走 postMessage（RPC/事件），不依赖同源。allow-popups-to-escape-sandbox
 // 同样移除，避免弹窗逃逸沙箱隔离。
-export const IFRAME_SANDBOX_ATTR = [
-    'allow-scripts',
-    'allow-forms',
-    'allow-popups',
-].join(' ');
+export const IFRAME_SANDBOX_ATTR = ["allow-scripts", "allow-forms", "allow-popups"].join(" ");
 
 export interface SandboxConfig {
     pluginId: string;

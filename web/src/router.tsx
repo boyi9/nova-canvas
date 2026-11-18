@@ -3,9 +3,12 @@ import { createBrowserRouter, Outlet } from "react-router-dom";
 
 import { AnalyticsTracker } from "@/components/layout/analytics-tracker";
 import { CanvasErrorBoundary, NovaWorkbenchErrorBoundary } from "@/components/common/ErrorBoundary";
+import { RouteErrorPage } from "@/components/common/RouteErrorPage";
 import UserLayout from "@/layouts/user-layout";
+import { ROUTES } from "@/router/routes";
 
-// Lazy-loaded page components for code splitting
+// Lazy-loaded page components for code splitting.
+// 约定：页面一律默认导出；路由路径只从 ROUTES 读取，禁止在组件中硬编码。
 const NovaHomePage = lazy(() => import("@/pages/nova"));
 const HomePage = lazy(() => import("@/pages/home"));
 const ImagePage = lazy(() => import("@/pages/image"));
@@ -44,22 +47,144 @@ export const router = createBrowserRouter([
                 <Outlet />
             </UserLayout>
         ),
+        // 路由级兜底：懒加载失败、布局异常时仍可导航回首页。
+        errorElement: <RouteErrorPage />,
         children: [
-            { path: "/", element: <LazyPage><NovaWorkbenchErrorBoundary><NovaHomePage /></NovaWorkbenchErrorBoundary></LazyPage> },
-            { path: "/home", element: <LazyPage><HomePage /></LazyPage> },
-            { path: "/nova", element: <LazyPage><NovaWorkbenchErrorBoundary><NovaHomePage /></NovaWorkbenchErrorBoundary></LazyPage> },
-            { path: "/image", element: <LazyPage><ImagePage /></LazyPage> },
-            { path: "/video", element: <LazyPage><VideoPage /></LazyPage> },
-            { path: "/assets", element: <LazyPage><AssetsPage /></LazyPage> },
-            { path: "/prompts", element: <LazyPage><PromptsPage /></LazyPage> },
-            { path: "/canvas", element: <LazyPage><CanvasPage /></LazyPage> },
-            { path: "/canvas/:id", element: <LazyPage><CanvasErrorBoundary><CanvasProjectPage /></CanvasErrorBoundary></LazyPage> },
-            { path: "/cmdhub", element: <LazyPage><NovaWorkbenchErrorBoundary><CmdHubPage /></NovaWorkbenchErrorBoundary></LazyPage> },
-            { path: "/timeline", element: <LazyPage><NovaWorkbenchErrorBoundary><TimelinePage /></NovaWorkbenchErrorBoundary></LazyPage> },
-            { path: "/source-preview", element: <LazyPage><NovaWorkbenchErrorBoundary><SourcePreviewPage /></NovaWorkbenchErrorBoundary></LazyPage> },
-            { path: "/control", element: <LazyPage><NovaWorkbenchErrorBoundary><ControlPage /></NovaWorkbenchErrorBoundary></LazyPage> },
-            { path: "/config", element: <LazyPage><ConfigPage /></LazyPage> },
+            {
+                path: ROUTES.nova,
+                element: (
+                    <LazyPage>
+                        <NovaWorkbenchErrorBoundary>
+                            <NovaHomePage />
+                        </NovaWorkbenchErrorBoundary>
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.home,
+                element: (
+                    <LazyPage>
+                        <HomePage />
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.novaWorkbench,
+                element: (
+                    <LazyPage>
+                        <NovaWorkbenchErrorBoundary>
+                            <NovaHomePage />
+                        </NovaWorkbenchErrorBoundary>
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.image,
+                element: (
+                    <LazyPage>
+                        <ImagePage />
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.video,
+                element: (
+                    <LazyPage>
+                        <VideoPage />
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.assets,
+                element: (
+                    <LazyPage>
+                        <AssetsPage />
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.prompts,
+                element: (
+                    <LazyPage>
+                        <PromptsPage />
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.canvas,
+                element: (
+                    <LazyPage>
+                        <CanvasPage />
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.canvasProject,
+                element: (
+                    <LazyPage>
+                        <CanvasErrorBoundary>
+                            <CanvasProjectPage />
+                        </CanvasErrorBoundary>
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.cmdhub,
+                element: (
+                    <LazyPage>
+                        <NovaWorkbenchErrorBoundary>
+                            <CmdHubPage />
+                        </NovaWorkbenchErrorBoundary>
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.timeline,
+                element: (
+                    <LazyPage>
+                        <NovaWorkbenchErrorBoundary>
+                            <TimelinePage />
+                        </NovaWorkbenchErrorBoundary>
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.sourcePreview,
+                element: (
+                    <LazyPage>
+                        <NovaWorkbenchErrorBoundary>
+                            <SourcePreviewPage />
+                        </NovaWorkbenchErrorBoundary>
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.control,
+                element: (
+                    <LazyPage>
+                        <NovaWorkbenchErrorBoundary>
+                            <ControlPage />
+                        </NovaWorkbenchErrorBoundary>
+                    </LazyPage>
+                ),
+            },
+            {
+                path: ROUTES.config,
+                element: (
+                    <LazyPage>
+                        <ConfigPage />
+                    </LazyPage>
+                ),
+            },
         ],
     },
-    { path: "*", element: <LazyPage><NotFound /></LazyPage> },
+    {
+        path: "*",
+        element: (
+            <LazyPage>
+                <NotFound />
+            </LazyPage>
+        ),
+        errorElement: <RouteErrorPage />,
+    },
 ]);

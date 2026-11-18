@@ -59,6 +59,36 @@ function HtmlEditor({ ctx, value }: { ctx: CanvasNodeContentProps["ctx"]; value:
     );
 }
 
+// 原型预览安全基线：预览文档只允许单层 iframe。
+// - frame-src/child-src 'none'：禁止用户 HTML 再嵌套帧（移除原型预览的多层 iframe）
+// - object-src/base-uri/form-action 'none'：禁止插件对象、改写基址与表单外发
+// - 允许 inline script/style 与远程图片，满足常见 HTML 原型预览需求
+const PREVIEW_CSP = [
+    "default-src 'none'",
+    "img-src data: blob: https: http:",
+    "media-src data: blob: https: http:",
+    "style-src 'unsafe-inline'",
+    "font-src data: https: http:",
+    "script-src 'unsafe-inline'",
+    "frame-src 'none'",
+    "child-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "connect-src 'none'",
+].join("; ");
+
+function buildPreviewDocument(html: string): string {
+    const meta = `<meta http-equiv="Content-Security-Policy" content="${PREVIEW_CSP}"><meta name="referrer" content="no-referrer">`;
+    if (/<head(\s[^>]*)?>/i.test(html)) {
+        return html.replace(/<head(\s[^>]*)?>/i, (tag) => `${tag}${meta}`);
+    }
+    if (/<html(\s[^>]*)?>/i.test(html)) {
+        return html.replace(/<html(\s[^>]*)?>/i, (tag) => `${tag}<head>${meta}</head>`);
+    }
+    return `<!DOCTYPE html><html><head><meta charset="utf-8">${meta}</head><body>${html}</body></html>`;
+}
+
 function HtmlContent({ ctx }: CanvasNodeContentProps) {
     const value = ctx.node.metadata?.content || "";
     const editing = Boolean(ctx.node.metadata?.editing);
@@ -90,10 +120,14 @@ function HtmlContent({ ctx }: CanvasNodeContentProps) {
     // 这里无需再手动做 pointer-events 穿透。data-canvas-no-zoom 保证交互时滚动作用于页面而非缩放画布。
     return (
         <div data-canvas-no-zoom style={{ position: "relative", height: "100%", width: "100%" }}>
+            {/* 单层沙箱：不开启 allow-same-origin / allow-top-navigation，
+                预览文档内部再嵌套 iframe 会被 PREVIEW_CSP 的 frame-src 'none' 拦截。 */}
             <iframe
                 title="html-preview"
                 sandbox="allow-scripts allow-forms"
-                srcDoc={html}
+                referrerPolicy="no-referrer"
+                loading="lazy"
+                srcDoc={buildPreviewDocument(html)}
                 style={{ height: "100%", width: "100%", border: 0, borderRadius: 16, background: "#fff", display: "block" }}
             />
         </div>

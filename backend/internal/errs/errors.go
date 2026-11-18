@@ -43,6 +43,16 @@ func RespondError(c *gin.Context, err *AppError) {
 	})
 }
 
+// Respond 接受 service 层返回的通用 error：*AppError 原样输出，其余统一 500。
+// 这样 handler 无需感知 service 内部的错误构造方式，也不会把底层错误原文透给客户端。
+func Respond(c *gin.Context, err error) {
+	if appErr, ok := err.(*AppError); ok {
+		RespondError(c, appErr)
+		return
+	}
+	RespondError(c, ErrInternal("Internal server error"))
+}
+
 func statusForCode(code int) int {
 	if code >= 100 && code < 600 {
 		return code

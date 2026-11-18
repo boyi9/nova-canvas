@@ -1,0 +1,24 @@
+import { describe, expect, it } from "vitest";
+
+import { canvasProjectPath, ROUTE_PATHS, ROUTES } from "@/router/routes";
+
+describe("route table", () => {
+    it("keeps every path unique", () => {
+        expect(new Set(ROUTE_PATHS).size).toBe(ROUTE_PATHS.length);
+    });
+
+    it("uses absolute paths", () => {
+        for (const path of ROUTE_PATHS) {
+            expect(path.startsWith("/")).toBe(true);
+        }
+    });
+
+    it("encodes dynamic canvas project ids", () => {
+        expect(canvasProjectPath("abc 123")).toBe("/canvas/abc%20123");
+        expect(canvasProjectPath("a/b")).toBe("/canvas/a%2Fb");
+    });
+
+    it("exposes the canvas project template with its param", () => {
+        expect(ROUTES.canvasProject).toBe("/canvas/:id");
+    });
+});

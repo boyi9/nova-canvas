@@ -14,6 +14,7 @@ import (
 	"nova-canvas-backend/internal/models"
 	"nova-canvas-backend/internal/repository"
 	"nova-canvas-backend/internal/security"
+	"nova-canvas-backend/internal/service"
 )
 
 type Handler struct {
@@ -21,6 +22,10 @@ type Handler struct {
 	Projects    repository.ProjectRepository
 	Generations repository.GenerationRepository
 	Templates   repository.TemplateRepository
+
+	// 业务用例层：handler 不直接编排多个仓储，统一走 service。
+	ProjectService    *service.ProjectService
+	GenerationService *service.GenerationService
 
 	// 认证依赖由 EnableAuth 注入（见 auth.go），存量测试可以不构造这些依赖。
 	Tokens        *security.TokenManager
@@ -31,7 +36,14 @@ type Handler struct {
 }
 
 func NewHandler(u repository.UserRepository, p repository.ProjectRepository, g repository.GenerationRepository, t repository.TemplateRepository) *Handler {
-	return &Handler{Users: u, Projects: p, Generations: g, Templates: t}
+	return &Handler{
+		Users:             u,
+		Projects:          p,
+		Generations:       g,
+		Templates:         t,
+		ProjectService:    service.NewProjectService(p),
+		GenerationService: service.NewGenerationService(g, u),
+	}
 }
 
 func (h *Handler) Register(c *gin.Context) {
@@ -171,7 +183,7 @@ func (h *Handler) ListProjects(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	projects, total, err := h.Projects.ListByUser(c.Request.Context(), uid, limit, offset)
+	projects, total, err := h.ProjectService.List(c.Request.Context(), uid, limit, offset)
 	if err != nil {
 		errs.RespondError(c, errs.ErrInternal("Failed to list projects"))
 		return
@@ -194,18 +206,13 @@ func (h *Handler) CreateProject(c *gin.Context) {
 		return
 	}
 
-	project := &models.Project{
-		ID:          uuid.New(),
-		UserID:      uid,
+	project, err := h.ProjectService.Create(c.Request.Context(), uid, service.ProjectInput{
 		Name:        req.Name,
 		Description: req.Description,
 		Scene:       req.Scene,
-		CanvasData:  "{}",
-		Status:      "draft",
-	}
-
-	if err := h.Projects.Create(c.Request.Context(), project); err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to create project"))
+	})
+	if err != nil {
+		errs.Respond(c, err)
 		return
 	}
 
@@ -214,12 +221,12 @@ func (h *Handler) CreateProject(c *gin.Context) {
 
 func (h *Handler) GetProject(c *gin.Context) {
 	userID := c.GetString("user_id")
-	projectID := c.Param("id")
-	pid, _ := uuid.Parse(projectID)
+	uid, _ := uuid.Parse(userID)
+	pid, _ := uuid.Parse(c.Param("id"))
 
-	project, err := h.Projects.FindByID(c.Request.Context(), pid)
-	if err != nil || project.UserID.String() != userID {
-		errs.RespondError(c, errs.ErrNotFound("Project not found"))
+	project, err := h.ProjectService.Get(c.Request.Context(), uid, pid)
+	if err != nil {
+		errs.Respond(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, project)
@@ -227,14 +234,8 @@ func (h *Handler) GetProject(c *gin.Context) {
 
 func (h *Handler) UpdateProject(c *gin.Context) {
 	userID := c.GetString("user_id")
-	projectID := c.Param("id")
-	pid, _ := uuid.Parse(projectID)
-
-	project, err := h.Projects.FindByID(c.Request.Context(), pid)
-	if err != nil || project.UserID.String() != userID {
-		errs.RespondError(c, errs.ErrNotFound("Project not found"))
-		return
-	}
+	uid, _ := uuid.Parse(userID)
+	pid, _ := uuid.Parse(c.Param("id"))
 
 	var req struct {
 		Name        string `json:"name"`
@@ -247,21 +248,14 @@ func (h *Handler) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	if req.Name != "" {
-		project.Name = req.Name
-	}
-	if req.Description != "" {
-		project.Description = req.Description
-	}
-	if req.CanvasData != "" {
-		project.CanvasData = req.CanvasData
-	}
-	if req.Status != "" {
-		project.Status = req.Status
-	}
-
-	if err := h.Projects.Update(c.Request.Context(), project); err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to update project"))
+	project, err := h.ProjectService.Update(c.Request.Context(), uid, pid, service.ProjectInput{
+		Name:        req.Name,
+		Description: req.Description,
+		CanvasData:  req.CanvasData,
+		Status:      req.Status,
+	})
+	if err != nil {
+		errs.Respond(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, project)
@@ -269,17 +263,11 @@ func (h *Handler) UpdateProject(c *gin.Context) {
 
 func (h *Handler) DeleteProject(c *gin.Context) {
 	userID := c.GetString("user_id")
-	projectID := c.Param("id")
-	pid, _ := uuid.Parse(projectID)
+	uid, _ := uuid.Parse(userID)
+	pid, _ := uuid.Parse(c.Param("id"))
 
-	project, err := h.Projects.FindByID(c.Request.Context(), pid)
-	if err != nil || project.UserID.String() != userID {
-		errs.RespondError(c, errs.ErrNotFound("Project not found"))
-		return
-	}
-
-	if err := h.Projects.Delete(c.Request.Context(), pid); err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to delete project"))
+	if err := h.ProjectService.Delete(c.Request.Context(), uid, pid); err != nil {
+		errs.Respond(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Project deleted"})
@@ -288,17 +276,6 @@ func (h *Handler) DeleteProject(c *gin.Context) {
 func (h *Handler) GenerateImage(c *gin.Context) {
 	userID := c.GetString("user_id")
 	uid, _ := uuid.Parse(userID)
-
-	user, err := h.Users.FindByID(c.Request.Context(), uid)
-	if err != nil {
-		errs.RespondError(c, errs.ErrNotFound("User not found"))
-		return
-	}
-
-	if user.Credits <= 0 {
-		errs.RespondError(c, errs.ErrInsufficientCredits("No credits remaining"))
-		return
-	}
 
 	var req struct {
 		Prompt   string `json:"prompt" binding:"required"`
@@ -315,35 +292,21 @@ func (h *Handler) GenerateImage(c *gin.Context) {
 	if req.Width == 0 { req.Width = 800 }
 	if req.Height == 0 { req.Height = 800 }
 
-	gen := &models.Generation{
-		ID:          uuid.New(),
-		UserID:      uid,
-		Type:        "image",
-		Prompt:      req.Prompt,
-		Params: marshalParams(map[string]any{
-			"width":  req.Width,
-			"height": req.Height,
-			"style":  req.Style,
-		}),
-		Status:      "pending",
-		CreditsCost: 1,
-		TaskID:      uuid.New().String(),
-	}
-
-	if err := h.Generations.Create(c.Request.Context(), gen); err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to create generation task"))
-		return
-	}
-
-	newCredits, err := h.Users.UpdateCredits(c.Request.Context(), uid, -1)
+	gen, newCredits, err := h.GenerationService.Create(c.Request.Context(), uid, service.GenerationInput{
+		Type:               "image",
+		Prompt:             req.Prompt,
+		Params:             marshalParams(map[string]any{"width": req.Width, "height": req.Height, "style": req.Style}),
+		Cost:               1,
+		InsufficientDetail: "No credits remaining",
+	})
 	if err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to deduct credits"))
+		errs.Respond(c, err)
 		return
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"task_id": gen.TaskID,
-		"status":  "pending",
+		"status":  gen.Status,
 		"credits": newCredits,
 	})
 }
@@ -351,17 +314,6 @@ func (h *Handler) GenerateImage(c *gin.Context) {
 func (h *Handler) GenerateVideo(c *gin.Context) {
 	userID := c.GetString("user_id")
 	uid, _ := uuid.Parse(userID)
-
-	user, err := h.Users.FindByID(c.Request.Context(), uid)
-	if err != nil {
-		errs.RespondError(c, errs.ErrNotFound("User not found"))
-		return
-	}
-
-	if user.Credits < 10 {
-		errs.RespondError(c, errs.ErrInsufficientCredits("Video generation requires 10 credits"))
-		return
-	}
 
 	var req struct {
 		Prompt   string `json:"prompt" binding:"required"`
@@ -373,34 +325,21 @@ func (h *Handler) GenerateVideo(c *gin.Context) {
 		return
 	}
 
-	gen := &models.Generation{
-		ID:          uuid.New(),
-		UserID:      uid,
-		Type:        "video",
-		Prompt:      req.Prompt,
-		Params: marshalParams(map[string]any{
-			"duration": req.Duration,
-			"style":    req.Style,
-		}),
-		Status:      "pending",
-		CreditsCost: 10,
-		TaskID:      uuid.New().String(),
-	}
-
-	if err := h.Generations.Create(c.Request.Context(), gen); err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to create generation task"))
-		return
-	}
-
-	newCredits, err := h.Users.UpdateCredits(c.Request.Context(), uid, -10)
+	gen, newCredits, err := h.GenerationService.Create(c.Request.Context(), uid, service.GenerationInput{
+		Type:               "video",
+		Prompt:             req.Prompt,
+		Params:             marshalParams(map[string]any{"duration": req.Duration, "style": req.Style}),
+		Cost:               10,
+		InsufficientDetail: "Video generation requires 10 credits",
+	})
 	if err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to deduct credits"))
+		errs.Respond(c, err)
 		return
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"task_id": gen.TaskID,
-		"status":  "pending",
+		"status":  gen.Status,
 		"credits": newCredits,
 	})
 }
@@ -408,17 +347,6 @@ func (h *Handler) GenerateVideo(c *gin.Context) {
 func (h *Handler) StyleTransfer(c *gin.Context) {
 	userID := c.GetString("user_id")
 	uid, _ := uuid.Parse(userID)
-
-	user, err := h.Users.FindByID(c.Request.Context(), uid)
-	if err != nil {
-		errs.RespondError(c, errs.ErrNotFound("User not found"))
-		return
-	}
-
-	if user.Credits <= 0 {
-		errs.RespondError(c, errs.ErrInsufficientCredits("No credits remaining"))
-		return
-	}
 
 	var req struct {
 		ImageURL string  `json:"image_url" binding:"required"`
@@ -430,46 +358,33 @@ func (h *Handler) StyleTransfer(c *gin.Context) {
 		return
 	}
 
-	gen := &models.Generation{
-		ID:          uuid.New(),
-		UserID:      uid,
-		Type:        "style_transfer",
-		Prompt:      req.ImageURL,
-		Params: marshalParams(map[string]any{
-			"style":    req.Style,
-			"strength": req.Strength,
-		}),
-		Status:      "pending",
-		CreditsCost: 1,
-		TaskID:      uuid.New().String(),
-	}
-
-	if err := h.Generations.Create(c.Request.Context(), gen); err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to create style transfer task"))
-		return
-	}
-
-	newCredits, err := h.Users.UpdateCredits(c.Request.Context(), uid, -1)
+	gen, newCredits, err := h.GenerationService.Create(c.Request.Context(), uid, service.GenerationInput{
+		Type:               "style_transfer",
+		Prompt:             req.ImageURL,
+		Params:             marshalParams(map[string]any{"style": req.Style, "strength": req.Strength}),
+		Cost:               1,
+		InsufficientDetail: "No credits remaining",
+	})
 	if err != nil {
-		errs.RespondError(c, errs.ErrInternal("Failed to deduct credits"))
+		errs.Respond(c, err)
 		return
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"task_id": gen.TaskID,
-		"status":  "pending",
+		"status":  gen.Status,
 		"credits": newCredits,
 	})
 }
 
 func (h *Handler) GetGenerationStatus(c *gin.Context) {
 	userID := c.GetString("user_id")
+	uid, _ := uuid.Parse(userID)
 	taskID := c.Param("task_id")
 
-	gen, err := h.Generations.FindByTaskID(c.Request.Context(), taskID)
-	// 归属校验：他人生成任务的进度与结果 URL 一律按 404 处理，不泄露存在性
-	if err != nil || gen.UserID.String() != userID {
-		errs.RespondError(c, errs.ErrNotFound("Generation task not found"))
+	gen, err := h.GenerationService.Status(c.Request.Context(), uid, taskID)
+	if err != nil {
+		errs.Respond(c, err)
 		return
 	}
 

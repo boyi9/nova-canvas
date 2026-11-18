@@ -1,8 +1,5 @@
-import {
-    buildCSP,
-    IFRAME_SANDBOX_ATTR,
-    type PluginManifest,
-} from './iframe-sandbox';
+import { buildCSP, IFRAME_SANDBOX_ATTR, type PluginManifest } from "./iframe-sandbox";
+import { createSandboxSession, isSandboxMessage, SANDBOX_HANDSHAKE_TIMEOUT_MS, SANDBOX_RPC_TIMEOUT_MS, type SandboxMessage } from "./iframe-protocol";
 
 // iframe 内部运行的插件运行时代码：建立与宿主的 postMessage 通道，并暴露 PluginRuntimeAPI。
 const PLUGIN_RUNTIME_SOURCE = `
@@ -10,12 +7,32 @@ const PLUGIN_RUNTIME_SOURCE = `
     'use strict';
 
     let messageId = 0;
+    let session = null;
     const pending = new Map();
     const handlers = new Map();
     const eventHandlers = new Map();
+    const outbox = [];
 
-    function send(type, payload, id) {
-        window.parent.postMessage({ type, payload, id }, '*');
+    function post(message) {
+        message.session = session;
+        window.parent.postMessage(message, '*');
+    }
+
+    function send(type, payload, id, method) {
+        const message = { type: type, payload: payload, id: id };
+        if (method) message.method = method;
+        // 握手完成前先排队：此时还没有会话令牌，直接发送会被宿主丢弃。
+        if (!session) {
+            outbox.push(message);
+            return;
+        }
+        post(message);
+    }
+
+    function flushOutbox() {
+        while (outbox.length > 0) {
+            post(outbox.shift());
+        }
     }
 
     function dispatch(msg) {
@@ -44,7 +61,20 @@ const PLUGIN_RUNTIME_SOURCE = `
 
     window.addEventListener('message', (e) => {
         if (e.source !== window.parent) return;
-        dispatch(e.data);
+        const msg = e.data;
+        if (!msg || typeof msg.type !== 'string') return;
+
+        // 握手：宿主下发一次性会话令牌，之后所有消息都必须携带该令牌。
+        if (msg.type === 'handshake') {
+            if (session || typeof msg.session !== 'string' || msg.session.length === 0) return;
+            session = msg.session;
+            flushOutbox();
+            send('event', { event: 'iframe:ready' }, null);
+            return;
+        }
+
+        if (!session || msg.session !== session) return;
+        dispatch(msg);
     });
 
         // RPC 调用
@@ -52,7 +82,7 @@ const PLUGIN_RUNTIME_SOURCE = `
             call: (method, payload) => new Promise((resolve, reject) => {
                 const id = ++messageId + '-' + Math.random().toString(36).slice(2);
                 pending.set(id, { resolve, reject });
-                window.parent.postMessage({ type: 'request', id, method, payload }, '*');
+                send('request', payload, id, method);
             }),
         on: (event, handler) => {
             const handlers_ = eventHandlers.get(event) || [];
@@ -121,7 +151,11 @@ const PLUGIN_RUNTIME_SOURCE = `
                 set: (key, value) => window.__pluginRpc.call('pluginStorage.set', { key, value }),
                 remove: (key) => window.__pluginRpc.call('pluginStorage.remove', { key }),
             },
-            addEventListener: (event, handler) => window.__pluginRpc.on(event, handler),
+            addEventListener: (event, handler) => {
+                const off = window.__pluginRpc.on(event, handler);
+                listenerDisposers.set(handler, off);
+                return off;
+            },
             removeEventListener: (event, handler) => {
                 const off = listenerDisposers.get(handler);
                 if (off) {
@@ -146,14 +180,16 @@ const PLUGIN_RUNTIME_SOURCE = `
     window.__PluginRuntime.hostBridge = runtime.hostBridge;
     window.hostBridge = runtime.hostBridge;
 
-    // 通知宿主 iframe 就绪
-    send('event', { event: 'iframe:ready' }, null);
+    // 通知宿主开始握手；宿主校验 origin/source 后下发会话令牌，
+    // 收到令牌后运行时才会 flush 队列并发出 iframe:ready。
+    window.parent.postMessage({ type: 'handshake' }, '*');
 })();
 `;
 
 interface PendingRequest<T = unknown> {
     resolve: (value: T) => void;
     reject: (error: Error) => void;
+    timer: ReturnType<typeof setTimeout>;
 }
 
 export interface IframeSandboxOptions {
@@ -179,57 +215,104 @@ export function createIframeSandbox(options: IframeSandboxOptions): {
     destroy: () => void;
     isReady: () => boolean;
 } {
-    const { config, onMessage, onReady, onError, onRequest } = options;
+    const { config, onMessage, onReady, onRequest, onError } = options;
+    const session = createSandboxSession();
     const pendingRequests = new Map<string, PendingRequest>();
     const eventHandlers = new Map<string, Set<(payload: unknown) => void>>();
+    // 握手完成前先排队，避免宿主侧早发的消息丢失。
+    const outbox: Array<Omit<SandboxMessage, "session">> = [];
     let ready = false;
+    let destroyed = false;
+    let handshakeTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+        handshakeTimer = null;
+        if (!ready && !destroyed) {
+            onError?.(new Error("Sandbox handshake timeout"));
+        }
+    }, SANDBOX_HANDSHAKE_TIMEOUT_MS);
 
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
     iframe.sandbox = IFRAME_SANDBOX_ATTR;
-    iframe.setAttribute('csp', config.csp);
+    iframe.setAttribute("csp", config.csp);
     iframe.srcdoc = config.srcDoc;
+
+    // 沙箱以不透明源运行，targetOrigin 只能是 '*'；
+    // 安全性由 event.source（严格等于本 iframe）与 session 令牌共同保证。
+    function postToIframe(message: SandboxMessage): void {
+        if (destroyed) return;
+        iframe.contentWindow?.postMessage(message, "*");
+    }
+
+    function flushOutbox(): void {
+        while (outbox.length > 0) {
+            const message = outbox.shift()!;
+            postToIframe({ ...message, session });
+        }
+    }
 
     function sendMessage<T>(method: string, payload?: unknown): Promise<T> {
         return new Promise((resolve, reject) => {
+            if (destroyed) {
+                reject(new Error("Sandbox has been destroyed"));
+                return;
+            }
             const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-            const msg = { type: 'request', id, method, payload };
-            pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject });
-            iframe.contentWindow?.postMessage(msg, '*');
-            // 超时保护，避免插件无响应时 Promise 永久挂起
-            setTimeout(() => {
-                if (pendingRequests.has(id)) {
-                    pendingRequests.delete(id);
+            const msg: SandboxMessage = { type: "request", id, method, payload };
+            // 超时保护，避免插件无响应时 Promise 永久挂起；响应到达后清除定时器。
+            const timer = setTimeout(() => {
+                if (pendingRequests.delete(id)) {
                     reject(new Error(`RPC timeout: ${method}`));
                 }
-            }, 30000);
+            }, SANDBOX_RPC_TIMEOUT_MS);
+            pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject, timer });
+            if (ready) postToIframe({ ...msg, session });
+            else outbox.push(msg);
         });
+    }
+
+    function settleRequest(msg: SandboxMessage, failed: boolean): void {
+        if (!msg.id) return;
+        const pending = pendingRequests.get(msg.id);
+        if (!pending) return;
+        pendingRequests.delete(msg.id);
+        clearTimeout(pending.timer);
+        if (failed) pending.reject(new Error(msg.error || "Unknown error"));
+        else pending.resolve(msg.payload);
     }
 
     function handleMessage(e: MessageEvent) {
         if (e.source !== iframe.contentWindow) return;
-        const msg = e.data as { type: string; id?: string; method?: string; payload?: unknown; error?: string };
-        if (!msg || !msg.type) return;
+        if (!isSandboxMessage(e.data)) return;
+        const msg = e.data;
 
-        if (msg.type === 'response') {
-            const pending = pendingRequests.get(msg.id!);
-            if (pending) {
-                pendingRequests.delete(msg.id!);
-                pending.resolve(msg.payload);
-            }
-        } else if (msg.type === 'error') {
-            const pending = pendingRequests.get(msg.id!);
-            if (pending) {
-                pendingRequests.delete(msg.id!);
-                pending.reject(new Error(msg.error || 'Unknown error'));
-            }
-        } else if (msg.type === 'event') {
+        // 握手由 iframe 发起，宿主校验来源后下发一次性会话令牌。
+        if (msg.type === "handshake") {
+            postToIframe({ type: "handshake", session });
+            return;
+        }
+
+        // 除握手外，所有消息必须携带匹配的会话令牌，防止同页面其他脚本伪造。
+        if (!msg.session || msg.session !== session) return;
+
+        if (msg.type === "response") {
+            settleRequest(msg, false);
+        } else if (msg.type === "error") {
+            settleRequest(msg, true);
+        } else if (msg.type === "event") {
             const data = (msg.payload ?? {}) as { event?: string; payload?: unknown };
             const eventName = data.event;
             const eventPayload = data.payload;
-            if (eventName === 'iframe:ready') {
-                ready = true;
-                onReady?.();
+            if (eventName === "iframe:ready") {
+                // 只处理一次：重复 ready 会导致订阅者收到重复事件。
+                if (!ready) {
+                    ready = true;
+                    if (handshakeTimer) {
+                        clearTimeout(handshakeTimer);
+                        handshakeTimer = null;
+                    }
+                    flushOutbox();
+                    onReady?.();
+                }
             } else if (eventName && onMessage) {
                 onMessage(eventName, eventPayload);
             }
@@ -237,29 +320,28 @@ export function createIframeSandbox(options: IframeSandboxOptions): {
                 const handlers = eventHandlers.get(eventName);
                 if (handlers) handlers.forEach((h) => h(eventPayload));
             }
-        } else if (msg.type === 'request') {
+        } else if (msg.type === "request") {
+            if (!msg.id || !msg.method) return;
             // 插件请求宿主能力，交由调用方桥接
-            void handlePluginRequest({ id: msg.id!, method: msg.method!, payload: msg.payload });
+            void handlePluginRequest({ id: msg.id, method: msg.method, payload: msg.payload });
         }
     }
 
     async function handlePluginRequest(msg: { id: string; method: string; payload?: unknown }) {
         try {
-            if (!onRequest) {
-                iframe.contentWindow?.postMessage({ type: 'response', id: msg.id, payload: null }, '*');
-                return;
-            }
-            const payload = await onRequest(msg);
-            iframe.contentWindow?.postMessage({ type: 'response', id: msg.id, payload }, '*');
+            const payload = onRequest ? await onRequest(msg) : null;
+            postToIframe({ type: "response", id: msg.id, payload, session });
         } catch (error) {
-            iframe.contentWindow?.postMessage(
-                { type: 'error', id: msg.id, error: error instanceof Error ? error.message : String(error) },
-                '*',
-            );
+            postToIframe({
+                type: "error",
+                id: msg.id,
+                error: error instanceof Error ? error.message : String(error),
+                session,
+            });
         }
     }
 
-    window.addEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
 
     const sandbox = {
         iframe,
@@ -274,10 +356,24 @@ export function createIframeSandbox(options: IframeSandboxOptions): {
             };
         },
         emit: (event: string, payload?: unknown) => {
-            iframe.contentWindow?.postMessage({ type: 'event', method: event, payload }, '*');
+            const message: SandboxMessage = { type: "event", method: event, payload };
+            if (ready) postToIframe({ ...message, session });
+            else outbox.push(message);
         },
         destroy: () => {
-            window.removeEventListener('message', handleMessage);
+            destroyed = true;
+            window.removeEventListener("message", handleMessage);
+            if (handshakeTimer) {
+                clearTimeout(handshakeTimer);
+                handshakeTimer = null;
+            }
+            // 销毁时拒绝所有在途请求，避免调用方永久等待。
+            for (const pending of pendingRequests.values()) {
+                clearTimeout(pending.timer);
+                pending.reject(new Error("Sandbox has been destroyed"));
+            }
+            pendingRequests.clear();
+            outbox.length = 0;
             iframe.remove();
         },
         isReady: () => ready,
@@ -292,16 +388,10 @@ export function createIframeSandbox(options: IframeSandboxOptions): {
  * 创建插件 iframe 的 HTML 文档（含运行时 + 插件源码注入点）。
  * manifest 需携带 capabilities（用于 CSP 动态放宽）与 source（插件代码）。
  */
-export function createPluginIframeHTML(
-    manifest: PluginManifest & { source: string; css?: string },
-    nonce?: string,
-): string {
+export function createPluginIframeHTML(manifest: PluginManifest & { source: string; css?: string }, nonce?: string): string {
     const usedNonce = nonce ?? Math.random().toString(36).slice(2);
     // 将 nonce 注入现有 script-src（避免重复 script-src 指令被浏览器忽略）。
-    const csp = buildCSP(manifest).replace(
-        /script-src[^;]*/,
-        `script-src 'nonce-${usedNonce}' 'wasm-unsafe-eval'`,
-    );
+    const csp = buildCSP(manifest).replace(/script-src[^;]*/, `script-src 'nonce-${usedNonce}' 'wasm-unsafe-eval'`);
 
     return `<!DOCTYPE html>
 <html>
@@ -315,7 +405,7 @@ export function createPluginIframeHTML(
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         #plugin-root { width: 100%; height: 100%; }
     </style>
-    ${manifest.css ? `<style nonce="${usedNonce}">${manifest.css}</style>` : ''}
+    ${manifest.css ? `<style nonce="${usedNonce}">${manifest.css}</style>` : ""}
 </head>
 <body>
     <div id="plugin-root"></div>
@@ -328,7 +418,10 @@ export function createPluginIframeHTML(
             ${manifest.source}
         } catch (e) {
             console.error('[Plugin] Load error:', e);
-            window.parent.postMessage({ type: 'error', error: 'Plugin load failed: ' + (e && e.message) }, '*');
+            // 错误也走已握手的 RPC 通道，避免发出没有会话令牌的裸 postMessage。
+            try {
+                window.__pluginRpc.emit('plugin:load-error', { message: String((e && e.message) || e) });
+            } catch (_) {}
         }
     </script>
 </body>

@@ -124,8 +124,10 @@ rpc.register('onPanelAction', function (p) {
 
 - 沙箱 iframe 以不透明源运行，不可读取父页面；父子通信一律 postMessage。
 - 插件源码仅注入 iframe 内执行，绝不进入主上下文 `eval`。
+- **父子通信握手**：iframe 加载后先向宿主发 `{ type: 'handshake' }`；宿主校验 `event.source` 后下发一次性 `session` 令牌，此后每条消息都必须携带该令牌。宿主丢弃令牌不匹配的消息（不透明源的 `targetOrigin` 只能是 `*`，令牌用于防止同页面其他脚本伪造）。
 - 宿主校验消息来源（`event.source === iframe.contentWindow`），只处理自身 iframe 的消息。
-- iframe 就绪后向宿主发送 `iframe:ready` 事件，宿主据此标记为 ready。
+- 握手完成后宿主 flush 排队消息，iframe 发出 `iframe:ready`；宿主只处理一次 ready。
+- RPC 30s 超时；`destroy()` 会拒绝所有在途请求并清理定时器/事件监听。
 
 ## 7. 完整示例
 
