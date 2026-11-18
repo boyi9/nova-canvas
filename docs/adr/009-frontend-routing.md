@@ -2,7 +2,7 @@
 
 - 状态：已采纳
 - 日期：2026-11-17
-- 相关代码：`web/src/router.tsx`、`web/src/router/routes.ts`、`web/src/router/lazy-pages.ts`、`web/src/components/common/RouteErrorPage.tsx`、`web/src/components/common/state-page.tsx`
+- 相关代码：`web/src/router.tsx`、`web/src/router/routes.ts`、`web/src/router/lazy-pages.ts`、`web/src/components/common/RouteErrorPage.tsx`、`web/src/components/common/state-page.tsx`、`web/src/components/layout/app-sidebar.tsx`、`web/src/constant/navigation-tools.ts`
 
 ## 背景
 
@@ -47,7 +47,18 @@
 
 说明：项目是 Vite + React SPA，页面由前端路由承载，不再新增独立 `.html` 文件；否则会绕过 `ROUTES`、错误边界与代码分割。异常状态页共用 `StatePage` 骨架，只通过 icon/tone/actions 区分。
 
-### 4. 错误边界分层
+### 4. 工作台导航骨架
+
+- 桌面端左侧 `AppSidebar` 常驻，分组顺序取自 `navigationGroupOrder`；
+- 导航项的唯一来源是 `web/src/constant/navigation-tools.ts`，其中 `path` 必须取自 `ROUTES`，禁止再用 slug 拼路径（slug 是 i18n key，如 `source-preview` 与路由常量 `sourcePreview` 并不同名）；
+- 顶栏 `AppTopNav` 不再承载导航项，只显示当前页标题与全局操作（命令面板、Agent、配置、主题、语言）；
+- 移动端（`< md`）隐藏侧边栏，由 `MobileNavDrawer` 复用同一份导航数据；
+- 侧边栏折叠状态存于 `useNavStore`，并持久化到 localStorage；
+- `/canvas/:id` 为沉浸式路由：`UserLayout` 隐藏侧边栏、`AppTopNav` 隐藏顶栏；`/canvas` 列表页仍保留完整导航；
+- 激活态由 `navigationToolFromPath` 按首段路径解析，`/canvas/:id` 归入画布，`/source-preview-extra` 不会误匹配；
+- `navigation-tools.test.ts` 校验路径唯一、分组完备与激活态解析；`app-sidebar.test.tsx` 校验激活态与折叠持久化。
+
+### 5. 错误边界分层
 
 | 层级     | 位置                               | 职责                                                  |
 | -------- | ---------------------------------- | ----------------------------------------------------- |
@@ -56,7 +67,7 @@
 | 画布级   | `CanvasErrorBoundary`              | 画布编辑器异常，避免整页崩溃                          |
 | 组件级   | `ModalErrorBoundary` 等            | 局部弹窗/面板降级                                     |
 
-### 5. 鉴权守卫
+### 6. 鉴权守卫
 
 当前前端尚未接入登录/刷新界面（`nova_token` 只读），因此**不添加假守卫**。接入认证时按以下顺序落地：
 

@@ -670,6 +670,10 @@ export default {
         tools: "工具",
         system: "系统",
     },
+    sidebar: {
+        collapse: "收起侧边栏",
+        expand: "展开侧边栏",
+    },
     commandPalette: {
         title: "命令面板",
         open: "打开命令面板",

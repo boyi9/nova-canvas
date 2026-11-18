@@ -669,6 +669,10 @@ export default {
         tools: "Tools",
         system: "System",
     },
+    sidebar: {
+        collapse: "Collapse sidebar",
+        expand: "Expand sidebar",
+    },
     commandPalette: {
         title: "Command Palette",
         open: "Open command palette",

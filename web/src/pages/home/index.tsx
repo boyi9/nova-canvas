@@ -8,6 +8,7 @@ import { fetchPrompts, type Prompt } from "@/services/api/prompts";
 import { navigationTools } from "@/constant/navigation-tools";
 import i18n from "@/i18n";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/router/routes";
 
 function Highlighter({ action, color, children }: { action: "highlight" | "underline"; color: string; children?: ReactNode }) {
     return (
@@ -49,10 +50,10 @@ export default function IndexPage() {
                         <Trans i18nKey="home.description" components={{ canvas: <Highlighter action="underline" color="#FF9800" />, content: <Highlighter action="highlight" color="#87CEFA" /> }} />
                     </p>
                     <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                        <Button type="primary" size="large" onClick={() => navigate(`/${primaryTool.slug}`)} icon={<ArrowRight className="size-4" />} iconPlacement="end">
+                        <Button type="primary" size="large" onClick={() => navigate(primaryTool.path)} icon={<ArrowRight className="size-4" />} iconPlacement="end">
                             {t("home.start")}
                         </Button>
-                        <Button size="large" onClick={() => navigate("/canvas")}>
+                        <Button size="large" onClick={() => navigate(ROUTES.canvas)}>
                             {t("home.openCanvas")}
                         </Button>
                     </div>
@@ -78,11 +79,7 @@ export default function IndexPage() {
                                     setPreviewIndex(index);
                                     setPreviewOpen(true);
                                 }}
-                                className={cn(
-                                    "group relative cursor-pointer overflow-hidden border border-border bg-muted text-left dark:border-border dark:bg-card",
-                                    index === 0 && "md:col-span-2 md:row-span-2",
-                                    index === 3 && "md:col-span-2",
-                                )}
+                                className={cn("group relative cursor-pointer overflow-hidden border border-border bg-muted text-left dark:border-border dark:bg-card", index === 0 && "md:col-span-2 md:row-span-2", index === 3 && "md:col-span-2")}
                             >
                                 <img src={item.coverUrl} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent p-4 text-white">

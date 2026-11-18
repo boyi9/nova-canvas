@@ -39,5 +39,15 @@ export function canvasProjectPath(id: string): string {
     return `/canvas/${encodeURIComponent(id)}`;
 }
 
+/**
+ * 画布项目详情（/canvas/:id）是沉浸式路由：隐藏侧边栏与顶栏，把高度让给画布。
+ * /canvas 列表页仍保留完整工作台导航。
+ */
+export function isCanvasProjectPath(pathname: string): boolean {
+    if (!pathname.startsWith(`${ROUTES.canvas}/`)) return false;
+    const projectId = pathname.slice(ROUTES.canvas.length + 1);
+    return projectId.length > 0 && !projectId.includes("/");
+}
+
 /** 所有静态路由模板（用于校验唯一性/生成导航）。 */
 export const ROUTE_PATHS: readonly AppRoutePath[] = Object.values(ROUTES);

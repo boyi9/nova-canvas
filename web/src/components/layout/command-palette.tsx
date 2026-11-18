@@ -27,13 +27,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         });
     }, [query, t]);
 
-    const grouped = useMemo(
-        () =>
-            navigationGroupOrder
-                .map((group) => ({ group, tools: items.filter((tool) => tool.group === group) }))
-                .filter((entry) => entry.tools.length > 0),
-        [items],
-    );
+    const grouped = useMemo(() => navigationGroupOrder.map((group) => ({ group, tools: items.filter((tool) => tool.group === group) })).filter((entry) => entry.tools.length > 0), [items]);
 
     const flat = useMemo(() => grouped.flatMap((entry) => entry.tools), [grouped]);
 
@@ -64,7 +58,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 const tool = flat[activeIndex];
                 if (tool) {
                     event.preventDefault();
-                    navigate(`/${tool.slug}`);
+                    navigate(tool.path);
                     onClose();
                 }
             }
@@ -109,19 +103,16 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                                         <button
                                             key={tool.slug}
                                             type="button"
-                                            className={cn(
-                                                "flex w-full items-center gap-3 px-4 py-2 text-left text-sm",
-                                                active ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
-                                            )}
+                                            className={cn("flex w-full items-center gap-3 px-4 py-2 text-left text-sm", active ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted")}
                                             onMouseEnter={() => setActiveIndex(index)}
                                             onClick={() => {
-                                                navigate(`/${tool.slug}`);
+                                                navigate(tool.path);
                                                 onClose();
                                             }}
                                         >
                                             <Icon className="size-4 shrink-0" />
                                             <span className="flex-1 truncate">{t(`navigation.${tool.slug}`)}</span>
-                                            <span className="text-xs text-muted-foreground">/{tool.slug}</span>
+                                            <span className="text-xs text-muted-foreground">{tool.path}</span>
                                             {active ? <CornerDownLeft className="size-3.5 shrink-0 text-muted-foreground" /> : null}
                                         </button>
                                     );
