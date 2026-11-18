@@ -461,7 +461,6 @@
             transform: translate(0, 0) rotate(0) scale(1);
         }
     }
-
 }
 
 ::view-transition-old(root),
@@ -615,4 +614,15 @@
     padding: 0.5rem 0.8rem;
     border-radius: 0.6rem;
     font-size: 0.75rem;
+}
+
+/* antd reset 的 a 规则不在 @layer 中，会盖掉 Tailwind utilities 层的背景色与文字色。
+   状态页主操作是站内链接，需要显式声明颜色，否则按钮会退化成纯文本。 */
+.state-action-primary {
+    background-color: var(--color-brand-primary);
+    color: #fff;
+}
+
+.state-action-primary:hover {
+    background-color: var(--color-brand-primary-hover);
 }

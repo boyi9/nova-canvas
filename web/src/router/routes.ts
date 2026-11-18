@@ -20,6 +20,15 @@ export const ROUTES = {
     sourcePreview: "/source-preview",
     control: "/control",
     config: "/config",
+    // 无主壳页面：登录、引导与异常状态页不渲染 UserLayout（顶栏 + Agent 面板）。
+    login: "/login",
+    onboarding: "/onboarding",
+    forbidden: "/403",
+    empty: "/empty",
+    loading: "/loading",
+    maintenance: "/maintenance",
+    networkError: "/network-error",
+    insufficientCredits: "/insufficient-credits",
 } as const;
 
 export type AppRouteId = keyof typeof ROUTES;

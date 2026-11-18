@@ -12,3 +12,6 @@ bun.lock
 *.gif
 *.webp
 *.svg
+
+# 翻译目录按 key 分行紧凑维护；prettier 展开后会产出大范围格式 diff。
+src/i18n/locales

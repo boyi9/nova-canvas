@@ -1,4 +1,4 @@
-import { onboardingSteps, starterTemplates, markOnboardingSeen, hasSeenOnboarding } from "@/lib/onboarding";
+import { onboardingSteps, starterTemplates, markOnboardingSeen, hasSeenOnboarding, readOnboardingDraft, saveOnboardingDraft } from "@/lib/onboarding";
 
 describe("onboarding data", () => {
     it("exposes at least one step and one starter template", () => {
@@ -20,5 +20,21 @@ describe("onboarding data", () => {
         expect(hasSeenOnboarding()).toBe(false);
         markOnboardingSeen();
         expect(hasSeenOnboarding()).toBe(true);
+    });
+
+    it("persists and restores the onboarding draft", () => {
+        localStorage.removeItem("nova_onboarding_draft");
+        expect(readOnboardingDraft()).toBeNull();
+
+        saveOnboardingDraft({ scene: "shortvideo", ratio: "portrait", style: "minimal" });
+        expect(readOnboardingDraft()).toEqual({ scene: "shortvideo", ratio: "portrait", style: "minimal" });
+    });
+
+    it("ignores malformed onboarding drafts", () => {
+        localStorage.setItem("nova_onboarding_draft", "{not-json");
+        expect(readOnboardingDraft()).toBeNull();
+
+        localStorage.setItem("nova_onboarding_draft", JSON.stringify({ scene: "ad" }));
+        expect(readOnboardingDraft()).toBeNull();
     });
 });

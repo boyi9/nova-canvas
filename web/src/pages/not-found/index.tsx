@@ -1,24 +1,24 @@
-import { Home } from "lucide-react";
-import { Link } from "react-router-dom";
+import { FileQuestion, Home } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+import { StatePrimaryLink } from "@/components/common/state-actions";
+import { StatePage } from "@/components/common/state-page";
+import { ROUTES } from "@/router/routes";
 
 export default function NotFound() {
     const { t } = useTranslation();
     return (
-        <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-            <main className="flex h-full min-h-0 items-center justify-center overflow-y-auto bg-background bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] px-6 py-10 text-foreground [background-size:16px_16px] dark:bg-[radial-gradient(rgba(245,245,244,.16)_1px,transparent_1px)] dark:text-foreground">
-                <section className="w-full max-w-md text-center">
-                    <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-lg border border-border bg-white text-2xl font-semibold shadow-sm dark:border-border dark:bg-card">404</div>
-                    <h1 className="text-3xl font-semibold tracking-normal">{t("notFound.title")}</h1>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground dark:text-muted-foreground">{t("notFound.description")}</p>
-                    <div className="mt-8 flex flex-wrap justify-center gap-3">
-                        <Link to="/" className="inline-flex h-10 items-center gap-2 rounded-lg bg-background px-4 text-sm font-medium text-white transition hover:bg-card dark:bg-muted dark:text-foreground dark:hover:bg-muted">
-                            <Home className="size-4" />
-                            {t("notFound.home")}
-                        </Link>
-                    </div>
-                </section>
-            </main>
-        </div>
+        <StatePage
+            icon={FileQuestion}
+            code="404"
+            title={t("notFound.title")}
+            description={t("notFound.description")}
+            actions={
+                <StatePrimaryLink to={ROUTES.nova}>
+                    <Home className="size-4" />
+                    {t("notFound.home")}
+                </StatePrimaryLink>
+            }
+        />
     );
 }

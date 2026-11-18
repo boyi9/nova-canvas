@@ -2,7 +2,7 @@
 
 - 状态：已采纳
 - 日期：2026-11-17
-- 相关代码：`web/src/router.tsx`、`web/src/router/routes.ts`、`web/src/components/common/RouteErrorPage.tsx`
+- 相关代码：`web/src/router.tsx`、`web/src/router/routes.ts`、`web/src/router/lazy-pages.ts`、`web/src/components/common/RouteErrorPage.tsx`、`web/src/components/common/state-page.tsx`
 
 ## 背景
 
@@ -23,20 +23,40 @@
 
 ### 2. 页面加载约定
 
-- 每个页面默认导出（`export default`），由 `router.tsx` 统一 `lazy(() => import(...))`；
+- 每个页面默认导出（`export default`），在 `web/src/router/lazy-pages.ts` 统一 `lazy(() => import(...))`；
+- `router.tsx` 只描述路由结构，不直接声明懒加载组件；
 - 页面级 loading 由统一的 `LazyPage` + `Suspense` 提供，页面内部不再包全局 loading；
-- 重业务页面（画布工作台）保留 `React.lazy`；未来若需要 loader/action，再迁移到 route-level `lazy`，不在本次改动中混用两套机制。
+- 重业务页面（画布工作台）仍按路由级 `lazy` 拆包；未来若需要 loader/action，再迁移到 route-level `lazy`，不在本次改动中混用两套机制。
 
-### 3. 错误边界分层
+### 3. 无主壳路由
 
-| 层级 | 位置 | 职责 |
-| --- | --- | --- |
-| 路由级 | `errorElement: <RouteErrorPage />` | 懒加载失败、布局渲染异常、loader 异常；仍可导航回首页 |
-| 工作台级 | `NovaWorkbenchErrorBoundary` | 工作台子树异常，保留导航壳 |
-| 画布级 | `CanvasErrorBoundary` | 画布编辑器异常，避免整页崩溃 |
-| 组件级 | `ModalErrorBoundary` 等 | 局部弹窗/面板降级 |
+登录、引导与异常状态页不渲染 `UserLayout`（顶栏 + Agent 面板），在 `router.tsx` 中以 `SHELL_FREE_ROUTES` 平铺注册：
 
-### 4. 鉴权守卫
+| 交付命名          | 实际路由                | 入口文件                                                      |
+| ----------------- | ----------------------- | ------------------------------------------------------------- |
+| `index.html`      | `/`                     | `web/index.html`（Vite 入口）+ `web/src/pages/nova/index.tsx` |
+| `login.html`      | `/login`                | `web/src/pages/login/index.tsx`                               |
+| `onboarding.html` | `/onboarding`           | `web/src/pages/onboarding/index.tsx`                          |
+| 404               | 任意未匹配路径          | `web/src/pages/not-found/index.tsx`                           |
+| 无权限            | `/403`                  | `web/src/pages/status/index.tsx`（`kind="forbidden"`）        |
+| 空状态            | `/empty`                | 同上（`kind="empty"`）                                        |
+| 加载中            | `/loading`              | 同上（`kind="loading"`）                                      |
+| 维护中            | `/maintenance`          | 同上（`kind="maintenance"`）                                  |
+| 网络错误          | `/network-error`        | 同上（`kind="networkError"`）                                 |
+| 额度不足          | `/insufficient-credits` | 同上（`kind="insufficientCredits"`）                          |
+
+说明：项目是 Vite + React SPA，页面由前端路由承载，不再新增独立 `.html` 文件；否则会绕过 `ROUTES`、错误边界与代码分割。异常状态页共用 `StatePage` 骨架，只通过 icon/tone/actions 区分。
+
+### 4. 错误边界分层
+
+| 层级     | 位置                               | 职责                                                  |
+| -------- | ---------------------------------- | ----------------------------------------------------- |
+| 路由级   | `errorElement: <RouteErrorPage />` | 懒加载失败、布局渲染异常、loader 异常；仍可导航回首页 |
+| 工作台级 | `NovaWorkbenchErrorBoundary`       | 工作台子树异常，保留导航壳                            |
+| 画布级   | `CanvasErrorBoundary`              | 画布编辑器异常，避免整页崩溃                          |
+| 组件级   | `ModalErrorBoundary` 等            | 局部弹窗/面板降级                                     |
+
+### 5. 鉴权守卫
 
 当前前端尚未接入登录/刷新界面（`nova_token` 只读），因此**不添加假守卫**。接入认证时按以下顺序落地：
 
@@ -46,6 +66,6 @@
 
 ## 影响
 
-- 新增页面需要同时更新 `routes.ts` 与 `router.tsx`，测试会阻止重复路径。
+- 新增页面需要同时更新 `routes.ts`、`lazy-pages.ts` 与 `router.tsx`，测试会阻止重复路径。
 - `RouteErrorPage` 取代了此前缺失的全局兜底，降低白屏概率。
 - 路由层不承担业务权限判断，避免前端守卫被误当作安全边界。

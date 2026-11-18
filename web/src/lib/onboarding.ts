@@ -30,6 +30,13 @@ export const starterTemplates: StarterTemplate[] = [
 ];
 
 const ONBOARDING_FLAG = "nova_onboarded";
+const ONBOARDING_DRAFT_KEY = "nova_onboarding_draft";
+
+export interface OnboardingDraft {
+    scene: string;
+    ratio: string;
+    style: string;
+}
 
 export function hasSeenOnboarding(): boolean {
     if (typeof localStorage === "undefined") return true;
@@ -39,4 +46,23 @@ export function hasSeenOnboarding(): boolean {
 export function markOnboardingSeen(): void {
     if (typeof localStorage === "undefined") return;
     localStorage.setItem(ONBOARDING_FLAG, "1");
+}
+
+/** 保存引导页选择的创作偏好；认证与用户资料接入后可改为写入服务端。 */
+export function saveOnboardingDraft(draft: OnboardingDraft): void {
+    if (typeof localStorage === "undefined") return;
+    localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
+}
+
+export function readOnboardingDraft(): OnboardingDraft | null {
+    if (typeof localStorage === "undefined") return null;
+    try {
+        const raw = localStorage.getItem(ONBOARDING_DRAFT_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as Partial<OnboardingDraft>;
+        if (typeof parsed.scene !== "string" || typeof parsed.ratio !== "string" || typeof parsed.style !== "string") return null;
+        return { scene: parsed.scene, ratio: parsed.ratio, style: parsed.style };
+    } catch {
+        return null;
+    }
 }

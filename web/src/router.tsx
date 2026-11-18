@@ -1,28 +1,30 @@
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 
 import { AnalyticsTracker } from "@/components/layout/analytics-tracker";
 import { CanvasErrorBoundary, NovaWorkbenchErrorBoundary } from "@/components/common/ErrorBoundary";
 import { RouteErrorPage } from "@/components/common/RouteErrorPage";
 import UserLayout from "@/layouts/user-layout";
+import {
+    AssetsPage,
+    CanvasPage,
+    CanvasProjectPage,
+    CmdHubPage,
+    ConfigPage,
+    ControlPage,
+    HomePage,
+    ImagePage,
+    LoginPage,
+    NotFound,
+    NovaHomePage,
+    OnboardingPage,
+    PromptsPage,
+    SourcePreviewPage,
+    StatusPage,
+    TimelinePage,
+    VideoPage,
+} from "@/router/lazy-pages";
 import { ROUTES } from "@/router/routes";
-
-// Lazy-loaded page components for code splitting.
-// 约定：页面一律默认导出；路由路径只从 ROUTES 读取，禁止在组件中硬编码。
-const NovaHomePage = lazy(() => import("@/pages/nova"));
-const HomePage = lazy(() => import("@/pages/home"));
-const ImagePage = lazy(() => import("@/pages/image"));
-const VideoPage = lazy(() => import("@/pages/video"));
-const AssetsPage = lazy(() => import("@/pages/assets"));
-const PromptsPage = lazy(() => import("@/pages/prompts"));
-const CanvasPage = lazy(() => import("@/pages/canvas"));
-const CanvasProjectPage = lazy(() => import("@/pages/canvas/project"));
-const ConfigPage = lazy(() => import("@/pages/config"));
-const CmdHubPage = lazy(() => import("@/pages/cmdhub"));
-const TimelinePage = lazy(() => import("@/pages/timeline"));
-const SourcePreviewPage = lazy(() => import("@/pages/source-preview"));
-const ControlPage = lazy(() => import("@/pages/control"));
-const NotFound = lazy(() => import("@/pages/not-found"));
 
 function PageLoader() {
     return (
@@ -38,6 +40,18 @@ function PageLoader() {
 function LazyPage({ children }: { children: React.ReactNode }) {
     return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
+
+// 无主壳页面：登录、引导与异常状态页不渲染 UserLayout（顶栏 + Agent 面板）。
+const SHELL_FREE_ROUTES: Array<{ path: string; element: React.ReactNode }> = [
+    { path: ROUTES.login, element: <LoginPage /> },
+    { path: ROUTES.onboarding, element: <OnboardingPage /> },
+    { path: ROUTES.forbidden, element: <StatusPage kind="forbidden" /> },
+    { path: ROUTES.empty, element: <StatusPage kind="empty" /> },
+    { path: ROUTES.loading, element: <StatusPage kind="loading" /> },
+    { path: ROUTES.maintenance, element: <StatusPage kind="maintenance" /> },
+    { path: ROUTES.networkError, element: <StatusPage kind="networkError" /> },
+    { path: ROUTES.insufficientCredits, element: <StatusPage kind="insufficientCredits" /> },
+];
 
 export const router = createBrowserRouter([
     {
@@ -178,6 +192,11 @@ export const router = createBrowserRouter([
             },
         ],
     },
+    ...SHELL_FREE_ROUTES.map(({ path, element }) => ({
+        path,
+        element: <LazyPage>{element}</LazyPage>,
+        errorElement: <RouteErrorPage />,
+    })),
     {
         path: "*",
         element: (

@@ -21,4 +21,15 @@ describe("route table", () => {
     it("exposes the canvas project template with its param", () => {
         expect(ROUTES.canvasProject).toBe("/canvas/:id");
     });
+
+    it("exposes shell-free entry and status routes", () => {
+        expect(ROUTES.login).toBe("/login");
+        expect(ROUTES.onboarding).toBe("/onboarding");
+        expect(ROUTES.forbidden).toBe("/403");
+        expect(ROUTES.empty).toBe("/empty");
+        expect(ROUTES.loading).toBe("/loading");
+        expect(ROUTES.maintenance).toBe("/maintenance");
+        expect(ROUTES.networkError).toBe("/network-error");
+        expect(ROUTES.insufficientCredits).toBe("/insufficient-credits");
+    });
 });
