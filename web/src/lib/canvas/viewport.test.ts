@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
     MAX_ZOOM,
     MIN_ZOOM,
+    WHEEL_DELTA_LINE_PX,
+    WHEEL_DELTA_PAGE_PX,
     centerViewportOnWorld,
     clampZoom,
     clientToWorld,
@@ -11,6 +13,7 @@ import {
     getVisibleWorldRect,
     getWorldViewportCenter,
     isUntouchedViewport,
+    normalizeWheelDelta,
     panViewportBy,
     resizeViewport,
     sanitizeViewport,
@@ -136,6 +139,29 @@ describe("animated zoom", () => {
         expect(wheelZoomFactor(-100)).toBeCloseTo(1.1, 10);
         expect(wheelZoomFactor(100)).toBeCloseTo(1 / 1.1, 10);
         expect(wheelZoomFactor(0)).toBe(1);
+    });
+});
+
+describe("normalizeWheelDelta", () => {
+    it("keeps pixel deltas unchanged", () => {
+        expect(normalizeWheelDelta(-100, 0)).toBe(-100);
+        expect(normalizeWheelDelta(37, undefined)).toBe(37);
+    });
+
+    it("converts line deltas so Firefox wheels still zoom", () => {
+        expect(normalizeWheelDelta(-3, 1)).toBe(-3 * WHEEL_DELTA_LINE_PX);
+        expect(wheelZoomFactor(normalizeWheelDelta(-3, 1))).toBeCloseTo(Math.pow(1.1, 0.48), 10);
+    });
+
+    it("converts page deltas with a caller override", () => {
+        expect(normalizeWheelDelta(1, 2)).toBe(WHEEL_DELTA_PAGE_PX);
+        expect(normalizeWheelDelta(2, 2, 400)).toBe(800);
+    });
+
+    it("returns 0 for invalid or empty deltas", () => {
+        expect(normalizeWheelDelta(0, 0)).toBe(0);
+        expect(normalizeWheelDelta(Number.NaN, 1)).toBe(0);
+        expect(normalizeWheelDelta(Number.POSITIVE_INFINITY, 0)).toBe(0);
     });
 });
 

@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { canvasThemes, type CanvasBackgroundMode } from "@/lib/canvas-theme";
 import { snapToDevicePixel } from "@/lib/canvas/dpr";
-import { wheelZoomFactor, zoomAtScreenPoint } from "@/lib/canvas/viewport";
+import { normalizeWheelDelta, panViewportBy, wheelZoomFactor, zoomAtScreenPoint } from "@/lib/canvas/viewport";
 import { useDevicePixelRatio } from "@/hooks/use-device-pixel-ratio";
 import { useThemeStore } from "@/stores/use-theme-store";
 import type { ViewportTransform } from "@/types/canvas";
@@ -25,16 +25,25 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
     // 网格线按设备像素对齐，避免高分屏上 1px 线落在半像素处发虚。
     const dpr = useDevicePixelRatio();
-    const panState = useRef({
+    const panState = useRef<{
+        isPanning: boolean;
+        startX: number;
+        startY: number;
+        initialViewport: ViewportTransform;
+        hasMoved: boolean;
+        startedOnBackground: boolean;
+    }>({
         isPanning: false,
         startX: 0,
         startY: 0,
-        initialX: 0,
-        initialY: 0,
+        initialViewport: viewport,
         hasMoved: false,
         startedOnBackground: false,
     });
-    const scaleRef = useRef(viewport.k);
+    // 连续滚轮/平移事件可能在同一帧内多次触发，props 里的 viewport 尚未回写；
+    // 这里同步保存最近一次对外发出的视口，保证每次增量都基于最新值累加。
+    const latestViewportRef = useRef(viewport);
+    const callbacksRef = useRef({ onViewportChange, onCanvasDeselect });
     const frameRef = useRef<number | null>(null);
     const nextViewportRef = useRef<ViewportTransform | null>(null);
     const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -42,8 +51,17 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
     const [isPanning, setIsPanning] = useState(false);
 
     useEffect(() => {
-        scaleRef.current = viewport.k;
-    }, [viewport.k]);
+        latestViewportRef.current = viewport;
+    }, [viewport]);
+
+    useEffect(() => {
+        callbacksRef.current = { onViewportChange, onCanvasDeselect };
+    }, [onCanvasDeselect, onViewportChange]);
+
+    const emitViewport = useCallback((next: ViewportTransform) => {
+        latestViewportRef.current = next;
+        callbacksRef.current.onViewportChange(next);
+    }, []);
 
     useEffect(
         () => () => {
@@ -97,9 +115,12 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
         if (!rect) return;
 
         // 以鼠标位置为锚点缩放：光标下的世界坐标保持不动，缩放不会“跑偏”。
+        // deltaMode 归一化后，Firefox 行模式（±3 行）与触控板/鼠标的像素模式手感一致。
+        const delta = normalizeWheelDelta(event.deltaY, event.deltaMode);
+        if (delta === 0) return;
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
-        onViewportChange(zoomAtScreenPoint(viewport, mouseX, mouseY, wheelZoomFactor(event.deltaY)));
+        emitViewport(zoomAtScreenPoint(latestViewportRef.current, mouseX, mouseY, wheelZoomFactor(delta)));
     };
 
     const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -118,8 +139,7 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
                 isPanning: true,
                 startX: event.clientX,
                 startY: event.clientY,
-                initialX: viewport.x,
-                initialY: viewport.y,
+                initialViewport: latestViewportRef.current,
                 hasMoved: false,
                 startedOnBackground: isBackgroundClick,
             };
@@ -151,23 +171,30 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
                 panState.current.hasMoved = true;
             }
 
-            nextViewportRef.current = {
-                x: panState.current.initialX + dx,
-                y: panState.current.initialY + dy,
-                k: scaleRef.current,
-            };
+            // 平移只改 x/y：以按下时的视口为基准，避免缩放并发时累积误差。
+            nextViewportRef.current = panViewportBy(panState.current.initialViewport, dx, dy);
             if (frameRef.current) return;
             frameRef.current = requestAnimationFrame(() => {
                 frameRef.current = null;
-                if (nextViewportRef.current) onViewportChange(nextViewportRef.current);
+                if (nextViewportRef.current) emitViewport(nextViewportRef.current);
             });
         };
 
         const handlePointerUp = () => {
             if (!panState.current.isPanning) return;
 
+            // 收尾时把尚未提交的最后一帧补发，快速拖拽不会丢失最后几像素。
+            if (frameRef.current) {
+                cancelAnimationFrame(frameRef.current);
+                frameRef.current = null;
+            }
+            if (nextViewportRef.current) {
+                emitViewport(nextViewportRef.current);
+                nextViewportRef.current = null;
+            }
+
             if (!panState.current.hasMoved && panState.current.startedOnBackground) {
-                onCanvasDeselect?.();
+                callbacksRef.current.onCanvasDeselect?.();
             }
             panState.current.isPanning = false;
             setIsPanning(false);
@@ -183,7 +210,7 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
             window.removeEventListener("pointercancel", handlePointerUp);
             document.body.style.cursor = "";
         };
-    }, [onCanvasDeselect, onViewportChange]);
+    }, [emitViewport]);
 
     useEffect(() => {
         const container = containerRef.current;

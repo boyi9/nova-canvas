@@ -3220,6 +3220,8 @@ function NovaCanvasPage() {
                     tool={canvasTool}
                     backgroundMode={backgroundMode}
                     onViewportChange={(next) => {
+                        // 同步更新 ref：同一帧内的后续坐标换算（双击建节点、拖拽、连线）立刻生效。
+                        viewportRef.current = next;
                         setViewport(next);
                         setContextMenu(null);
                     }}

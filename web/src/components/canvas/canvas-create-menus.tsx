@@ -18,7 +18,20 @@ export function ConnectionCreateMenu({
     onClose,
 }: {
     pending: PendingConnectionCreate;
-    onCreate: (type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.NovaText | CanvasNodeType.Config | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Product | CanvasNodeType.Storyboard | CanvasNodeType.VideoTrack | CanvasNodeType.Recipe | CanvasNodeType.Multimodal) => void;
+    onCreate: (
+        type:
+            | CanvasNodeType.Image
+            | CanvasNodeType.Text
+            | CanvasNodeType.NovaText
+            | CanvasNodeType.Config
+            | CanvasNodeType.Video
+            | CanvasNodeType.Audio
+            | CanvasNodeType.Product
+            | CanvasNodeType.Storyboard
+            | CanvasNodeType.VideoTrack
+            | CanvasNodeType.Recipe
+            | CanvasNodeType.Multimodal,
+    ) => void;
     onClose: () => void;
 }) {
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
@@ -56,10 +69,25 @@ export function ConnectionCreateMenu({
     );
 }
 
-export function ConnectionCreateOption({ theme, icon, title, description, onClick }: { theme: (typeof canvasThemes)[keyof typeof canvasThemes]; icon: React.ReactNode; title: string; description?: string; onClick?: () => void }) {
+export function ConnectionCreateOption({
+    theme,
+    icon,
+    title,
+    description,
+    nodeType,
+    onClick,
+}: {
+    theme: (typeof canvasThemes)[keyof typeof canvasThemes];
+    icon: React.ReactNode;
+    title: string;
+    description?: string;
+    nodeType?: string;
+    onClick?: () => void;
+}) {
     return (
         <button
             type="button"
+            data-node-type={nodeType}
             className="flex h-16 w-full cursor-pointer items-center gap-3 rounded-2xl px-3 text-left transition"
             style={{ color: theme.node.text }}
             onClick={onClick}
@@ -98,6 +126,7 @@ export function NodeCreateMenu({ position, onCreate, onClose }: { position: Posi
     return (
         <div
             ref={menuRef}
+            data-testid="canvas-node-create-menu"
             className="absolute z-[120] max-h-[70vh] w-[300px] overflow-y-auto rounded-[18px] border p-3 shadow-2xl backdrop-blur thin-scrollbar"
             data-canvas-no-zoom
             style={{ left: position.x, top: position.y, background: theme.node.panel, borderColor: theme.node.stroke, color: theme.node.text }}
@@ -113,7 +142,7 @@ export function NodeCreateMenu({ position, onCreate, onClose }: { position: Posi
             </div>
             <div className="grid gap-1">
                 {definitions.map((def) => (
-                    <ConnectionCreateOption key={def.type} theme={theme} icon={def.icon} title={def.title} description={def.description} onClick={() => onCreate(def.type)} />
+                    <ConnectionCreateOption key={def.type} theme={theme} icon={def.icon} title={def.title} description={def.description} nodeType={def.type} onClick={() => onCreate(def.type)} />
                 ))}
             </div>
         </div>

@@ -123,6 +123,25 @@ export function wheelZoomFactor(deltaY: number): number {
     return Math.pow(WHEEL_ZOOM_BASE, -deltaY / 100);
 }
 
+/** `WheelEvent.deltaMode` 的取值：0=像素、1=行、2=页。 */
+export const WHEEL_DELTA_LINE_PX = 16;
+export const WHEEL_DELTA_PAGE_PX = 100;
+
+/**
+ * 把各浏览器的 wheel deltaY 归一化为像素。
+ * Firefox 鼠标滚轮上报行数（deltaY = ±3、deltaMode = 1），
+ * 直接套指数公式几乎感知不到缩放；页面模式按固定一页折算。
+ */
+export function normalizeWheelDelta(deltaY: number, deltaMode = 0, pagePx: number = WHEEL_DELTA_PAGE_PX): number {
+    if (!isFiniteNumber(deltaY) || deltaY === 0) return 0;
+    if (deltaMode === 1) return deltaY * WHEEL_DELTA_LINE_PX;
+    if (deltaMode === 2) {
+        const page = isFiniteNumber(pagePx) && pagePx > 0 ? pagePx : WHEEL_DELTA_PAGE_PX;
+        return deltaY * page;
+    }
+    return deltaY;
+}
+
 export function panViewportBy(viewport: ViewportTransform, dx: number, dy: number): ViewportTransform {
     return {
         x: viewport.x + (isFiniteNumber(dx) ? dx : 0),

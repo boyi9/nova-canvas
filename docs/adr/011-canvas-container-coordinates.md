@@ -17,11 +17,11 @@
 
 ### 1. 统一坐标定义
 
-| 坐标 | 原点 | 单位 | 用途 |
-| --- | --- | --- | --- |
-| 世界坐标 world | 画布内容原点 | 与节点尺寸一致 | 节点位置/宽高、连线锚点、持久化 |
-| 屏幕坐标 screen | 画布容器左上角 | CSS 像素 | 网格、小地图、命中测试 |
-| 客户端坐标 client | 浏览器视口左上角 | CSS 像素 | 指针事件（`clientX/clientY`） |
+| 坐标              | 原点             | 单位           | 用途                            |
+| ----------------- | ---------------- | -------------- | ------------------------------- |
+| 世界坐标 world    | 画布内容原点     | 与节点尺寸一致 | 节点位置/宽高、连线锚点、持久化 |
+| 屏幕坐标 screen   | 画布容器左上角   | CSS 像素       | 网格、小地图、命中测试          |
+| 客户端坐标 client | 浏览器视口左上角 | CSS 像素       | 指针事件（`clientX/clientY`）   |
 
 唯一变换公式：
 
@@ -43,9 +43,12 @@ world  = (screen - (x, y)) / k
 
 - 缩放范围 `0.05 – 5`（`MIN_ZOOM` / `MAX_ZOOM`），所有入口统一经 `clampZoom`；
 - 滚轮因子 `1.1^(-deltaY / 100)`，以指针位置为锚点（`zoomAtScreenPoint`），锚点下的世界坐标保持不动；
+- 滚轮 `deltaY` 先经 `normalizeWheelDelta` 归一化：行模式（Firefox，`deltaMode = 1`）按 16px/行、页模式按 100px/页折算，避免同一手势在不同浏览器缩放速度差一个数量级；
+- 连续滚轮事件以 `latestViewportRef` 同步累加，不依赖尚未回写的 React props，避免同一帧内多次缩放被合并丢失；
 - 缩放滑杆以容器中心为锚点（`setZoomAtScreenPoint`）；
 - 聚焦节点使用 `fitViewportToBounds(..., { paddingRatio: 0.2, maxZoom: 1 })`，节点占容器约 60%，小节点最多放大到 100%；
-- 平移使用 `panViewportBy`，只改 `x/y`，不动 `k`。
+- 平移使用 `panViewportBy`，只改 `x/y`，不动 `k`；入口包括空格 / Ctrl 临时切换、`pan` 工具左键拖拽、鼠标中键拖拽；
+- 平移以按下瞬间的视口为基准做增量计算，指针移动经 `requestAnimationFrame` 合并提交，抬起时补发最后一帧。
 
 ### 4. 可见区域与容器尺寸变化
 
@@ -65,6 +68,7 @@ world  = (screen - (x, y)) / k
 ## 影响
 
 - 新增画布相关交互时必须复用 `web/src/lib/canvas/viewport.ts`，避免公式分叉；
-- `viewport.test.ts` 与 `dpr.test.ts` 固定坐标系、缩放锚点、尺寸变化和 DPI 换算行为；
+- `viewport.test.ts` 与 `dpr.test.ts` 固定坐标系、缩放锚点、滚轮归一化、尺寸变化和 DPI 换算行为；
+- `web/e2e/canvas-container.spec.ts` 覆盖非中心锚点缩放、连续滚轮累加、缩放上下限、空格/中键平移，以及双击建节点的屏幕→世界坐标一致性；
 - 旧的 `{0,0,1}` 项目首次打开会居中显示，这是有意的行为修正，不影响已保存的非默认视口；
 - 若未来把画布改为 `<canvas>` 渲染，只需在绘制前使用 `resizeCanvasBackingStore`，世界/屏幕坐标约定保持不变。
