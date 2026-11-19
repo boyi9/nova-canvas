@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import { canvasThemes, type CanvasBackgroundMode } from "@/lib/canvas-theme";
+import { snapToDevicePixel } from "@/lib/canvas/dpr";
+import { wheelZoomFactor, zoomAtScreenPoint } from "@/lib/canvas/viewport";
+import { useDevicePixelRatio } from "@/hooks/use-device-pixel-ratio";
 import { useThemeStore } from "@/stores/use-theme-store";
 import type { ViewportTransform } from "@/types/canvas";
 
@@ -20,6 +23,8 @@ type NovaCanvasProps = {
 
 export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lines", onViewportChange, onCanvasMouseDown, onCanvasDeselect, onCanvasDoubleClick, onContextMenu, onDrop, children }: NovaCanvasProps) {
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
+    // 网格线按设备像素对齐，避免高分屏上 1px 线落在半像素处发虚。
+    const dpr = useDevicePixelRatio();
     const panState = useRef({
         isPanning: false,
         startX: 0,
@@ -88,22 +93,13 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
         const target = event.target instanceof Element ? event.target : null;
         if (target?.closest("[data-canvas-no-zoom],.ant-modal,.ant-popover,.ant-dropdown,.ant-select-dropdown,.ant-picker-dropdown")) return;
 
-        const delta = -event.deltaY;
-        const factor = Math.pow(1.1, delta / 100);
-        const newScale = Math.min(Math.max(viewport.k * factor, 0.05), 5);
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return;
 
+        // 以鼠标位置为锚点缩放：光标下的世界坐标保持不动，缩放不会“跑偏”。
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
-        const worldX = (mouseX - viewport.x) / viewport.k;
-        const worldY = (mouseY - viewport.y) / viewport.k;
-
-        onViewportChange({
-            x: mouseX - worldX * newScale,
-            y: mouseY - worldY * newScale,
-            k: newScale,
-        });
+        onViewportChange(zoomAtScreenPoint(viewport, mouseX, mouseY, wheelZoomFactor(event.deltaY)));
     };
 
     const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -210,6 +206,7 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
     return (
         <div
             ref={containerRef}
+            data-testid="canvas-container"
             className="relative h-full w-full select-none overflow-hidden"
             style={{ background: theme.canvas.background, cursor }}
             onPointerDown={handlePointerDown}
@@ -219,8 +216,12 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
             onDragOver={(event) => event.preventDefault()}
             onDrop={onDrop}
         >
-            <CanvasGrid viewport={viewport} mode={backgroundMode} />
+            <CanvasGrid viewport={viewport} mode={backgroundMode} dpr={dpr} />
             <div
+                data-testid="canvas-world-layer"
+                data-viewport-x={viewport.x}
+                data-viewport-y={viewport.y}
+                data-viewport-k={viewport.k}
                 className="absolute origin-top-left"
                 style={{
                     transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.k})`,
@@ -232,13 +233,17 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
     );
 }
 
-function CanvasGrid({ viewport, mode }: { viewport: ViewportTransform; mode: CanvasBackgroundMode }) {
+function CanvasGrid({ viewport, mode, dpr }: { viewport: ViewportTransform; mode: CanvasBackgroundMode; dpr: number }) {
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
     if (mode === "blank") return null;
 
-    const gridSize = 48 * viewport.k;
-    const x = viewport.x % gridSize;
-    const y = viewport.y % gridSize;
+    // 网格间距与偏移都对齐到设备像素：缩放比例是连续值时，
+    // 未对齐会让 1px 网格线覆盖在两个像素之间，出现灰边/摩尔纹。
+    const gridSize = snapToDevicePixel(48 * viewport.k, dpr);
+    if (!(gridSize > 0)) return null;
+
+    const x = snapToDevicePixel(viewport.x % gridSize, dpr);
+    const y = snapToDevicePixel(viewport.y % gridSize, dpr);
     const dotSize = viewport.k < 0.12 ? 0.8 : 1.15;
     const backgroundImage =
         mode === "dots" ? `radial-gradient(circle, ${theme.canvas.dot} ${dotSize}px, transparent ${dotSize + 0.2}px)` : `linear-gradient(${theme.canvas.line} 1px, transparent 1px), linear-gradient(90deg, ${theme.canvas.line} 1px, transparent 1px)`;

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { canvasThemes } from "@/lib/canvas-theme";
 import { getNodeDefinition } from "@/lib/canvas/node-registry";
+import { centerViewportOnWorld, getVisibleWorldRect } from "@/lib/canvas/viewport";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { type CanvasNodeData, type ViewportTransform } from "@/types/canvas";
 
@@ -68,12 +69,9 @@ export function Minimap({ nodes, viewport, viewportSize, onViewportChange }: { n
     );
 
     const viewportRect = useMemo(() => {
-        const vx = -viewport.x / viewport.k;
-        const vy = -viewport.y / viewport.k;
-        const vw = viewportSize.width / viewport.k;
-        const vh = viewportSize.height / viewport.k;
-        const p1 = toMinimap(vx, vy);
-        const p2 = toMinimap(vx + vw, vy + vh);
+        const visible = getVisibleWorldRect(viewport, viewportSize);
+        const p1 = toMinimap(visible.x, visible.y);
+        const p2 = toMinimap(visible.x + visible.width, visible.y + visible.height);
 
         return {
             x: p1.x,
@@ -81,22 +79,18 @@ export function Minimap({ nodes, viewport, viewportSize, onViewportChange }: { n
             w: Math.max(p2.x - p1.x, 4),
             h: Math.max(p2.y - p1.y, 4),
         };
-    }, [toMinimap, viewport.k, viewport.x, viewport.y, viewportSize.height, viewportSize.width]);
+    }, [toMinimap, viewport, viewportSize]);
 
     const updateViewportFromEvent = (event: React.PointerEvent) => {
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return;
 
         const world = toWorld(event.clientX - rect.left, event.clientY - rect.top);
-        onViewportChange({
-            x: viewportSize.width / 2 - world.x * viewport.k,
-            y: viewportSize.height / 2 - world.y * viewport.k,
-            k: viewport.k,
-        });
+        onViewportChange(centerViewportOnWorld(viewport, viewportSize, world));
     };
 
     return (
-        <div className="absolute bottom-24 left-6 z-50 overflow-hidden rounded-lg border shadow-2xl backdrop-blur-sm" style={{ width, height, background: theme.toolbar.panel, borderColor: theme.toolbar.border }}>
+        <div data-testid="canvas-minimap" className="absolute bottom-24 left-6 z-50 overflow-hidden rounded-lg border shadow-2xl backdrop-blur-sm" style={{ width, height, background: theme.toolbar.panel, borderColor: theme.toolbar.border }}>
             <div
                 ref={containerRef}
                 className="relative h-full w-full cursor-crosshair"

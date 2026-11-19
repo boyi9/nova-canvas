@@ -18,6 +18,7 @@ import { useAssetStore } from "@/stores/use-asset-store";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { cropDataUrl, splitDataUrl, upscaleDataUrl } from "@/lib/canvas/canvas-image-data";
 import { fitNodeSize, nodeSizeFromRatio } from "@/lib/canvas/canvas-node-size";
+import { clientToWorld, createInitialViewport, fitViewportToBounds, getVisibleWorldRect, isUntouchedViewport, resizeViewport, sanitizeViewport, setZoomAtScreenPoint } from "@/lib/canvas/viewport";
 import { App, Button, List, Modal, Spin } from "antd";
 import { NODE_DEFAULT_SIZE, getNodeSpec } from "@/constant/canvas";
 import { ActiveConnectionPath, ConnectionPath } from "@/components/canvas/canvas-connections";
@@ -188,6 +189,8 @@ function NovaCanvasPage() {
     const applyingHistoryRef = useRef(false);
     const historyPausedRef = useRef(false);
     const didInitialCenterRef = useRef(false);
+    const restoredViewportRef = useRef<ViewportTransform | null>(null);
+    const lastViewportSizeRef = useRef<{ width: number; height: number } | null>(null);
     const rafRef = useRef<number | null>(null);
     const nodeDraggingRef = useRef(false);
     const physicsSimRef = useRef<NodePhysicsSim | null>(null);
@@ -339,25 +342,36 @@ function NovaCanvasPage() {
         if (request?.controller === controller) generationRequestsRef.current.delete(targetNodeId);
     }, []);
 
-    const stopGenerationByRunningId = useCallback((runningId: string) => {
-        const affectedNodeIds = new Set<string>();
-        generationRequestsRef.current.forEach((request) => {
-            if (request.runningNodeId !== runningId) return;
-            request.controller.abort();
-            generationRequestsRef.current.delete(request.targetNodeId);
-            affectedNodeIds.add(request.targetNodeId);
-            affectedNodeIds.add(request.originNodeId);
-        });
-        setRunningNodeId((current) => (current === runningId ? null : current));
-        if (!affectedNodeIds.size) return;
-        setNodes((prev) =>
-            prev.map((node) =>
-                affectedNodeIds.has(node.id) && node.metadata?.status === NODE_STATUS_LOADING
-                    ? { ...node, metadata: { ...node.metadata, status: NODE_STATUS_IDLE, errorDetails: undefined, images: node.metadata.images?.map((image) => (image.status === NODE_STATUS_LOADING ? { ...image, status: NODE_STATUS_ERROR, errorDetails: t("common.requestCanceled") } : image)) } }
-                    : node,
-            ),
-        );
-    }, [t]);
+    const stopGenerationByRunningId = useCallback(
+        (runningId: string) => {
+            const affectedNodeIds = new Set<string>();
+            generationRequestsRef.current.forEach((request) => {
+                if (request.runningNodeId !== runningId) return;
+                request.controller.abort();
+                generationRequestsRef.current.delete(request.targetNodeId);
+                affectedNodeIds.add(request.targetNodeId);
+                affectedNodeIds.add(request.originNodeId);
+            });
+            setRunningNodeId((current) => (current === runningId ? null : current));
+            if (!affectedNodeIds.size) return;
+            setNodes((prev) =>
+                prev.map((node) =>
+                    affectedNodeIds.has(node.id) && node.metadata?.status === NODE_STATUS_LOADING
+                        ? {
+                              ...node,
+                              metadata: {
+                                  ...node.metadata,
+                                  status: NODE_STATUS_IDLE,
+                                  errorDetails: undefined,
+                                  images: node.metadata.images?.map((image) => (image.status === NODE_STATUS_LOADING ? { ...image, status: NODE_STATUS_ERROR, errorDetails: t("common.requestCanceled") } : image)),
+                              },
+                          }
+                        : node,
+                ),
+            );
+        },
+        [t],
+    );
 
     const confirmStopGeneration = useCallback(
         (nodeId: string) => {
@@ -381,6 +395,7 @@ function NovaCanvasPage() {
             navigate("/canvas", { replace: true });
             return;
         }
+        restoredViewportRef.current = null;
 
         const restore = async () => {
             const restoredNodes = await hydrateCanvasImages(resetInterruptedGeneration(project.nodes));
@@ -391,7 +406,19 @@ function NovaCanvasPage() {
             setActiveChatId(project.activeChatId || null);
             setBackgroundMode(project.backgroundMode);
             setShowImageInfo(project.showImageInfo || false);
-            setViewport(project.viewport);
+
+            // `{ x: 0, y: 0, k: 1 }` 是旧数据的“未设置”默认值：
+            // 交给画布容器挂载后的首次测量居中（加载态容器尚未挂载，读不到 rect）。
+            const restoredViewport = sanitizeViewport(project.viewport);
+            if (isUntouchedViewport(restoredViewport)) {
+                restoredViewportRef.current = null;
+                didInitialCenterRef.current = false;
+            } else {
+                restoredViewportRef.current = restoredViewport;
+                didInitialCenterRef.current = true;
+                setViewport(restoredViewport);
+            }
+
             historyRef.current = { past: [], future: [] };
             if (historyCommitTimerRef.current) {
                 clearTimeout(historyCommitTimerRef.current);
@@ -486,34 +513,43 @@ function NovaCanvasPage() {
     }, [selectionBox]);
 
     useEffect(() => {
+        // 加载期间画布容器尚未挂载，必须等 projectLoaded 后再测量，否则拿不到 ref。
+        if (!projectLoaded) return;
         const el = containerRef.current;
         if (!el) return;
 
         const updateSize = () => {
             const rect = el.getBoundingClientRect();
-            setSize({ width: rect.width, height: rect.height });
+            const nextSize = { width: rect.width, height: rect.height };
+            const previousSize = lastViewportSizeRef.current;
+
             if (!didInitialCenterRef.current) {
                 didInitialCenterRef.current = true;
-                setViewport({ x: rect.width / 2, y: rect.height / 2, k: 1 });
+                lastViewportSizeRef.current = nextSize;
+                setSize(nextSize);
+                // 只有项目没有保存过视口时才自动居中；已保存的视口不能被首次测量覆盖。
+                if (!restoredViewportRef.current) setViewport(createInitialViewport(nextSize.width, nextSize.height));
+                return;
             }
+
+            if (previousSize && previousSize.width === nextSize.width && previousSize.height === nextSize.height) return;
+
+            lastViewportSizeRef.current = nextSize;
+            setSize(nextSize);
+
+            // 侧栏折叠、窗口缩放、分屏切换：保持容器中心的世界坐标不变，避免内容整体漂移。
+            if (previousSize) setViewport((prev) => resizeViewport(prev, previousSize, nextSize));
         };
 
         updateSize();
         const resizeObserver = new ResizeObserver(updateSize);
         resizeObserver.observe(el);
         return () => resizeObserver.disconnect();
-    }, []);
+    }, [projectLoaded]);
 
     const screenToCanvas = useCallback((clientX: number, clientY: number) => {
         const rect = containerRef.current?.getBoundingClientRect();
-        const currentViewport = viewportRef.current;
-        const localX = clientX - (rect?.left || 0);
-        const localY = clientY - (rect?.top || 0);
-
-        return {
-            x: (localX - currentViewport.x) / currentViewport.k,
-            y: (localY - currentViewport.y) / currentViewport.k,
-        };
+        return clientToWorld(viewportRef.current, clientX, clientY, rect);
     }, []);
 
     const getCanvasCenter = useCallback(() => {
@@ -594,26 +630,24 @@ function NovaCanvasPage() {
             let bestNodeId: string | null = null;
             let bestPriority = Number.POSITIVE_INFINITY;
 
-            [...nodesRef.current]
-                .reverse()
-                .forEach((node) => {
-                    const anchor = getConnectionTargetAnchor(node, current);
-                    const dx = world.x - anchor.x;
-                    const dy = world.y - anchor.y;
-                    const hitsHandle = dx * dx + dy * dy <= handleRadius * handleRadius;
-                    const hitsInside = world.x >= node.position.x && world.x <= node.position.x + node.width && world.y >= node.position.y && world.y <= node.position.y + node.height;
-                    const hitsExpanded = world.x >= node.position.x - padding && world.x <= node.position.x + node.width + padding && world.y >= node.position.y - padding && world.y <= node.position.y + node.height + padding;
+            [...nodesRef.current].reverse().forEach((node) => {
+                const anchor = getConnectionTargetAnchor(node, current);
+                const dx = world.x - anchor.x;
+                const dy = world.y - anchor.y;
+                const hitsHandle = dx * dx + dy * dy <= handleRadius * handleRadius;
+                const hitsInside = world.x >= node.position.x && world.x <= node.position.x + node.width && world.y >= node.position.y && world.y <= node.position.y + node.height;
+                const hitsExpanded = world.x >= node.position.x - padding && world.x <= node.position.x + node.width + padding && world.y >= node.position.y - padding && world.y <= node.position.y + node.height + padding;
 
-                    if (!hitsHandle && !hitsInside && !hitsExpanded) return;
-                    isNearNode = true;
-                    if (node.id === current.nodeId || !normalizeConnection(current.nodeId, node.id, nodesRef.current, current.handleType)) return;
+                if (!hitsHandle && !hitsInside && !hitsExpanded) return;
+                isNearNode = true;
+                if (node.id === current.nodeId || !normalizeConnection(current.nodeId, node.id, nodesRef.current, current.handleType)) return;
 
-                    const priority = hitsInside ? 0 : hitsHandle ? 1 : 2;
-                    if (priority < bestPriority) {
-                        bestNodeId = node.id;
-                        bestPriority = priority;
-                    }
-                });
+                const priority = hitsInside ? 0 : hitsHandle ? 1 : 2;
+                if (priority < bestPriority) {
+                    bestNodeId = node.id;
+                    bestPriority = priority;
+                }
+            });
 
             return { nodeId: bestNodeId, isNearNode };
         },
@@ -623,15 +657,11 @@ function NovaCanvasPage() {
     const visibleNodes = useMemo(() => {
         const padding = 280;
         const rect = containerRef.current?.getBoundingClientRect();
-        const width = rect?.width || size.width;
-        const height = rect?.height || size.height;
-        const viewLeft = -viewport.x / viewport.k - padding;
-        const viewTop = -viewport.y / viewport.k - padding;
-        const viewRight = viewLeft + width / viewport.k + padding * 2;
-        const viewBottom = viewTop + height / viewport.k + padding * 2;
+        const viewportSize = { width: rect?.width || size.width, height: rect?.height || size.height };
+        const visible = getVisibleWorldRect(viewport, viewportSize, padding);
 
-        return nodes.filter((node) => node.position.x + node.width > viewLeft && node.position.x < viewRight && node.position.y + node.height > viewTop && node.position.y < viewBottom);
-    }, [nodes, size.height, size.width, viewport.k, viewport.x, viewport.y]);
+        return nodes.filter((node) => node.position.x + node.width > visible.x && node.position.x < visible.x + visible.width && node.position.y + node.height > visible.y && node.position.y < visible.y + visible.height);
+    }, [nodes, size.height, size.width, viewport]);
 
     const nodeById = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes]);
     // The toolbar follows a single selected node selected by click, creation, marquee, or keyboard.
@@ -979,7 +1009,7 @@ function NovaCanvasPage() {
     }, [getCanvasCenter]);
 
     const resetViewport = useCallback(() => {
-        setViewport({ x: size.width / 2, y: size.height / 2, k: 1 });
+        setViewport(createInitialViewport(size.width, size.height));
         setContextMenu(null);
     }, [size.height, size.width]);
 
@@ -987,10 +1017,8 @@ function NovaCanvasPage() {
         (nodeId: string) => {
             const node = nodesRef.current.find((item) => item.id === nodeId);
             if (!node) return;
-            const worldX = node.position.x + node.width / 2;
-            const worldY = node.position.y + node.height / 2;
-            const k = Math.min(Math.max(Math.min((size.width * 0.6) / node.width, (size.height * 0.6) / node.height), 0.05), 1);
-            const target = { x: size.width / 2 - worldX * k, y: size.height / 2 - worldY * k, k };
+            // 节点占容器约 60%，与旧逻辑一致；最高放大到 100%，避免小节点被过度拉伸。
+            const target = fitViewportToBounds({ x: node.position.x, y: node.position.y, width: node.width, height: node.height }, { width: size.width, height: size.height }, { paddingRatio: 0.2, maxZoom: 1 });
             setSelectedNodeIds(new Set([nodeId]));
             setSelectedConnectionId(null);
             setContextMenu(null);
@@ -1016,12 +1044,8 @@ function NovaCanvasPage() {
 
     const setZoomScale = useCallback(
         (scale: number) => {
-            const nextScale = Math.min(Math.max(scale, 0.05), 5);
-            setViewport((prev) => ({
-                x: size.width / 2 - ((size.width / 2 - prev.x) / prev.k) * nextScale,
-                y: size.height / 2 - ((size.height / 2 - prev.y) / prev.k) * nextScale,
-                k: nextScale,
-            }));
+            // 滑杆以容器中心为锚点，保持视觉中心不移动。
+            setViewport((prev) => setZoomAtScreenPoint(prev, size.width / 2, size.height / 2, scale));
             setContextMenu(null);
         },
         [size.height, size.width],
@@ -1346,12 +1370,11 @@ function NovaCanvasPage() {
             const rectH = Math.abs(world.y - currentSelection.startWorldY);
             const nextSelected = new Set<string>(currentSelection.additive ? currentSelection.initialSelectedNodeIds : []);
 
-            nodesRef.current
-                .forEach((node) => {
-                    const intersects = rectX < node.position.x + node.width && rectX + rectW > node.position.x && rectY < node.position.y + node.height && rectY + rectH > node.position.y;
+            nodesRef.current.forEach((node) => {
+                const intersects = rectX < node.position.x + node.width && rectX + rectW > node.position.x && rectY < node.position.y + node.height && rectY + rectH > node.position.y;
 
-                    if (intersects) nextSelected.add(node.id);
-                });
+                if (intersects) nextSelected.add(node.id);
+            });
 
             const nextSelectionBox = { ...currentSelection, currentWorldX: world.x, currentWorldY: world.y };
             selectionBoxRef.current = nextSelectionBox;
@@ -1509,7 +1532,8 @@ function NovaCanvasPage() {
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             const target = event.target instanceof Element ? event.target : null;
-            if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement || target?.closest("[contenteditable='true'],[data-canvas-no-zoom],[data-canvas-shortcuts-ignore]")) return;
+            if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement || target?.closest("[contenteditable='true'],[data-canvas-no-zoom],[data-canvas-shortcuts-ignore]"))
+                return;
 
             const key = event.key.toLowerCase();
             const isModifierShortcut = event.metaKey || event.ctrlKey;
@@ -1664,7 +1688,7 @@ function NovaCanvasPage() {
                     if (Math.abs(next.x - node.position.x) < 0.25 && Math.abs(next.y - node.position.y) < 0.25) return node;
                     moved = true;
                     return { ...node, position: next };
-                })
+                }),
             );
             if (!moved) lastPhysicsTimeRef.current = time - (1 / 60) * 1000;
             physicsRafRef.current = requestAnimationFrame(loop);
@@ -1755,15 +1779,18 @@ function NovaCanvasPage() {
         setEditRequestNonce((value) => value + 1);
     }, []);
 
-    const openVideoEditorForNode = useCallback((nodeId: string) => {
-        const node = nodes.find((n) => n.id === nodeId);
-        if (!node || node.type !== CanvasNodeType.Video) return;
-        if (!node.metadata?.content) {
-            message.warning(t("canvas.projectPage.noVideoToSave"));
-            return;
-        }
-        setVideoEditorOpen({ open: true, nodeId });
-    }, [nodes, message, t]);
+    const openVideoEditorForNode = useCallback(
+        (nodeId: string) => {
+            const node = nodes.find((n) => n.id === nodeId);
+            if (!node || node.type !== CanvasNodeType.Video) return;
+            if (!node.metadata?.content) {
+                message.warning(t("canvas.projectPage.noVideoToSave"));
+                return;
+            }
+            setVideoEditorOpen({ open: true, nodeId });
+        },
+        [nodes, message, t],
+    );
 
     const handleNodePromptChange = useCallback((nodeId: string, prompt: string) => {
         setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, metadata: { ...node.metadata, prompt } } : node)));
@@ -1842,7 +1869,11 @@ function NovaCanvasPage() {
             const configSpec = NODE_DEFAULT_SIZE[CanvasNodeType.Config];
             const centerY = node.position.y + node.height / 2;
             const textNode = {
-                ...createCanvasNode(CanvasNodeType.Text, { x: node.position.x + node.width + gap + textSpec.width / 2, y: centerY }, { content: t("canvas.projectPage.reversePreset"), prompt: t("canvas.projectPage.reversePreset"), status: NODE_STATUS_SUCCESS, fontSize: 14 }),
+                ...createCanvasNode(
+                    CanvasNodeType.Text,
+                    { x: node.position.x + node.width + gap + textSpec.width / 2, y: centerY },
+                    { content: t("canvas.projectPage.reversePreset"), prompt: t("canvas.projectPage.reversePreset"), status: NODE_STATUS_SUCCESS, fontSize: 14 },
+                ),
                 title: t("canvas.projectPage.reverseTitle"),
             };
             const configNode = {
@@ -2074,9 +2105,7 @@ function NovaCanvasPage() {
 
     const handleImageInputChange = useCallback(
         async (event: ReactChangeEvent<HTMLInputElement>) => {
-            const files = Array.from(event.target.files || []).filter(
-                (f) => f.type.startsWith("image/") || f.type.startsWith("video/") || isAudioFile(f),
-            );
+            const files = Array.from(event.target.files || []).filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/") || isAudioFile(f));
             if (!files.length) {
                 uploadTargetRef.current = null;
                 event.target.value = "";
@@ -2084,12 +2113,7 @@ function NovaCanvasPage() {
             }
 
             const target = uploadTargetRef.current;
-            const basePosition =
-                target?.position ||
-                screenToCanvas(
-                    (containerRef.current?.getBoundingClientRect().left || 0) + size.width / 2,
-                    (containerRef.current?.getBoundingClientRect().top || 0) + size.height / 2,
-                );
+            const basePosition = target?.position || screenToCanvas((containerRef.current?.getBoundingClientRect().left || 0) + size.width / 2, (containerRef.current?.getBoundingClientRect().top || 0) + size.height / 2);
             const STAGGER = 40; // Offset between multiple imported files.
 
             // When replacing a target node, use the first file as the replacement and create the rest nearby.
@@ -2207,9 +2231,7 @@ function NovaCanvasPage() {
     const handleDrop = useCallback(
         (event: ReactDragEvent<HTMLDivElement>) => {
             event.preventDefault();
-            const files = Array.from(event.dataTransfer.files).filter(
-                (item) => item.type.startsWith("image/") || item.type.startsWith("video/") || isAudioFile(item),
-            );
+            const files = Array.from(event.dataTransfer.files).filter((item) => item.type.startsWith("image/") || item.type.startsWith("video/") || isAudioFile(item));
             if (!files.length) return;
 
             const basePos = screenToCanvas(event.clientX, event.clientY);
@@ -2316,7 +2338,8 @@ function NovaCanvasPage() {
                 return;
             }
             let pendingChildIds: string[] = [];
-            if (markSourceStatus) setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, metadata: { ...node.metadata, ...(node.type === CanvasNodeType.Config ? {} : { prompt }), status: NODE_STATUS_LOADING, errorDetails: undefined } } : node)));
+            if (markSourceStatus)
+                setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, metadata: { ...node.metadata, ...(node.type === CanvasNodeType.Config ? {} : { prompt }), status: NODE_STATUS_LOADING, errorDetails: undefined } } : node)));
 
             try {
                 if (mode === "image") {
@@ -2406,7 +2429,16 @@ function NovaCanvasPage() {
                                     : await requestGeneration({ ...generationConfig, count: "1" }, effectivePrompt, { signal: controller.signal }).then((items) => items[0]);
                                 const uploaded = await uploadImage(image.dataUrl);
                                 const imageSize = fitNodeSize(uploaded.width, uploaded.height, imageConfig.width, imageConfig.height);
-                                const item: CanvasNodeImage = { id: imageId, status: NODE_STATUS_SUCCESS, content: uploaded.url, storageKey: uploaded.storageKey, naturalWidth: uploaded.width, naturalHeight: uploaded.height, bytes: uploaded.bytes, mimeType: uploaded.mimeType };
+                                const item: CanvasNodeImage = {
+                                    id: imageId,
+                                    status: NODE_STATUS_SUCCESS,
+                                    content: uploaded.url,
+                                    storageKey: uploaded.storageKey,
+                                    naturalWidth: uploaded.width,
+                                    naturalHeight: uploaded.height,
+                                    bytes: uploaded.bytes,
+                                    mimeType: uploaded.mimeType,
+                                };
                                 setNodes((prev) =>
                                     prev.map((node) => {
                                         if (node.id !== rootId) return node;
@@ -2439,7 +2471,11 @@ function NovaCanvasPage() {
                                 const errorDetails = error instanceof Error ? error.message : t("canvas.projectPage.generationFailed");
                                 if (!firstError) firstError = errorDetails;
                                 hasFailure = true;
-                                setNodes((prev) => prev.map((node) => (node.id === rootId ? { ...node, metadata: { ...node.metadata, images: node.metadata?.images?.map((image) => (image.id === imageId ? { ...image, status: NODE_STATUS_ERROR, errorDetails } : image)) } } : node)));
+                                setNodes((prev) =>
+                                    prev.map((node) =>
+                                        node.id === rootId ? { ...node, metadata: { ...node.metadata, images: node.metadata?.images?.map((image) => (image.id === imageId ? { ...image, status: NODE_STATUS_ERROR, errorDetails } : image)) } } : node,
+                                    ),
+                                );
                             }
                             return false;
                         }),
@@ -2458,7 +2494,7 @@ function NovaCanvasPage() {
                                 ? { ...node, metadata: { ...node.metadata, status: hasSuccess ? NODE_STATUS_SUCCESS : NODE_STATUS_ERROR, errorDetails: hasSuccess ? undefined : t("canvas.projectPage.generationFailed") } }
                                 : node.id === rootId
                                   ? { ...node, metadata: { ...node.metadata, status: hasSuccess ? NODE_STATUS_SUCCESS : NODE_STATUS_ERROR, errorDetails: hasSuccess ? undefined : t("canvas.projectPage.allFailed") } }
-                                    : node,
+                                  : node,
                         ),
                     );
                     return;
@@ -2677,13 +2713,41 @@ function NovaCanvasPage() {
                 hasSavedImageMetadata && savedImageMetadata ? await resolveMetadataReferences(savedImageMetadata) : useReferenceImages ? (context?.referenceImages.length ? context.referenceImages : sourceNodeReferenceImages(sourceNode)) : [];
             if (useReferenceImages && !retryReferenceImages) {
                 message.error(t("canvas.projectPage.referenceMissing"));
-                setNodes((prev) => prev.map((item) => (item.id === node.id ? { ...item, metadata: { ...item.metadata, status: item.metadata?.content ? NODE_STATUS_SUCCESS : NODE_STATUS_ERROR, errorDetails: item.metadata?.content ? undefined : t("canvas.projectPage.referenceMissing"), images: item.metadata?.images?.map((image) => (image.id === imageId ? { ...image, status: NODE_STATUS_ERROR, errorDetails: t("canvas.projectPage.referenceMissing") } : image)) } } : item)));
+                setNodes((prev) =>
+                    prev.map((item) =>
+                        item.id === node.id
+                            ? {
+                                  ...item,
+                                  metadata: {
+                                      ...item.metadata,
+                                      status: item.metadata?.content ? NODE_STATUS_SUCCESS : NODE_STATUS_ERROR,
+                                      errorDetails: item.metadata?.content ? undefined : t("canvas.projectPage.referenceMissing"),
+                                      images: item.metadata?.images?.map((image) => (image.id === imageId ? { ...image, status: NODE_STATUS_ERROR, errorDetails: t("canvas.projectPage.referenceMissing") } : image)),
+                                  },
+                              }
+                            : item,
+                    ),
+                );
                 return;
             }
             const retryImages = retryReferenceImages || [];
 
             setRunningNodeId(node.id);
-            setNodes((prev) => prev.map((item) => (item.id === node.id ? { ...item, metadata: { ...item.metadata, status: NODE_STATUS_LOADING, errorDetails: undefined, images: item.metadata?.images?.map((image) => (image.id === imageId ? { ...image, status: NODE_STATUS_LOADING, errorDetails: undefined } : image)) } } : item)));
+            setNodes((prev) =>
+                prev.map((item) =>
+                    item.id === node.id
+                        ? {
+                              ...item,
+                              metadata: {
+                                  ...item.metadata,
+                                  status: NODE_STATUS_LOADING,
+                                  errorDetails: undefined,
+                                  images: item.metadata?.images?.map((image) => (image.id === imageId ? { ...image, status: NODE_STATUS_LOADING, errorDetails: undefined } : image)),
+                              },
+                          }
+                        : item,
+                ),
+            );
             const controller = startGenerationRequest(node.id, sourceNode.id, node.id);
 
             try {
@@ -2767,11 +2831,18 @@ function NovaCanvasPage() {
                         if (item.id !== node.id) return item;
                         const makePrimary = !imageId || !item.metadata?.content;
                         const edge = imageId ? Math.max(item.width, item.height) : 0;
-                        const imageSize = imageId && item.metadata?.freeResize ? { width: item.width, height: item.height } : imageId ? fitNodeSize(uploadedImage.width, uploadedImage.height, edge, edge) : fitNodeSize(uploadedImage.width, uploadedImage.height, imageConfig.width, imageConfig.height);
+                        const imageSize =
+                            imageId && item.metadata?.freeResize
+                                ? { width: item.width, height: item.height }
+                                : imageId
+                                  ? fitNodeSize(uploadedImage.width, uploadedImage.height, edge, edge)
+                                  : fitNodeSize(uploadedImage.width, uploadedImage.height, imageConfig.width, imageConfig.height);
                         return {
                             ...item,
                             type: CanvasNodeType.Image,
-                            ...(makePrimary ? { width: imageSize.width, height: imageSize.height, ...(imageId ? { position: { x: item.position.x + item.width / 2 - imageSize.width / 2, y: item.position.y + item.height / 2 - imageSize.height / 2 } } : {}) } : {}),
+                            ...(makePrimary
+                                ? { width: imageSize.width, height: imageSize.height, ...(imageId ? { position: { x: item.position.x + item.width / 2 - imageSize.width / 2, y: item.position.y + item.height / 2 - imageSize.height / 2 } } : {}) }
+                                : {}),
                             metadata: {
                                 ...item.metadata,
                                 ...(makePrimary ? imageMetadata(uploadedImage) : { status: NODE_STATUS_SUCCESS }),
@@ -2787,7 +2858,21 @@ function NovaCanvasPage() {
                 if (isGenerationCanceled(error)) return;
                 const errorDetails = error instanceof Error ? error.message : t("canvas.projectPage.generationFailed");
                 message.error(errorDetails);
-                setNodes((prev) => prev.map((item) => (item.id === node.id ? { ...item, metadata: { ...item.metadata, status: item.metadata?.content ? NODE_STATUS_SUCCESS : NODE_STATUS_ERROR, errorDetails: item.metadata?.content ? undefined : errorDetails, images: item.metadata?.images?.map((image) => (image.id === imageId ? { ...image, status: NODE_STATUS_ERROR, errorDetails } : image)) } } : item)));
+                setNodes((prev) =>
+                    prev.map((item) =>
+                        item.id === node.id
+                            ? {
+                                  ...item,
+                                  metadata: {
+                                      ...item.metadata,
+                                      status: item.metadata?.content ? NODE_STATUS_SUCCESS : NODE_STATUS_ERROR,
+                                      errorDetails: item.metadata?.content ? undefined : errorDetails,
+                                      images: item.metadata?.images?.map((image) => (image.id === imageId ? { ...image, status: NODE_STATUS_ERROR, errorDetails } : image)),
+                                  },
+                              }
+                            : item,
+                    ),
+                );
             } finally {
                 finishGenerationRequest(node.id, controller);
                 setRunningNodeId(null);
@@ -3034,17 +3119,9 @@ function NovaCanvasPage() {
                     onAutoLink={handleAutoLink}
                 />
 
-                <RecipeBrowser
-                    open={recipeOpen}
-                    onClose={() => setRecipeOpen(false)}
-                    onApplyGraph={handleApplyRecipeGraph}
-                    getSnapshot={getCanvasSnapshot}
-                />
+                <RecipeBrowser open={recipeOpen} onClose={() => setRecipeOpen(false)} onApplyGraph={handleApplyRecipeGraph} getSnapshot={getCanvasSnapshot} />
 
-                <AIProviderChat
-                    open={providerChatOpen}
-                    onClose={() => setProviderChatOpen(false)}
-                />
+                <AIProviderChat open={providerChatOpen} onClose={() => setProviderChatOpen(false)} />
 
                 <BatchHeroImage
                     open={batchImageOpen}
@@ -3058,21 +3135,11 @@ function NovaCanvasPage() {
                         }))}
                 />
 
-                <ScriptRunner
-                    open={scriptsOpen}
-                    onClose={() => setScriptsOpen(false)}
-                />
+                <ScriptRunner open={scriptsOpen} onClose={() => setScriptsOpen(false)} />
 
-                <VideoGenerator
-                    open={videoOpen}
-                    onClose={() => setVideoOpen(false)}
-                />
+                <VideoGenerator open={videoOpen} onClose={() => setVideoOpen(false)} />
 
-                <HitFission
-                    open={fissionOpen}
-                    onClose={() => setFissionOpen(false)}
-                    onApplyToCanvas={handleApplyFission}
-                />
+                <HitFission open={fissionOpen} onClose={() => setFissionOpen(false)} onApplyToCanvas={handleApplyFission} />
 
                 <EcommerceFullFlow
                     open={ecommerceFlowOpen}
@@ -3088,22 +3155,11 @@ function NovaCanvasPage() {
                     onArrangeDetailPage={handleArrangeDetailPage}
                 />
 
-                <CollabPanel
-                    open={collabOpen}
-                    onClose={() => setCollabOpen(false)}
-                    projectId={currentProject?.id || projectId || null}
-                    getCanvasData={() => JSON.stringify({ nodes: nodesRef.current, connections: connectionsRef.current })}
-                />
+                <CollabPanel open={collabOpen} onClose={() => setCollabOpen(false)} projectId={currentProject?.id || projectId || null} getCanvasData={() => JSON.stringify({ nodes: nodesRef.current, connections: connectionsRef.current })} />
 
-                <ScenarioStudio
-                    open={scenarioOpen}
-                    onClose={() => setScenarioOpen(false)}
-                />
+                <ScenarioStudio open={scenarioOpen} onClose={() => setScenarioOpen(false)} />
 
-                <PromptLibrary
-                    open={promptLibOpen}
-                    onClose={() => setPromptLibOpen(false)}
-                />
+                <PromptLibrary open={promptLibOpen} onClose={() => setPromptLibOpen(false)} />
 
                 <CanvasComplianceModal
                     open={canvasComplianceOpen}
@@ -3116,30 +3172,17 @@ function NovaCanvasPage() {
                                     typeof n.metadata?.prompt === "string" ? n.metadata.prompt : "",
                                     typeof n.metadata?.productName === "string" ? n.metadata.productName : "",
                                     Array.isArray(n.metadata?.sellingPoints) ? n.metadata.sellingPoints.join(" ") : "",
-                                ].join(" ")
+                                ].join(" "),
                             )
                             .filter((t) => t.trim().length > 0)
                     }
                 />
 
-                <OnboardingModal
-                    open={onboardingOpen}
-                    onClose={() => setOnboardingOpen(false)}
-                />
+                <OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
 
-                <MembershipModal
-                    open={membershipOpen}
-                    onClose={() => setMembershipOpen(false)}
-                />
+                <MembershipModal open={membershipOpen} onClose={() => setMembershipOpen(false)} />
 
-                <Modal
-                    open={workflowRun.open}
-                    onCancel={() => setWorkflowRun((state) => ({ ...state, open: false }))}
-                    footer={null}
-                    title={t("canvas.runWorkflow")}
-                    width={640}
-                    destroyOnClose
-                >
+                <Modal open={workflowRun.open} onCancel={() => setWorkflowRun((state) => ({ ...state, open: false }))} footer={null} title={t("canvas.runWorkflow")} width={640} destroyOnClose>
                     {workflowRun.loading ? (
                         <div className="grid place-items-center py-10">
                             <Spin />
@@ -3161,9 +3204,7 @@ function NovaCanvasPage() {
                                             {result?.error ? (
                                                 <div className="mt-1 text-xs text-red-500">{result.error}</div>
                                             ) : (
-                                                <pre className="mt-1 max-h-40 overflow-auto rounded bg-black/5 p-2 text-xs dark:bg-white/10">
-                                                    {JSON.stringify(result?.output ?? {}, null, 2)}
-                                                </pre>
+                                                <pre className="mt-1 max-h-40 overflow-auto rounded bg-black/5 p-2 text-xs dark:bg-white/10">{JSON.stringify(result?.output ?? {}, null, 2)}</pre>
                                             )}
                                         </div>
                                     </List.Item>
@@ -3192,32 +3233,31 @@ function NovaCanvasPage() {
                     onDrop={handleDrop}
                 >
                     <svg className="absolute left-0 top-0 h-[10000px] w-[10000px] overflow-visible" style={{ pointerEvents: "none", transform: "translateZ(0)", zIndex: 0 }}>
-                        {connections
-                            .map((connection) => {
-                                const from = nodeById.get(connection.fromNodeId);
-                                const to = nodeById.get(connection.toNodeId);
-                                if (!from || !to) return null;
+                        {connections.map((connection) => {
+                            const from = nodeById.get(connection.fromNodeId);
+                            const to = nodeById.get(connection.toNodeId);
+                            if (!from || !to) return null;
 
-                                return (
-                                    <ConnectionPath
-                                        key={connection.id}
-                                        connection={connection}
-                                        from={from}
-                                        to={to}
-                                        active={selectedConnectionId === connection.id || relatedHighlight.connectionIds.has(connection.id)}
-                                        onSelect={() => {
-                                            setSelectedConnectionId(connection.id);
-                                            setSelectedNodeIds(new Set());
-                                            setContextMenu(null);
-                                        }}
-                                        onContextMenu={(event) => {
-                                            setSelectedConnectionId(connection.id);
-                                            setSelectedNodeIds(new Set());
-                                            setContextMenu({ type: "connection", x: event.clientX, y: event.clientY, connectionId: connection.id });
-                                        }}
-                                    />
-                                );
-                            })}
+                            return (
+                                <ConnectionPath
+                                    key={connection.id}
+                                    connection={connection}
+                                    from={from}
+                                    to={to}
+                                    active={selectedConnectionId === connection.id || relatedHighlight.connectionIds.has(connection.id)}
+                                    onSelect={() => {
+                                        setSelectedConnectionId(connection.id);
+                                        setSelectedNodeIds(new Set());
+                                        setContextMenu(null);
+                                    }}
+                                    onContextMenu={(event) => {
+                                        setSelectedConnectionId(connection.id);
+                                        setSelectedNodeIds(new Set());
+                                        setContextMenu({ type: "connection", x: event.clientX, y: event.clientY, connectionId: connection.id });
+                                    }}
+                                />
+                            );
+                        })}
                         {connectingParams ? <ActiveConnectionPath node={nodeById.get(connectingParams.nodeId)} handle={connectingParams} mouseWorld={mouseWorld} target={connectionTargetNodeId ? nodeById.get(connectionTargetNodeId) : undefined} /> : null}
                     </svg>
 
@@ -3250,9 +3290,9 @@ function NovaCanvasPage() {
                             onResizeStart={handleNodeResizeStart}
                             onResize={handleNodeResize}
                             onResizeEnd={handleNodeResizeEnd}
-                        onContentChange={handleNodeContentChange}
-                        onMetadataChange={handleNodeMetadataChange}
-                        onTitleChange={handleNodeTitleChange}
+                            onContentChange={handleNodeContentChange}
+                            onMetadataChange={handleNodeMetadataChange}
+                            onTitleChange={handleNodeTitleChange}
                             onToggleBatch={toggleBatchExpanded}
                             onSetBatchPrimary={setBatchPrimary}
                             onDuplicateBatchImage={duplicateBatchImage}
@@ -3367,11 +3407,15 @@ function NovaCanvasPage() {
                             }
                             setContextMenu(null);
                         }}
-                        onEditVideo={contextMenu.type === "node" && contextMenu.nodeType === "video" ? () => {
-                            if (contextMenu.nodeId) {
-                                openVideoEditorForNode(contextMenu.nodeId);
-                            }
-                        } : undefined}
+                        onEditVideo={
+                            contextMenu.type === "node" && contextMenu.nodeType === "video"
+                                ? () => {
+                                      if (contextMenu.nodeId) {
+                                          openVideoEditorForNode(contextMenu.nodeId);
+                                      }
+                                  }
+                                : undefined
+                        }
                     />
                 ) : null}
 
@@ -3431,7 +3475,11 @@ function NovaCanvasPage() {
                     title={t("canvas.compliance")}
                     open={complianceReport !== null}
                     centered
-                    footer={<Button type="primary" onClick={() => setComplianceReport(null)}>{t("canvas.complianceClose")}</Button>}
+                    footer={
+                        <Button type="primary" onClick={() => setComplianceReport(null)}>
+                            {t("canvas.complianceClose")}
+                        </Button>
+                    }
                     onCancel={() => setComplianceReport(null)}
                     width={640}
                 >
@@ -3450,7 +3498,10 @@ function NovaCanvasPage() {
                                                     <li key={`${violation.field}-${violation.keyword}-${index}`} className="leading-relaxed">
                                                         <span className="mr-1 rounded bg-amber-100 px-1.5 py-0.5 text-amber-700">{violation.keyword}</span>
                                                         <span className="opacity-60">[{violation.category}]</span> {violation.suggestion}
-                                                        <span className="opacity-40"> · {t("canvas.complianceField")}: {violation.field}</span>
+                                                        <span className="opacity-40">
+                                                            {" "}
+                                                            · {t("canvas.complianceField")}: {violation.field}
+                                                        </span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -3482,18 +3533,20 @@ function NovaCanvasPage() {
                             onEditComplete={(blob, frames) => {
                                 const nodeId = videoEditorOpen.nodeId;
                                 if (!nodeId) return;
-                                setNodes((prev) => prev.map((node) => {
-                                    if (node.id !== nodeId) return node;
-                                    return {
-                                        ...node,
-                                        metadata: {
-                                            ...node.metadata,
-                                            content: URL.createObjectURL(blob),
-                                            status: NODE_STATUS_SUCCESS,
-                                            editedFrames: frames.length,
-                                        },
-                                    };
-                                }));
+                                setNodes((prev) =>
+                                    prev.map((node) => {
+                                        if (node.id !== nodeId) return node;
+                                        return {
+                                            ...node,
+                                            metadata: {
+                                                ...node.metadata,
+                                                content: URL.createObjectURL(blob),
+                                                status: NODE_STATUS_SUCCESS,
+                                                editedFrames: frames.length,
+                                            },
+                                        };
+                                    }),
+                                );
                                 message.success(t("videoEditor.editComplete", { count: frames.length }));
                             }}
                             onError={(err) => message.error(err.message)}

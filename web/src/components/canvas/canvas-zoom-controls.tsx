@@ -34,10 +34,11 @@ export function CanvasZoomControls({ scale, onScaleChange, onReset, isMiniMapOpe
                         icon={<Compass className="size-4" />}
                         onClick={onToggleMiniMap}
                         aria-label={isMiniMapOpen ? t("canvas.miniMapClose") : t("canvas.miniMapOpen")}
+                        data-testid="canvas-toggle-minimap"
                     />
                 </Tooltip>
                 <Tooltip title={t("canvas.resetView")}>
-                    <Button type="text" className="!h-8 !w-8 !min-w-8 !p-0" style={{ color: theme.toolbar.item }} icon={<Focus className="size-4" />} onClick={onReset} aria-label={t("canvas.resetView")} />
+                    <Button type="text" className="!h-8 !w-8 !min-w-8 !p-0" style={{ color: theme.toolbar.item }} icon={<Focus className="size-4" />} onClick={onReset} aria-label={t("canvas.resetView")} data-testid="canvas-reset-view" />
                 </Tooltip>
                 <Tooltip title={t("canvas.zoom")}>
                     <input
@@ -56,7 +57,14 @@ export function CanvasZoomControls({ scale, onScaleChange, onReset, isMiniMapOpe
                     {Math.round(scale * 100)}%
                 </span>
                 <Tooltip title={t("canvas.shortcuts")}>
-                    <Button type="text" className="!h-8 !w-8 !min-w-8 !p-0" style={shortcutsOpen ? activeStyle : { color: theme.toolbar.item }} icon={<HelpCircle className="size-4" />} onClick={() => setShortcutsOpen(true)} aria-label={t("canvas.shortcuts")} />
+                    <Button
+                        type="text"
+                        className="!h-8 !w-8 !min-w-8 !p-0"
+                        style={shortcutsOpen ? activeStyle : { color: theme.toolbar.item }}
+                        icon={<HelpCircle className="size-4" />}
+                        onClick={() => setShortcutsOpen(true)}
+                        aria-label={t("canvas.shortcuts")}
+                    />
                 </Tooltip>
             </div>
             <Modal title={t("canvas.shortcuts")} open={shortcutsOpen} onCancel={() => setShortcutsOpen(false)} footer={null} centered>
