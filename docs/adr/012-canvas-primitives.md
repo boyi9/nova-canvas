@@ -50,9 +50,20 @@
 
 文本沿用 `TextContent`（双击进入编辑、`fontSize`/`fontColor` 等元数据），图片沿用 `ImageNodeContent`（`object-contain` 显示、批次展开、下载/重试）。本阶段只补画布级验收，不重写既有渲染器。
 
+### 5. 样式可视化配置
+
+样式通过 `ShapeStylePanel` 编辑，写回同一组元数据字段，渲染器无需改动：
+
+- 入口一：悬浮工具条“样式”按钮；
+- 入口二：双击矩形/圆形节点；
+- 填充、描边：预设色板 + 原生取色器 + “无”（`none`）；
+- 描边宽度：0–16px 滑杆，步进 0.5；
+- 圆角：仅矩形显示，0–120px 滑杆；
+- 面板修改经 `handleNodeMetadataChange` 写回节点并进入历史记录。
+
 ## 影响
 
 - 新增图元类型时必须同时补齐 `NODE_DEFAULT_SIZE`、`NODE_SPECS`、`nodeContentRenderers` 三处 `satisfies Record<CanvasNodeType, ...>`，类型检查会兜底；
-- `shape-geometry.test.ts` 固定几何与样式清洗行为；`web/e2e/canvas-shapes.spec.ts` 覆盖矩形/圆形创建与 SVG 属性、圆形等比缩放、文本草稿渲染、图片上传渲染；
+- `shape-geometry.test.ts` 固定几何与样式清洗行为；`web/e2e/canvas-shapes.spec.ts` 覆盖矩形/圆形创建与 SVG 属性、圆形等比缩放、文本草稿渲染、图片上传渲染，以及样式面板改填充/描边/描边宽度/圆角与关闭；
 - 画布容器由 `overflow-hidden` 改为 `overflow-clip`：浏览器在聚焦画布内元素时不会滚动容器，避免世界层整体偏移破坏“视口属性 ↔ 屏幕坐标”的一致性；
-- 形状样式目前通过元数据设置，尚未提供可视化属性面板；后续若加面板，直接写回上述字段即可，无需改渲染器。
+- 样式面板复用节点下方的 `renderPanel` 容器，因此面板会随节点一起缩放；缩放比例较大时可考虑改为独立浮层。

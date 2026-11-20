@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { App, Modal, Segmented, Tooltip } from "antd";
-import { Download, Ellipsis, FolderPlus, Image as ImageIcon, Info, MessageSquare, Minus, Music2, Pencil, Plus, RefreshCw, Settings2, Trash2, Upload, Video } from "lucide-react";
+import { Download, Ellipsis, FolderPlus, Image as ImageIcon, Info, MessageSquare, Minus, Music2, Palette, Pencil, Plus, RefreshCw, Settings2, Trash2, Upload, Video } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { canvasThemes } from "@/lib/canvas-theme";
@@ -120,6 +120,7 @@ export function CanvasNodeHoverToolbar({
     const isText = node.type === CanvasNodeType.Text;
     const isNovaText = node.type === CanvasNodeType.NovaText;
     const isConfig = node.type === CanvasNodeType.Config;
+    const isShape = node.type === CanvasNodeType.Rectangle || node.type === CanvasNodeType.Circle;
     const canOpenDialog = isText || isNovaText || hasImage || isVideo;
     const canRetry = node.metadata?.status === "error";
     const quickImageToolIdSet = new Set(quickImageToolIds);
@@ -161,6 +162,7 @@ export function CanvasNodeHoverToolbar({
         ...(canOpenDialog ? [{ id: "edit", title: t("common.edit"), label: t("common.edit"), icon: <MessageSquare className="size-4" />, onClick: () => onToggleDialog(node) }] : []),
         ...(isText ? [{ id: "editText", title: t("canvas.nodeToolbar.editTextTitle"), label: t("canvas.nodeToolbar.editText"), icon: <Pencil className="size-4" />, onClick: () => onEditText(node) }] : []),
         ...(isText ? [{ id: "generateImage", title: t("canvas.node.generateImage"), label: t("canvas.node.generate"), icon: <ImageIcon className="size-4" />, onClick: () => onGenerateImage(node) }] : []),
+        ...(isShape ? [{ id: "shapeStyle", title: t("canvas.shape.styleTitle"), label: t("canvas.shape.style"), icon: <Palette className="size-4" />, onClick: () => onToggleDialog(node) }] : []),
         ...(isConfig ? [{ id: "config", title: t("canvas.configNode.title"), label: t("canvas.configNode.title"), icon: <Settings2 className="size-4" />, onClick: () => onToggleDialog(node) }] : []),
         ...(isText ? [{ id: "decreaseFont", title: t("canvas.nodeToolbar.decreaseFont"), label: t("canvas.nodeToolbar.zoomOut"), icon: <Minus className="size-4" />, onClick: () => onDecreaseFont(node) }] : []),
         ...(isText ? [{ id: "increaseFont", title: t("canvas.nodeToolbar.increaseFont"), label: t("canvas.nodeToolbar.zoomIn"), icon: <Plus className="size-4" />, onClick: () => onIncreaseFont(node) }] : []),

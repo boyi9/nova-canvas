@@ -173,6 +173,55 @@ test("image node renders an uploaded file through an object URL", async ({ page 
         .toBeGreaterThan(0);
 });
 
+test("shape style panel configures fill, stroke, stroke width and corner radius", async ({ page }) => {
+    const container = await openNewCanvas(page);
+    const box = await waitForStableBox(page, container);
+    expect(box).not.toBeNull();
+
+    const center = { x: box!.x + box!.width * 0.5, y: box!.y + box!.height * 0.18 };
+    await createNodeAt(page, center.x, center.y, "rectangle");
+
+    const node = page.locator('[data-node-id^="rectangle-"]');
+    await expect(node).toBeVisible();
+
+    // 双击图元打开样式面板。
+    await node.dblclick();
+    const panel = page.getByTestId("canvas-shape-style-panel");
+    await expect(panel).toBeVisible();
+
+    const rect = node.locator('svg[data-shape-kind="rect"] rect');
+    await expect(rect).toHaveAttribute("fill", "#dbeafe");
+
+    // 点击预设色板改填充，点击“无”清空填充。
+    await panel.locator('[data-color-field="fill"] button[title="#2563eb"]').click();
+    await expect(rect).toHaveAttribute("fill", "#2563eb");
+    await panel.locator('[data-color-field="fill"] button', { hasText: "无" }).click();
+    await expect(rect).toHaveAttribute("fill", "none");
+
+    // 描边色 + 描边宽度滑杆（键盘步进 0.5）。
+    await panel.locator('[data-color-field="stroke"] button[title="#16a34a"]').click();
+    await expect(rect).toHaveAttribute("stroke", "#16a34a");
+    const sliders = panel.getByRole("slider");
+    await expect(sliders).toHaveCount(2);
+    await sliders.nth(0).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(rect).toHaveAttribute("stroke-width", "2.5");
+
+    // 圆角滑杆（步进 1）。
+    await sliders.nth(1).focus();
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowRight");
+    await expect(rect).toHaveAttribute("rx", "19");
+
+    // 悬浮工具条的“样式”入口也能打开同一面板，关闭按钮可收起。
+    await panel.locator('button[aria-label="关闭"]').click();
+    await expect(panel).toBeHidden();
+    await node.hover();
+    await page.locator('button[aria-label="配置图元样式"]').first().click();
+    await expect(panel).toBeVisible();
+});
+
 test("text node drafts render as plain text on the canvas", async ({ page }) => {
     const container = await openNewCanvas(page);
     const box = await waitForStableBox(page, container);

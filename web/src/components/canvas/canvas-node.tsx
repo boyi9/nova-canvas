@@ -65,6 +65,7 @@ type CanvasNodeProps = {
     onRetry?: (node: CanvasNodeData) => void;
     onGenerateImage?: (node: CanvasNodeData) => void;
     onViewImage?: (node: CanvasNodeData) => void;
+    onStyleOpen?: (node: CanvasNodeData) => void;
     onContextMenu: (event: React.MouseEvent, nodeId: string, nodeType?: string) => void;
 };
 
@@ -131,6 +132,7 @@ export const CanvasNode = React.memo(function CanvasNode({
     onRetry,
     onGenerateImage,
     onViewImage,
+    onStyleOpen,
     onContextMenu,
 }: CanvasNodeProps) {
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
@@ -145,6 +147,7 @@ export const CanvasNode = React.memo(function CanvasNode({
     const hasVideoContent = data.type === CanvasNodeType.Video && Boolean(data.metadata?.content);
     const hasAudioContent = data.type === CanvasNodeType.Audio && Boolean(data.metadata?.content);
     const isGroup = data.type === CanvasNodeType.Group;
+    const isShape = data.type === CanvasNodeType.Rectangle || data.type === CanvasNodeType.Circle;
     const batchCount = data.type === CanvasNodeType.Image ? data.metadata?.images?.length || 0 : 0;
     const isBatchRoot = batchCount > 1;
     // Nodes with the interaction/move toggle ignore content pointer events in move mode and allow interaction in interactive mode.
@@ -403,6 +406,11 @@ export const CanvasNode = React.memo(function CanvasNode({
                     if (data.type === CanvasNodeType.Image && hasImageContent) {
                         event.stopPropagation();
                         onViewImage?.(data);
+                        return;
+                    }
+                    if (isShape && onStyleOpen) {
+                        event.stopPropagation();
+                        onStyleOpen(data);
                         return;
                     }
                     if (!EDITABLE_NODE_TYPES.has(data.type)) return;

@@ -56,6 +56,7 @@ import { NovaCanvas } from "@/components/canvas/nova-canvas";
 import { Minimap } from "@/components/canvas/canvas-mini-map";
 import { CanvasNode } from "@/components/canvas/canvas-node";
 import { CanvasNodePromptPanel, type CanvasNodeGenerationMode } from "@/components/canvas/canvas-node-prompt-panel";
+import { ShapeStylePanel } from "@/components/canvas/nodes/ShapeStylePanel";
 import { CanvasToolbar } from "@/components/canvas/canvas-toolbar";
 import { NodePhysicsSim } from "@/lib/canvas/physics-sandbox";
 import { AssetPickerModal, type InsertAssetPayload } from "@/components/canvas/asset-picker-modal";
@@ -3023,6 +3024,8 @@ function NovaCanvasPage() {
         (panelNode: CanvasNodeData) =>
             getNodeDefinition(panelNode.type)?.Panel ? (
                 renderPluginPanel(panelNode)
+            ) : panelNode.type === CanvasNodeType.Rectangle || panelNode.type === CanvasNodeType.Circle ? (
+                <ShapeStylePanel node={panelNode} onMetadataChange={handleNodeMetadataChange} onClose={() => setDialogNodeId(null)} />
             ) : panelNode.type === CanvasNodeType.Config ? (
                 <CanvasConfigComposer
                     value={panelNode.metadata?.composerContent ?? panelNode.metadata?.prompt ?? ""}
@@ -3046,7 +3049,7 @@ function NovaCanvasPage() {
                     }}
                 />
             ),
-        [configInputsById, confirmStopGeneration, handleConfigNodeChange, handleGenerateNode, handleNodePromptChange, mentionReferencesByNodeId, renderPluginPanel, runningNodeId],
+        [configInputsById, confirmStopGeneration, handleConfigNodeChange, handleGenerateNode, handleNodeMetadataChange, handleNodePromptChange, mentionReferencesByNodeId, renderPluginPanel, runningNodeId],
     );
 
     const renderNodeContentPanel = useCallback(
@@ -3302,6 +3305,7 @@ function NovaCanvasPage() {
                             onRetry={handleNodeRetry}
                             onGenerateImage={generateImageFromTextNode}
                             onViewImage={handleNodeViewImage}
+                            onStyleOpen={(node) => setDialogNodeId(node.id)}
                             onContextMenu={handleNodeContextMenu}
                         />
                     ))}
