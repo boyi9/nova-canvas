@@ -41,13 +41,14 @@ world  = (screen - (x, y)) / k
 
 ### 3. 缩放与平移
 
-- 缩放范围 `0.05 – 5`（`MIN_ZOOM` / `MAX_ZOOM`），所有入口统一经 `clampZoom`；
+- 缩放范围 `0.05 – 5`（`MIN_ZOOM` / `MAX_ZOOM`），所有入口统一经 `clampZoom`；`±Infinity` 饱和到边界，只有 `NaN` 回退 100%，极端滚轮增量不会把画布“弹回”100%；
 - 滚轮因子 `1.1^(-deltaY / 100)`，以指针位置为锚点（`zoomAtScreenPoint`），锚点下的世界坐标保持不动；
 - 滚轮 `deltaY` 先经 `normalizeWheelDelta` 归一化：行模式（Firefox，`deltaMode = 1`）按 16px/行、页模式按 100px/页折算，避免同一手势在不同浏览器缩放速度差一个数量级；
 - 连续滚轮事件以 `latestViewportRef` 同步累加，不依赖尚未回写的 React props，避免同一帧内多次缩放被合并丢失；
 - 缩放滑杆以容器中心为锚点（`setZoomAtScreenPoint`）；
 - 聚焦节点使用 `fitViewportToBounds(..., { paddingRatio: 0.2, maxZoom: 1 })`，节点占容器约 60%，小节点最多放大到 100%；
 - 平移使用 `panViewportBy`，只改 `x/y`，不动 `k`；入口包括空格 / Ctrl 临时切换、`pan` 工具左键拖拽、鼠标中键拖拽；
+- 屏幕像素位移换算世界位移统一走 `screenDeltaToWorld`（节点拖拽、框选、连线命中），组件不手写 `/ k`；
 - 平移以按下瞬间的视口为基准做增量计算，指针移动经 `requestAnimationFrame` 合并提交，抬起时补发最后一帧。
 
 ### 4. 可见区域与容器尺寸变化

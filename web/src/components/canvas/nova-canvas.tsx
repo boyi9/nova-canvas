@@ -176,7 +176,9 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
             if (frameRef.current) return;
             frameRef.current = requestAnimationFrame(() => {
                 frameRef.current = null;
-                if (nextViewportRef.current) emitViewport(nextViewportRef.current);
+                const next = nextViewportRef.current;
+                nextViewportRef.current = null;
+                if (next) emitViewport(next);
             });
         };
 

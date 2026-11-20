@@ -18,7 +18,7 @@ import { useAssetStore } from "@/stores/use-asset-store";
 import { useThemeStore } from "@/stores/use-theme-store";
 import { cropDataUrl, splitDataUrl, upscaleDataUrl } from "@/lib/canvas/canvas-image-data";
 import { fitNodeSize, nodeSizeFromRatio } from "@/lib/canvas/canvas-node-size";
-import { clientToWorld, createInitialViewport, fitViewportToBounds, getVisibleWorldRect, isUntouchedViewport, resizeViewport, sanitizeViewport, setZoomAtScreenPoint } from "@/lib/canvas/viewport";
+import { clientToWorld, createInitialViewport, fitViewportToBounds, getVisibleWorldRect, isUntouchedViewport, resizeViewport, sanitizeViewport, screenDeltaToWorld, setZoomAtScreenPoint } from "@/lib/canvas/viewport";
 import { App, Button, List, Modal, Spin } from "antd";
 import { NODE_DEFAULT_SIZE, getNodeSpec } from "@/constant/canvas";
 import { ActiveConnectionPath, ConnectionPath } from "@/components/canvas/canvas-connections";
@@ -1267,8 +1267,7 @@ function NovaCanvasPage() {
         const wasClick = !dragRef.current.hasMoved && dragRef.current.initialSelectedNodes.length === 1;
         const clickedNodeId = dragRef.current.initialSelectedNodes[0]?.id;
         const currentViewport = viewportRef.current;
-        const dx = clientX == null ? 0 : (clientX - dragRef.current.startX) / currentViewport.k;
-        const dy = clientY == null ? 0 : (clientY - dragRef.current.startY) / currentViewport.k;
+        const { x: dx, y: dy } = screenDeltaToWorld(currentViewport, clientX == null ? 0 : clientX - dragRef.current.startX, clientY == null ? 0 : clientY - dragRef.current.startY);
         const initialPositions = dragRef.current.initialSelectedNodes;
 
         historyPausedRef.current = false;
@@ -1315,8 +1314,7 @@ function NovaCanvasPage() {
             const currentViewport = viewportRef.current;
 
             if (dragRef.current.isDraggingNode) {
-                const dx = (event.clientX - dragRef.current.startX) / currentViewport.k;
-                const dy = (event.clientY - dragRef.current.startY) / currentViewport.k;
+                const { x: dx, y: dy } = screenDeltaToWorld(currentViewport, event.clientX - dragRef.current.startX, event.clientY - dragRef.current.startY);
                 const initialPositions = dragRef.current.initialSelectedNodes;
                 if (Math.abs(event.clientX - dragRef.current.startX) > 3 || Math.abs(event.clientY - dragRef.current.startY) > 3) {
                     dragRef.current.hasMoved = true;

@@ -224,6 +224,42 @@ test("double-click maps the screen point to the same world position for the new 
         .toBeLessThan(2);
 });
 
+test("dragging a node moves it by the same screen delta at any zoom", async ({ page }) => {
+    const container = await openNewCanvas(page);
+    const box = await waitForStableBox(page, container);
+    expect(box).not.toBeNull();
+
+    // 缩放到非 1 倍，验证拖拽的屏幕位移→世界位移换算。
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.wheel(0, -240);
+    await expect.poll(async () => (await readViewport(page)).k).toBeGreaterThan(1.2);
+
+    const target = { x: box!.x + box!.width * 0.35, y: box!.y + box!.height * 0.4 };
+    await page.mouse.dblclick(target.x, target.y);
+    const menu = page.getByTestId("canvas-node-create-menu");
+    await expect(menu).toBeVisible();
+    await menu.locator('[data-node-type="text"]').first().click();
+
+    const node = page.locator("[data-node-id]").first();
+    await expect(node).toBeVisible();
+    const before = await node.boundingBox();
+    expect(before).not.toBeNull();
+    const start = { x: before!.x + before!.width / 2, y: before!.y + before!.height / 2 };
+
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(start.x + 60, start.y + 40, { steps: 8 });
+    await page.mouse.up();
+
+    await expect
+        .poll(async () => {
+            const after = await node.boundingBox();
+            if (!after) return Number.POSITIVE_INFINITY;
+            return Math.max(Math.abs(after.x + after.width / 2 - (start.x + 60)), Math.abs(after.y + after.height / 2 - (start.y + 40)));
+        })
+        .toBeLessThan(1.5);
+});
+
 test("reset restores 100% zoom with the origin centered", async ({ page }) => {
     const container = await openNewCanvas(page);
     const box = await waitForStableBox(page, container);

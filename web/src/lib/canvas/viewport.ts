@@ -41,9 +41,12 @@ function safeSize(size: Partial<CanvasSize> | null | undefined): CanvasSize {
  * `min`/`max` 允许调用方传入更窄的区间（例如聚焦节点时最高锁定到 1）。
  */
 export function clampZoom(zoom: number, min: number = MIN_ZOOM, max: number = MAX_ZOOM): number {
-    if (!isFiniteNumber(zoom)) return DEFAULT_ZOOM;
     const lower = isFiniteNumber(min) && min > 0 ? min : MIN_ZOOM;
     const upper = isFiniteNumber(max) && max >= lower ? max : lower;
+    // 溢出到 ±∞（极端滚轮增量）应顶到缩放边界，而不是回退 100%。
+    if (zoom === Number.POSITIVE_INFINITY) return upper;
+    if (zoom === Number.NEGATIVE_INFINITY) return lower;
+    if (!isFiniteNumber(zoom)) return DEFAULT_ZOOM;
     return Math.min(Math.max(zoom, lower), upper);
 }
 
@@ -89,6 +92,18 @@ export function worldToScreen(viewport: ViewportTransform, point: Position): Pos
     return {
         x: point.x * viewport.k + viewport.x,
         y: point.y * viewport.k + viewport.y,
+    };
+}
+
+/**
+ * 屏幕像素位移换算成世界位移：拖拽节点/框选时把鼠标移动距离折算到世界单位。
+ * 只与缩放比有关，与视口平移量无关，非法分量按 0 处理。
+ */
+export function screenDeltaToWorld(viewport: ViewportTransform, dx: number, dy: number): Position {
+    const zoom = clampZoom(viewport.k);
+    return {
+        x: (isFiniteNumber(dx) ? dx : 0) / zoom,
+        y: (isFiniteNumber(dy) ? dy : 0) / zoom,
     };
 }
 

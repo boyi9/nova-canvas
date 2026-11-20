@@ -17,6 +17,7 @@ import {
     panViewportBy,
     resizeViewport,
     sanitizeViewport,
+    screenDeltaToWorld,
     screenToWorld,
     setZoomAtScreenPoint,
     wheelZoomFactor,
@@ -31,9 +32,14 @@ describe("clampZoom", () => {
         expect(clampZoom(100)).toBe(MAX_ZOOM);
     });
 
-    it("falls back to 100% for non-finite input", () => {
+    it("falls back to 100% only for NaN", () => {
         expect(clampZoom(Number.NaN)).toBe(1);
-        expect(clampZoom(Number.POSITIVE_INFINITY)).toBe(1);
+    });
+
+    it("saturates infinite overflow at the bounds", () => {
+        expect(clampZoom(Number.POSITIVE_INFINITY)).toBe(MAX_ZOOM);
+        expect(clampZoom(Number.NEGATIVE_INFINITY)).toBe(MIN_ZOOM);
+        expect(clampZoom(Number.POSITIVE_INFINITY, MIN_ZOOM, 1)).toBe(1);
     });
 
     it("accepts a narrower caller range", () => {
@@ -162,6 +168,18 @@ describe("normalizeWheelDelta", () => {
         expect(normalizeWheelDelta(0, 0)).toBe(0);
         expect(normalizeWheelDelta(Number.NaN, 1)).toBe(0);
         expect(normalizeWheelDelta(Number.POSITIVE_INFINITY, 0)).toBe(0);
+    });
+});
+
+describe("screenDeltaToWorld", () => {
+    it("scales client pixel deltas by the zoom factor", () => {
+        expect(screenDeltaToWorld({ x: 100, y: -40, k: 2 }, 20, -10)).toEqual({ x: 10, y: -5 });
+        expect(screenDeltaToWorld({ x: 0, y: 0, k: 0.05 }, 10, 20)).toEqual({ x: 200, y: 400 });
+    });
+
+    it("ignores invalid components", () => {
+        expect(screenDeltaToWorld({ x: 0, y: 0, k: 2 }, Number.NaN, Number.POSITIVE_INFINITY)).toEqual({ x: 0, y: 0 });
+        expect(screenDeltaToWorld({ x: 0, y: 0, k: 1 }, 10, 0)).toEqual({ x: 10, y: 0 });
     });
 });
 
