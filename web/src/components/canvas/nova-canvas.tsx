@@ -236,7 +236,7 @@ export function NovaCanvas({ containerRef, viewport, tool, backgroundMode = "lin
         <div
             ref={containerRef}
             data-testid="canvas-container"
-            className="relative h-full w-full select-none overflow-hidden"
+            className="relative h-full w-full select-none overflow-clip"
             style={{ background: theme.canvas.background, cursor }}
             onPointerDown={handlePointerDown}
             onDoubleClick={handleDoubleClick}

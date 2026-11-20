@@ -1,4 +1,4 @@
-import { FileText, Group, Image as ImageIcon, Music2, Settings2, Video, Type, Package, Clapperboard, Film, Bookmark, Layers } from "lucide-react";
+import { FileText, Group, Image as ImageIcon, Music2, Settings2, Video, Type, Package, Clapperboard, Film, Bookmark, Layers, Square, Circle } from "lucide-react";
 
 import i18n from "@/i18n";
 
@@ -24,7 +24,14 @@ function builtinResource(node: CanvasNodeData): CanvasNodeResource | null {
         if (summary) return { kind: "text", text: summary };
     }
     if (node.type === CanvasNodeType.Recipe) {
-        const summary = [node.metadata?.recipeName, Object.entries(node.metadata?.params || {}).map(([k, v]) => `${k}: ${v}`).join(", ")].filter(Boolean).join(" · ");
+        const summary = [
+            node.metadata?.recipeName,
+            Object.entries(node.metadata?.params || {})
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(", "),
+        ]
+            .filter(Boolean)
+            .join(" · ");
         if (summary) return { kind: "text", text: summary };
     }
     if (node.type === CanvasNodeType.Multimodal) {
@@ -53,6 +60,9 @@ const BUILTIN_DEFINITIONS: CanvasNodeDefinition[] = [
     { type: CanvasNodeType.VideoTrack, title: i18n.t("assets.kinds.videoTrack"), icon: <Film className={iconClass} />, minimapColor: "#ec4899", resource: builtinResource },
     { type: CanvasNodeType.Recipe, title: i18n.t("assets.kinds.recipe"), icon: <Bookmark className={iconClass} />, minimapColor: "#8b5cf6", resource: builtinResource },
     { type: CanvasNodeType.Multimodal, title: i18n.t("assets.kinds.multimodal"), icon: <Layers className={iconClass} />, minimapColor: "#06b6d4", resource: builtinResource },
+    // 形状图元使用透明节点底色，让 SVG 直接融入画布。
+    { type: CanvasNodeType.Rectangle, title: i18n.t("assets.kinds.rectangle"), icon: <Square className={iconClass} />, minimapColor: "#3b82f6", transparentBackground: true },
+    { type: CanvasNodeType.Circle, title: i18n.t("assets.kinds.circle"), icon: <Circle className={iconClass} />, minimapColor: "#22c55e", transparentBackground: true, keepAspectRatio: () => true },
 ].map((def) => {
     const spec = NODE_SPECS[def.type];
     return { ...def, title: spec.title, defaultSize: { width: spec.width, height: spec.height }, defaultMetadata: spec.metadata };

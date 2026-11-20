@@ -82,7 +82,7 @@ export default {
         importFailed: "Import failed. Select a valid asset package.",
         deleted: "Asset deleted",
         packageName: "my-assets.zip",
-        kinds: { text: "Text", novaText: "Rich Text", image: "Image", video: "Video", audio: "Audio", product: "Product", storyboard: "Storyboard", videoTrack: "Video Track", recipe: "Recipe", multimodal: "Multimodal" },
+        kinds: { text: "Text", novaText: "Rich Text", image: "Image", video: "Video", audio: "Audio", product: "Product", storyboard: "Storyboard", videoTrack: "Video Track", recipe: "Recipe", multimodal: "Multimodal", rectangle: "Rectangle", circle: "Circle" },
         fields: {
             title: "Title",
             titleRequired: "Enter a title",
@@ -584,7 +584,7 @@ export default {
         runWorkflowError: "Workflow run failed",
         detailLayout: "Detail page layout",
         detailLayoutApplied: "Arranged {{count}} nodes into the best-selling detail-page structure",
-        nodeTypes: { image: "Image", text: "Text", novaText: "Rich Text", config: "Generation config", video: "Video", audio: "Audio", group: "Group", product: "Product", storyboard: "Storyboard", videoTrack: "Video Track", recipe: "Recipe", multimodal: "Multimodal", drama: "Short Drama", portraitDirector: "Portrait Director" },
+        nodeTypes: { image: "Image", text: "Text", novaText: "Rich Text", config: "Generation config", video: "Video", audio: "Audio", group: "Group", product: "Product", storyboard: "Storyboard", videoTrack: "Video Track", recipe: "Recipe", multimodal: "Multimodal", rectangle: "Rectangle", circle: "Circle", drama: "Short Drama", portraitDirector: "Portrait Director" },
         toolbar: {
             select: "Select", pan: "Move", text: "Text", image: "Image", video: "Video", audio: "Audio", config: "Generation config", group: "Group", extensions: "Extension nodes", upload: "Upload assets", appearance: "Canvas appearance", physics: "Physics sandbox", clear: "Clear canvas",
             themeMode: "Theme", light: "Light", dark: "Dark", gridStyle: "Grid style", dots: "Dots", lines: "Lines", blank: "Blank", imageInfo: "Image info",

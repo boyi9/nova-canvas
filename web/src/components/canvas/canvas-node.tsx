@@ -14,6 +14,7 @@ import { StoryboardNodeRenderer } from "./nodes/StoryboardNode";
 import { VideoTrackNodeRenderer } from "./nodes/VideoTrackNode";
 import { RecipeNodeRenderer } from "./nodes/RecipeNode";
 import { MultimodalNodeRenderer } from "./nodes/MultimodalNode";
+import { ShapeNodeRenderer } from "./nodes/ShapeNode";
 import { CanvasNodeType, type CanvasNodeData, type CanvasNodeImage, type CanvasNodeMetadata, type CanvasNodeTypeId, type Position } from "@/types/canvas";
 import type { CanvasNodeContext, CanvasPluginHost } from "@/types/canvas-plugin";
 import type { CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
@@ -23,15 +24,7 @@ type ResizeCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 const selectionBlue = "#2f80ff";
 
 // Node types whose content is inline-editable (double-click / edit request).
-const EDITABLE_NODE_TYPES = new Set<CanvasNodeTypeId>([
-    CanvasNodeType.Text,
-    CanvasNodeType.NovaText,
-    CanvasNodeType.Product,
-    CanvasNodeType.Storyboard,
-    CanvasNodeType.VideoTrack,
-    CanvasNodeType.Recipe,
-    CanvasNodeType.Multimodal,
-]);
+const EDITABLE_NODE_TYPES = new Set<CanvasNodeTypeId>([CanvasNodeType.Text, CanvasNodeType.NovaText, CanvasNodeType.Product, CanvasNodeType.Storyboard, CanvasNodeType.VideoTrack, CanvasNodeType.Recipe, CanvasNodeType.Multimodal]);
 
 type CanvasNodeProps = {
     data: CanvasNodeData;
@@ -380,7 +373,19 @@ export const CanvasNode = React.memo(function CanvasNode({
                 className="relative h-full w-full overflow-visible rounded-3xl border-2"
                 style={{
                     background: isGroup ? `${theme.toolbar.panel}66` : hasImageContent || hasVideoContent || transparentBg ? "transparent" : theme.node.fill,
-                    borderColor: isGroup ? (isGroupDropTarget || isActive ? selectionBlue : theme.node.stroke) : hasImageContent ? imageBorderColor : isActive ? selectionBlue : isRelated ? theme.node.muted : transparentBg ? "transparent" : theme.node.stroke,
+                    borderColor: isGroup
+                        ? isGroupDropTarget || isActive
+                            ? selectionBlue
+                            : theme.node.stroke
+                        : hasImageContent
+                          ? imageBorderColor
+                          : isActive
+                            ? selectionBlue
+                            : isRelated
+                              ? theme.node.muted
+                              : transparentBg
+                                ? "transparent"
+                                : theme.node.stroke,
                     borderStyle: isGroup ? "dashed" : "solid",
                     boxShadow: isGroupDropTarget ? `0 0 0 2px ${selectionBlue}66, inset 0 0 0 999px ${selectionBlue}10` : isActive ? `0 0 0 1px ${selectionBlue}55` : isRelated ? `0 0 0 1px ${theme.node.muted}55, 0 18px 48px rgba(0,0,0,.14)` : undefined,
                 }}
@@ -442,7 +447,9 @@ export const CanvasNode = React.memo(function CanvasNode({
 
                 {showImageInfo && hasImageContent ? <ImageInfoBar node={data} /> : null}
 
-                {!isGroup && !hasImageContent && !hasVideoContent && !hasAudioContent ? <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12" style={{ background: `linear-gradient(to top, ${theme.canvas.background}66, transparent)` }} /> : null}
+                {!isGroup && !hasImageContent && !hasVideoContent && !hasAudioContent && !transparentBg ? (
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12" style={{ background: `linear-gradient(to top, ${theme.canvas.background}66, transparent)` }} />
+                ) : null}
 
                 <ResizeHandle corner="top-left" onMouseDown={handleResizeMouseDown} />
                 <ResizeHandle corner="top-right" onMouseDown={handleResizeMouseDown} />
@@ -451,7 +458,9 @@ export const CanvasNode = React.memo(function CanvasNode({
             </div>
 
             {!isGroup ? <ConnectionHandleDot side="left" visible={hovered || isSelected || isConnecting} onMouseDown={(event) => onConnectStart(event, data.id, "target")} /> : null}
-            {!isGroup ? <ConnectionHandleDot side="right" visible={(definition?.hasSourceHandle ?? true) && data.type !== CanvasNodeType.Config && (hovered || isSelected || isConnecting)} onMouseDown={(event) => onConnectStart(event, data.id, "source")} /> : null}
+            {!isGroup ? (
+                <ConnectionHandleDot side="right" visible={(definition?.hasSourceHandle ?? true) && data.type !== CanvasNodeType.Config && (hovered || isSelected || isConnecting)} onMouseDown={(event) => onConnectStart(event, data.id, "source")} />
+            ) : null}
 
             {showPanel && !isGroup && renderPanel ? <div className="absolute left-1/2 top-full z-[70] w-[600px] -translate-x-1/2 pt-4">{renderPanel(data)}</div> : null}
         </div>
@@ -489,6 +498,8 @@ const nodeContentRenderers = {
     [CanvasNodeType.VideoTrack]: VideoTrackNodeContent,
     [CanvasNodeType.Recipe]: RecipeNodeContent,
     [CanvasNodeType.Multimodal]: MultimodalNodeContent,
+    [CanvasNodeType.Rectangle]: ShapeNodeRenderer,
+    [CanvasNodeType.Circle]: ShapeNodeRenderer,
     [CanvasNodeType.Drama]: DramaNodeContent,
     [CanvasNodeType.PortraitDirector]: PortraitDirectorNodeContent,
 } satisfies Record<CanvasNodeType, (props: NodeContentRendererProps) => ReactNode>;
@@ -566,7 +577,9 @@ function DramaNodeContent({ node, theme, isEditingContent, onContentChange, onMe
                 <span className="grid size-8 place-items-center rounded-xl" style={{ background: theme.toolbar.activeBg, color: theme.node.muted }}>
                     <Clapperboard className="size-4" />
                 </span>
-                <span className="text-sm font-semibold" style={{ color: theme.node.text }}>{t("canvas.nodeTypes.drama")}</span>
+                <span className="text-sm font-semibold" style={{ color: theme.node.text }}>
+                    {t("canvas.nodeTypes.drama")}
+                </span>
             </div>
             <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
                 {acts.length > 0 ? (
@@ -577,12 +590,14 @@ function DramaNodeContent({ node, theme, isEditingContent, onContentChange, onMe
                         </div>
                     ))
                 ) : (
-                    <div className="text-xs opacity-50" style={{ color: theme.node.muted }}>{t("canvas.node.noActs")}</div>
+                    <div className="text-xs opacity-50" style={{ color: theme.node.muted }}>
+                        {t("canvas.node.noActs")}
+                    </div>
                 )}
                 {characters.length > 0 && (
                     <div className="rounded border p-2 text-xs" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }}>
                         <span className="font-medium">角色</span>
-                        <div className="mt-1 text-[10px] opacity-70">{characters.join('、')}</div>
+                        <div className="mt-1 text-[10px] opacity-70">{characters.join("、")}</div>
                     </div>
                 )}
             </div>
@@ -593,7 +608,7 @@ function DramaNodeContent({ node, theme, isEditingContent, onContentChange, onMe
 function PortraitDirectorNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
     const { t } = useTranslation();
     const metadata = node.metadata || {};
-    const characterRef = metadata.characterRef || '';
+    const characterRef = metadata.characterRef || "";
     const currentScene = metadata.currentScene || 0;
 
     return (
@@ -602,7 +617,9 @@ function PortraitDirectorNodeContent({ node, theme, isEditingContent, onContentC
                 <span className="grid size-8 place-items-center rounded-xl" style={{ background: theme.toolbar.activeBg, color: theme.node.muted }}>
                     <User className="size-4" />
                 </span>
-                <span className="text-sm font-semibold" style={{ color: theme.node.text }}>{t("canvas.nodeTypes.portraitDirector")}</span>
+                <span className="text-sm font-semibold" style={{ color: theme.node.text }}>
+                    {t("canvas.nodeTypes.portraitDirector")}
+                </span>
             </div>
             <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
                 <div className="rounded border p-2 text-xs" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }}>
@@ -619,80 +636,27 @@ function PortraitDirectorNodeContent({ node, theme, isEditingContent, onContentC
 }
 
 function NovaTextContent({ node, theme, isEditingContent, onContentChange, onStopEditing }: NodeContentRendererProps) {
-    return (
-        <NovaTextNodeRenderer
-            node={node}
-            theme={theme}
-            isEditingContent={isEditingContent}
-            onContentChange={onContentChange}
-            onStopEditing={onStopEditing}
-        />
-    );
+    return <NovaTextNodeRenderer node={node} theme={theme} isEditingContent={isEditingContent} onContentChange={onContentChange} onStopEditing={onStopEditing} />;
 }
 
 function ProductNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
-    return (
-        <ProductNodeRenderer
-            node={node}
-            theme={theme}
-            isEditingContent={isEditingContent}
-            onContentChange={onContentChange}
-            onMetadataChange={onMetadataChange}
-            onStopEditing={onStopEditing}
-        />
-    );
+    return <ProductNodeRenderer node={node} theme={theme} isEditingContent={isEditingContent} onContentChange={onContentChange} onMetadataChange={onMetadataChange} onStopEditing={onStopEditing} />;
 }
 
 function StoryboardNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
-    return (
-        <StoryboardNodeRenderer
-            node={node}
-            theme={theme}
-            isEditingContent={isEditingContent}
-            onContentChange={onContentChange}
-            onMetadataChange={onMetadataChange}
-            onStopEditing={onStopEditing}
-        />
-    );
+    return <StoryboardNodeRenderer node={node} theme={theme} isEditingContent={isEditingContent} onContentChange={onContentChange} onMetadataChange={onMetadataChange} onStopEditing={onStopEditing} />;
 }
 
 function VideoTrackNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
-    return (
-        <VideoTrackNodeRenderer
-            node={node}
-            theme={theme}
-            isEditingContent={isEditingContent}
-            onContentChange={onContentChange}
-            onMetadataChange={onMetadataChange}
-            onStopEditing={onStopEditing}
-        />
-    );
+    return <VideoTrackNodeRenderer node={node} theme={theme} isEditingContent={isEditingContent} onContentChange={onContentChange} onMetadataChange={onMetadataChange} onStopEditing={onStopEditing} />;
 }
 
 function RecipeNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
-    return (
-        <RecipeNodeRenderer
-            node={node}
-            theme={theme}
-            isEditingContent={isEditingContent}
-            onContentChange={onContentChange}
-            onMetadataChange={onMetadataChange}
-            onStopEditing={onStopEditing}
-        />
-    );
+    return <RecipeNodeRenderer node={node} theme={theme} isEditingContent={isEditingContent} onContentChange={onContentChange} onMetadataChange={onMetadataChange} onStopEditing={onStopEditing} />;
 }
 
 function MultimodalNodeContent({ node, theme, isEditingContent, onContentChange, onMetadataChange, onStopEditing }: NodeContentRendererProps) {
-    return (
-        <MultimodalNodeRenderer
-            node={node}
-            theme={theme}
-            isEditingContent={isEditingContent}
-            onContentChange={onContentChange}
-            onMetadataChange={onMetadataChange}
-            onStopEditing={onStopEditing}
-        />
-    );
+    return <MultimodalNodeRenderer node={node} theme={theme} isEditingContent={isEditingContent} onContentChange={onContentChange} onMetadataChange={onMetadataChange} onStopEditing={onStopEditing} />;
 }
 
 function TextContent({ node, theme, isEditingContent, textareaRef, mentionReferences, onContentChange, onStopEditing, onGenerateImage }: NodeContentRendererProps) {
@@ -736,11 +700,7 @@ function TextContent({ node, theme, isEditingContent, textareaRef, mentionRefere
                     onWheel={(event) => event.stopPropagation()}
                 />
             ) : (
-                <div
-                    className="thin-scrollbar block h-full w-full overflow-y-auto whitespace-pre-wrap break-words bg-transparent pl-4 pr-14 pt-0 pb-4 font-mono"
-                    style={textStyle}
-                    onWheel={(event) => event.stopPropagation()}
-                >
+                <div className="thin-scrollbar block h-full w-full overflow-y-auto whitespace-pre-wrap break-words bg-transparent pl-4 pr-14 pt-0 pb-4 font-mono" style={textStyle} onWheel={(event) => event.stopPropagation()}>
                     {node.metadata?.content || <span style={{ color: theme.node.placeholder }}>{t("canvas.node.editText")}</span>}
                 </div>
             )}
@@ -842,7 +802,19 @@ function ImageContent({
             {batchExpanded
                 ? images
                       .filter((image) => image.id !== primaryImageId)
-                      .map((image, index) => <ExpandedImageCard key={image.id} node={node} image={image} index={index} onSetPrimary={() => onSetBatchPrimary?.(image.id)} onDuplicate={() => onDuplicateBatchImage?.(image.id)} onDownload={() => onDownloadBatchImage?.(image.id)} onRetry={() => onRetryBatchImage?.(image.id)} onDelete={() => onDeleteBatchImage?.(image.id)} />)
+                      .map((image, index) => (
+                          <ExpandedImageCard
+                              key={image.id}
+                              node={node}
+                              image={image}
+                              index={index}
+                              onSetPrimary={() => onSetBatchPrimary?.(image.id)}
+                              onDuplicate={() => onDuplicateBatchImage?.(image.id)}
+                              onDownload={() => onDownloadBatchImage?.(image.id)}
+                              onRetry={() => onRetryBatchImage?.(image.id)}
+                              onDelete={() => onDeleteBatchImage?.(image.id)}
+                          />
+                      ))
                 : null}
             <div className="h-full w-full overflow-hidden rounded-3xl">
                 {primaryContent ? (
@@ -859,7 +831,13 @@ function ImageContent({
             </div>
             {primaryImage?.status === "error" ? <BatchImageFailureActions placement="left" onRetry={() => onRetryBatchImage?.(primaryImage.id)} onDelete={() => onDeleteBatchImage?.(primaryImage.id)} /> : null}
             {primaryImage?.content ? (
-                <button type="button" className="absolute left-2.5 top-2.5 z-30 flex h-8 items-center gap-1 rounded-lg border px-2 text-[10px] font-medium shadow-[0_6px_18px_rgba(15,23,42,.16)] backdrop-blur-md transition hover:scale-[1.02]" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.toolbar.activeText }} title={t("common.download")} onClick={(event) => (event.stopPropagation(), onDownloadBatchImage?.(primaryImage.id))}>
+                <button
+                    type="button"
+                    className="absolute left-2.5 top-2.5 z-30 flex h-8 items-center gap-1 rounded-lg border px-2 text-[10px] font-medium shadow-[0_6px_18px_rgba(15,23,42,.16)] backdrop-blur-md transition hover:scale-[1.02]"
+                    style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.toolbar.activeText }}
+                    title={t("common.download")}
+                    onClick={(event) => (event.stopPropagation(), onDownloadBatchImage?.(primaryImage.id))}
+                >
                     <Download className="size-3" />
                     {t("common.download")}
                 </button>
@@ -885,7 +863,25 @@ function ImageContent({
     );
 }
 
-function ExpandedImageCard({ node, image, index, onSetPrimary, onDuplicate, onDownload, onRetry, onDelete }: { node: CanvasNodeData; image: CanvasNodeImage; index: number; onSetPrimary: () => void; onDuplicate: () => void; onDownload: () => void; onRetry: () => void; onDelete: () => void }) {
+function ExpandedImageCard({
+    node,
+    image,
+    index,
+    onSetPrimary,
+    onDuplicate,
+    onDownload,
+    onRetry,
+    onDelete,
+}: {
+    node: CanvasNodeData;
+    image: CanvasNodeImage;
+    index: number;
+    onSetPrimary: () => void;
+    onDuplicate: () => void;
+    onDownload: () => void;
+    onRetry: () => void;
+    onDelete: () => void;
+}) {
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
     const { t } = useTranslation();
     const count = node.metadata?.images?.length || 0;
@@ -922,15 +918,33 @@ function ExpandedImageCard({ node, image, index, onSetPrimary, onDuplicate, onDo
             {image.content ? <img src={image.content} alt={node.title} draggable={false} className="pointer-events-none h-full w-full select-none object-contain" /> : <ImageSlotStatus image={image} />}
             {image.content ? (
                 <div className="absolute inset-x-2 top-2 flex items-center gap-1">
-                    <button type="button" className="flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1.5 text-[10px] font-medium shadow-[0_6px_18px_rgba(15,23,42,.16)] backdrop-blur-md transition hover:scale-[1.02]" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.toolbar.activeText }} title={t("common.download")} onClick={(event) => (event.stopPropagation(), onDownload())}>
+                    <button
+                        type="button"
+                        className="flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1.5 text-[10px] font-medium shadow-[0_6px_18px_rgba(15,23,42,.16)] backdrop-blur-md transition hover:scale-[1.02]"
+                        style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.toolbar.activeText }}
+                        title={t("common.download")}
+                        onClick={(event) => (event.stopPropagation(), onDownload())}
+                    >
                         <Download className="size-3 shrink-0" />
                         <span className="truncate">{t("common.download")}</span>
                     </button>
-                    <button type="button" className="flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1.5 text-[10px] font-medium shadow-[0_6px_18px_rgba(15,23,42,.16)] backdrop-blur-md transition hover:scale-[1.02]" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.toolbar.activeText }} title={t("canvas.node.createCopy")} onClick={(event) => (event.stopPropagation(), onDuplicate())}>
+                    <button
+                        type="button"
+                        className="flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1.5 text-[10px] font-medium shadow-[0_6px_18px_rgba(15,23,42,.16)] backdrop-blur-md transition hover:scale-[1.02]"
+                        style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.toolbar.activeText }}
+                        title={t("canvas.node.createCopy")}
+                        onClick={(event) => (event.stopPropagation(), onDuplicate())}
+                    >
                         <Copy className="size-3 shrink-0" />
                         <span className="truncate">{t("canvas.node.createCopy")}</span>
                     </button>
-                    <button type="button" className="flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1.5 text-[10px] font-medium shadow-[0_6px_18px_rgba(15,23,42,.16)] backdrop-blur-md transition hover:scale-[1.02]" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.toolbar.activeText }} title={t("canvas.node.setPrimary")} onClick={(event) => (event.stopPropagation(), onSetPrimary())}>
+                    <button
+                        type="button"
+                        className="flex h-8 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1.5 text-[10px] font-medium shadow-[0_6px_18px_rgba(15,23,42,.16)] backdrop-blur-md transition hover:scale-[1.02]"
+                        style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.toolbar.activeText }}
+                        title={t("canvas.node.setPrimary")}
+                        onClick={(event) => (event.stopPropagation(), onSetPrimary())}
+                    >
                         <Star className="size-3 shrink-0" style={{ color: selectionBlue }} />
                         <span className="truncate">{t("canvas.node.setPrimary")}</span>
                     </button>
@@ -946,11 +960,23 @@ function BatchImageFailureActions({ placement, onRetry, onDelete }: { placement:
     const { t } = useTranslation();
     return (
         <div className={`absolute top-3 z-30 flex items-center gap-1.5 ${placement === "left" ? "left-3" : "right-3"}`}>
-            <button type="button" className="flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium shadow-sm transition hover:scale-[1.02]" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }} onClick={(event) => (event.stopPropagation(), onRetry())}>
+            <button
+                type="button"
+                className="flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium shadow-sm transition hover:scale-[1.02]"
+                style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }}
+                onClick={(event) => (event.stopPropagation(), onRetry())}
+            >
                 <RefreshCw className="size-3.5" />
                 {t("canvas.node.retry")}
             </button>
-            <button type="button" className="grid size-8 place-items-center rounded-lg border shadow-sm transition hover:scale-[1.02]" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }} onClick={(event) => (event.stopPropagation(), onDelete())} aria-label={t("common.delete")} title={t("common.delete")}>
+            <button
+                type="button"
+                className="grid size-8 place-items-center rounded-lg border shadow-sm transition hover:scale-[1.02]"
+                style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border, color: theme.node.text }}
+                onClick={(event) => (event.stopPropagation(), onDelete())}
+                aria-label={t("common.delete")}
+                title={t("common.delete")}
+            >
                 <Trash2 className="size-3.5" />
             </button>
         </div>
@@ -963,7 +989,11 @@ function ImageSlotStatus({ image }: { image?: CanvasNodeImage }) {
     const failed = image?.status === "error";
     return (
         <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center" style={{ background: theme.node.fill, color: failed ? theme.node.text : theme.node.activeStroke }}>
-            {failed ? <span className="text-xs leading-5">{image.errorDetails || t("canvas.node.failed")}</span> : <div className="size-10 animate-spin rounded-full border-2" style={{ borderColor: theme.node.stroke, borderTopColor: theme.node.activeStroke }} />}
+            {failed ? (
+                <span className="text-xs leading-5">{image.errorDetails || t("canvas.node.failed")}</span>
+            ) : (
+                <div className="size-10 animate-spin rounded-full border-2" style={{ borderColor: theme.node.stroke, borderTopColor: theme.node.activeStroke }} />
+            )}
             {!failed ? <span className="text-[10px] tracking-[0.2em]">{t("canvas.node.generating")}</span> : null}
         </div>
     );
@@ -1028,7 +1058,7 @@ function ResizeHandle({ corner, onMouseDown }: { corner: ResizeCorner; onMouseDo
         "bottom-right": "-bottom-[14px] -right-[14px] cursor-nwse-resize",
     }[corner];
 
-    return <div className={`absolute z-50 size-7 ${positionClass}`} onMouseDown={(event) => onMouseDown(event, corner)} />;
+    return <div data-resize-handle={corner} className={`absolute z-50 size-7 ${positionClass}`} onMouseDown={(event) => onMouseDown(event, corner)} />;
 }
 
 function ConnectionHandleDot({ side, visible, onMouseDown }: { side: "left" | "right"; visible: boolean; onMouseDown: (event: React.MouseEvent) => void }) {

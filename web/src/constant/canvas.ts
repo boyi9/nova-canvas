@@ -11,77 +11,247 @@ type CanvasNodeSpec = {
 };
 
 export const NODE_DEFAULT_SIZE = {
-    [CanvasNodeType.Image]: { width: 340, height: 240, get title() { return i18n.t("canvas.nodeTypes.image"); } },
-    [CanvasNodeType.Text]: { width: 340, height: 240, get title() { return i18n.t("canvas.nodeTypes.text"); } },
-    [CanvasNodeType.NovaText]: { width: 400, height: 300, get title() { return i18n.t("canvas.nodeTypes.novaText"); } },
-    [CanvasNodeType.Config]: { width: 340, height: 240, get title() { return i18n.t("canvas.nodeTypes.config"); } },
-    [CanvasNodeType.Video]: { width: 420, height: 236, get title() { return i18n.t("canvas.nodeTypes.video"); } },
-    [CanvasNodeType.Audio]: { width: 340, height: 120, get title() { return i18n.t("canvas.nodeTypes.audio"); } },
-    [CanvasNodeType.Group]: { width: 760, height: 480, get title() { return i18n.t("canvas.nodeTypes.group"); } },
-    [CanvasNodeType.Product]: { width: 340, height: 420, get title() { return i18n.t("canvas.nodeTypes.product"); } },
-    [CanvasNodeType.Storyboard]: { width: 420, height: 300, get title() { return i18n.t("canvas.nodeTypes.storyboard"); } },
-    [CanvasNodeType.VideoTrack]: { width: 600, height: 200, get title() { return i18n.t("canvas.nodeTypes.videoTrack"); } },
-    [CanvasNodeType.Recipe]: { width: 340, height: 300, get title() { return i18n.t("canvas.nodeTypes.recipe"); } },
-    [CanvasNodeType.Multimodal]: { width: 420, height: 320, get title() { return i18n.t("canvas.nodeTypes.multimodal"); } },
-    [CanvasNodeType.Drama]: { width: 500, height: 350, get title() { return i18n.t("canvas.nodeTypes.drama"); } },
-    [CanvasNodeType.PortraitDirector]: { width: 500, height: 350, get title() { return i18n.t("canvas.nodeTypes.portraitDirector"); } },
+    [CanvasNodeType.Image]: {
+        width: 340,
+        height: 240,
+        get title() {
+            return i18n.t("canvas.nodeTypes.image");
+        },
+    },
+    [CanvasNodeType.Text]: {
+        width: 340,
+        height: 240,
+        get title() {
+            return i18n.t("canvas.nodeTypes.text");
+        },
+    },
+    [CanvasNodeType.NovaText]: {
+        width: 400,
+        height: 300,
+        get title() {
+            return i18n.t("canvas.nodeTypes.novaText");
+        },
+    },
+    [CanvasNodeType.Config]: {
+        width: 340,
+        height: 240,
+        get title() {
+            return i18n.t("canvas.nodeTypes.config");
+        },
+    },
+    [CanvasNodeType.Video]: {
+        width: 420,
+        height: 236,
+        get title() {
+            return i18n.t("canvas.nodeTypes.video");
+        },
+    },
+    [CanvasNodeType.Audio]: {
+        width: 340,
+        height: 120,
+        get title() {
+            return i18n.t("canvas.nodeTypes.audio");
+        },
+    },
+    [CanvasNodeType.Group]: {
+        width: 760,
+        height: 480,
+        get title() {
+            return i18n.t("canvas.nodeTypes.group");
+        },
+    },
+    [CanvasNodeType.Product]: {
+        width: 340,
+        height: 420,
+        get title() {
+            return i18n.t("canvas.nodeTypes.product");
+        },
+    },
+    [CanvasNodeType.Storyboard]: {
+        width: 420,
+        height: 300,
+        get title() {
+            return i18n.t("canvas.nodeTypes.storyboard");
+        },
+    },
+    [CanvasNodeType.VideoTrack]: {
+        width: 600,
+        height: 200,
+        get title() {
+            return i18n.t("canvas.nodeTypes.videoTrack");
+        },
+    },
+    [CanvasNodeType.Recipe]: {
+        width: 340,
+        height: 300,
+        get title() {
+            return i18n.t("canvas.nodeTypes.recipe");
+        },
+    },
+    [CanvasNodeType.Multimodal]: {
+        width: 420,
+        height: 320,
+        get title() {
+            return i18n.t("canvas.nodeTypes.multimodal");
+        },
+    },
+    [CanvasNodeType.Rectangle]: {
+        width: 320,
+        height: 200,
+        get title() {
+            return i18n.t("canvas.nodeTypes.rectangle");
+        },
+    },
+    [CanvasNodeType.Circle]: {
+        width: 240,
+        height: 240,
+        get title() {
+            return i18n.t("canvas.nodeTypes.circle");
+        },
+    },
+    [CanvasNodeType.Drama]: {
+        width: 500,
+        height: 350,
+        get title() {
+            return i18n.t("canvas.nodeTypes.drama");
+        },
+    },
+    [CanvasNodeType.PortraitDirector]: {
+        width: 500,
+        height: 350,
+        get title() {
+            return i18n.t("canvas.nodeTypes.portraitDirector");
+        },
+    },
 } satisfies Record<CanvasNodeType, { width: number; height: number; title: string }>;
 
 export const NODE_SPECS = {
     [CanvasNodeType.Image]: {
-        width: 340, height: 240, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Image].title; },
+        width: 340,
+        height: 240,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Image].title;
+        },
         metadata: { content: "", status: "idle" },
     },
     [CanvasNodeType.Text]: {
-        width: 340, height: 240, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Text].title; },
+        width: 340,
+        height: 240,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Text].title;
+        },
         metadata: { content: "", status: "idle", fontSize: 14 },
     },
     [CanvasNodeType.NovaText]: {
-        width: 400, height: 300, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.NovaText].title; },
+        width: 400,
+        height: 300,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.NovaText].title;
+        },
         metadata: { content: "", status: "idle", fontSize: 16, fontColor: "#000000", isBold: false, isItalic: false, isUnderline: false },
     },
     [CanvasNodeType.Config]: {
-        width: 340, height: 240, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Config].title; },
+        width: 340,
+        height: 240,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Config].title;
+        },
         metadata: { content: "", status: "idle", generationMode: "image" },
     },
     [CanvasNodeType.Video]: {
-        width: 420, height: 236, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Video].title; },
+        width: 420,
+        height: 236,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Video].title;
+        },
         metadata: { content: "", status: "idle" },
     },
     [CanvasNodeType.Audio]: {
-        width: 340, height: 120, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Audio].title; },
+        width: 340,
+        height: 120,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Audio].title;
+        },
         metadata: { content: "", status: "idle" },
     },
     [CanvasNodeType.Group]: {
-        width: 760, height: 480, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Group].title; },
+        width: 760,
+        height: 480,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Group].title;
+        },
         metadata: { status: "idle" },
     },
     [CanvasNodeType.Product]: {
-        width: 340, height: 420, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Product].title; },
+        width: 340,
+        height: 420,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Product].title;
+        },
         metadata: { status: "idle", content: "", productName: "", price: "", sellingPoints: [] },
     },
     [CanvasNodeType.Storyboard]: {
-        width: 420, height: 300, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Storyboard].title; },
+        width: 420,
+        height: 300,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Storyboard].title;
+        },
         metadata: { status: "idle", content: "", scenes: [] },
     },
     [CanvasNodeType.VideoTrack]: {
-        width: 600, height: 200, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.VideoTrack].title; },
+        width: 600,
+        height: 200,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.VideoTrack].title;
+        },
         metadata: { status: "idle", content: "", duration: 0, clips: [] },
     },
     [CanvasNodeType.Recipe]: {
-        width: 340, height: 300, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Recipe].title; },
+        width: 340,
+        height: 300,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Recipe].title;
+        },
         metadata: { status: "idle", content: "", recipeName: "", params: {} },
     },
     [CanvasNodeType.Multimodal]: {
-        width: 420, height: 320, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Multimodal].title; },
+        width: 420,
+        height: 320,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Multimodal].title;
+        },
         metadata: { status: "idle", content: "", modalities: [] },
     },
+    [CanvasNodeType.Rectangle]: {
+        width: 320,
+        height: 200,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Rectangle].title;
+        },
+        metadata: { status: "idle", fill: "#dbeafe", stroke: "#2563eb", strokeWidth: 2, cornerRadius: 16 },
+    },
+    [CanvasNodeType.Circle]: {
+        width: 240,
+        height: 240,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Circle].title;
+        },
+        metadata: { status: "idle", fill: "#dcfce7", stroke: "#16a34a", strokeWidth: 2 },
+    },
     [CanvasNodeType.Drama]: {
-        width: 500, height: 350, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.Drama].title; },
+        width: 500,
+        height: 350,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.Drama].title;
+        },
         metadata: { status: "idle", content: "", acts: [], scenes: [], characters: [] },
     },
     [CanvasNodeType.PortraitDirector]: {
-        width: 500, height: 350, get title() { return NODE_DEFAULT_SIZE[CanvasNodeType.PortraitDirector].title; },
+        width: 500,
+        height: 350,
+        get title() {
+            return NODE_DEFAULT_SIZE[CanvasNodeType.PortraitDirector].title;
+        },
         metadata: { status: "idle", content: "", characterRef: "", currentScene: 0 },
     },
 } satisfies Record<CanvasNodeType, CanvasNodeSpec>;

@@ -22,7 +22,9 @@ export enum CanvasNodeType {
     VideoTrack = "video_track",
     Recipe = "recipe",
     Multimodal = "multimodal",
-    Drama = "drama",        // 短剧制作节点
+    Rectangle = "rectangle", // 矩形图元
+    Circle = "circle", // 圆形/椭圆图元
+    Drama = "drama", // 短剧制作节点
     PortraitDirector = "portrait_director", // 人像导演节点
 }
 
@@ -84,6 +86,11 @@ export type CanvasNodeMetadata = {
     durationMs?: number;
     groupId?: string;
     interactive?: boolean; // Plugin node interaction/move state; see CanvasNodeDefinition.interactionToggle.
+    // Shape node fields (Rectangle / Circle); SVG 填充与描边均使用世界坐标单位。
+    fill?: string;
+    stroke?: string;
+    strokeWidth?: number;
+    cornerRadius?: number;
     // Scenario node fields (Product / Storyboard / VideoTrack / Recipe / Multimodal)
     productName?: string;
     price?: string;
